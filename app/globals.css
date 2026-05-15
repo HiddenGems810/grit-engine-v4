@@ -1,0 +1,87 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme {
+  --font-sans: var(--font-sans-primary);
+  --font-mono: var(--font-mono-primary);
+}
+
+:root {
+  --bg-app: #181818;
+  --bg-panel: #202020;
+  --bg-panel-dark: #141414;
+  --ink-border: #333333;
+  --accent-amber: #e8a82d; /* From inspiration */
+  --text-primary: #e0e0e0;
+  --text-secondary: #999999;
+}
+
+body {
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  overflow: hidden;
+  font-family: var(--font-sans-primary);
+  font-size: 13px;
+}
+
+.panel {
+  background: var(--bg-panel);
+  border-color: var(--ink-border);
+}
+
+.panel-header {
+  background: var(--bg-panel-dark);
+}
+
+/* Custom Range Slider (DxO Style) */
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%;
+  background: transparent;
+}
+input[type=range]:focus {
+  outline: none;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 12px;
+  width: 8px;
+  border-radius: 2px;
+  background: #fff;
+  cursor: pointer;
+  margin-top: -5px;
+  box-shadow: 0 0 2px rgba(0,0,0,0.5);
+}
+input[type=range]::-webkit-slider-thumb:hover {
+  background: var(--accent-amber);
+}
+input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 2px;
+  cursor: pointer;
+  background: #444; 
+}
+input[type=range]:focus::-webkit-slider-runnable-track {
+  background: #555;
+}
+
+/* Checkbox override to match amber style */
+input[type=checkbox] {
+  accent-color: var(--accent-amber);
+}
+
+/* Custom scrollbar for preset list */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-panel-dark); 
+}
+::-webkit-scrollbar-thumb {
+  background: #444; 
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #555; 
+}
