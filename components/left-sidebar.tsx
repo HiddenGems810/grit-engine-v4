@@ -58,6 +58,21 @@ function buildPresetFilterStack(preset: Preset) {
   return `blur(${blur}px) contrast(${contrast}%) brightness(${brightness}%) saturate(${saturation}%) hue-rotate(${hue}deg)`;
 }
 
+function buildPresetBadges(preset: Preset) {
+  const badges = [
+    preset.tier === 'hero' ? 'HERO' : null,
+    preset.skinSafe ? 'SKIN SAFE' : null,
+    preset.commercialScore >= 88 ? 'COMMERCIAL' : null,
+    preset.viralScore >= 88 ? 'VIRAL' : null,
+    preset.family === 'film' ? 'FILM' : null,
+    preset.family === 'product' ? 'PRODUCT' : null,
+    preset.family === 'graphic' ? 'GRAPHIC' : null,
+    preset.intensity === 'extreme' ? 'EXTREME' : null
+  ].filter(Boolean) as string[];
+
+  return Array.from(new Set(badges)).slice(0, 3);
+}
+
 export function LeftSidebar({
   isFocusMode,
   leftPanels,
@@ -227,15 +242,18 @@ export function LeftSidebar({
                       </div>
                       <div className="p-2 w-full">
                         <span className="text-[11px] font-semibold text-[#ccc] group-hover:text-white leading-tight truncate block">{preset.name}</span>
-                        <span className="text-[9px] text-[#777] uppercase tracking-wider block mt-0.5">{CATEGORY_SHORT_LABELS[preset.category] ?? preset.category}</span>
+                        <span className="text-[9px] text-[#777] uppercase tracking-wider block mt-0.5">{CATEGORY_SHORT_LABELS[preset.category] ?? preset.category} / {preset.intensity}</span>
                         {preset.description && (
                           <span className="text-[9px] text-[#8a847a] leading-tight block mt-1 line-clamp-2">{preset.description}</span>
                         )}
-                        {preset.usageTags && preset.usageTags.length > 0 && (
+                        {preset.bestFor && preset.bestFor.length > 0 && (
+                          <span className="text-[8px] text-[#9c8f78] leading-tight block mt-1 truncate">Best: {preset.bestFor.slice(0, 2).join(', ')}</span>
+                        )}
+                        {buildPresetBadges(preset).length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-1.5">
-                            {preset.usageTags.map((tag) => (
-                              <span key={`${preset.id}-${tag}`} className="text-[8px] uppercase tracking-[0.14em] rounded-[2px] border border-[#4b4027] bg-[#17130d] px-1.5 py-0.5 text-[#d1b170]">
-                                {tag.replace('-', ' ')}
+                            {buildPresetBadges(preset).map((badge) => (
+                              <span key={`${preset.id}-${badge}`} className="text-[8px] uppercase tracking-[0.14em] rounded-[2px] border border-[#4b4027] bg-[#17130d] px-1.5 py-0.5 text-[#d1b170]">
+                                {badge}
                               </span>
                             ))}
                           </div>

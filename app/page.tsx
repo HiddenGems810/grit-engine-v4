@@ -131,7 +131,7 @@ export default function FormatWorkspace() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [workspaceNotice, setWorkspaceNotice] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeCategory, setActiveCategory] = useState<string | null>('Vintage Cameras (Pre-1980)');
+  const [activeCategory, setActiveCategory] = useState<string | null>(PRESET_CATEGORIES[0]);
   const [showOriginal, setShowOriginal] = useState(false);
   const [imageReady, setImageReady] = useState(0); // Trigger to force reliable rendering
   const [activeCamera, setActiveCamera] = useState('Standard Matrix');
@@ -1057,10 +1057,33 @@ export default function FormatWorkspace() {
     setMonochrome(profile.monochrome);
   };
 
-  const filteredPresets = allPresets.filter(p => 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) && 
-    (activeCategory ? p.category === activeCategory : true)
-  );
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+  const filteredPresets = allPresets
+    .filter((preset) => {
+      const searchableText = [
+        preset.name,
+        preset.category,
+        preset.family,
+        preset.previewTone,
+        preset.subjectBias,
+        preset.intensity,
+        preset.description,
+        ...(preset.usageTags ?? []),
+        ...(preset.bestFor ?? []),
+        ...(preset.avoidFor ?? [])
+      ].join(' ').toLowerCase();
+      const searchMatches = normalizedSearchTerm.length === 0 || searchableText.includes(normalizedSearchTerm);
+      const categoryMatches = activeCategory ? preset.category === activeCategory : true;
+      const hideExperimentalByDefault = !activeCategory && normalizedSearchTerm.length === 0 && preset.family === 'experimental';
+
+      return searchMatches && categoryMatches && !hideExperimentalByDefault;
+    })
+    .sort((a, b) => (
+      (b.tier === 'hero' ? 1 : 0) - (a.tier === 'hero' ? 1 : 0)
+      || b.oneClickScore - a.oneClickScore
+      || b.commercialScore - a.commercialScore
+      || b.viralScore - a.viralScore
+    ));
 
   return (
     <div className="flex flex-col h-screen w-full bg-[#181818] text-[#e0e0e0] font-sans text-[13px] overflow-hidden">

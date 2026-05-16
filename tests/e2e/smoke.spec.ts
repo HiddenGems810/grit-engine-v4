@@ -20,8 +20,8 @@ test('top menu, preset search, history panel, and help modal are reachable', asy
   await expect(page.getByRole('button', { name: 'Close Guide' })).toBeVisible();
   await page.getByRole('button', { name: 'Close Guide' }).click();
 
-  await page.getByRole('textbox', { name: 'Search specification presets' }).first().fill('kodachrome');
-  await expect(page.getByText('1935 Kodachrome I').first()).toBeVisible();
+  await page.getByRole('textbox', { name: 'Search specification presets' }).first().fill('film');
+  await expect(page.getByText('Warm Film Editorial').first()).toBeVisible();
 
   await page.getByText('History').first().click();
   await expect(page.getByText('History').first()).toBeVisible();

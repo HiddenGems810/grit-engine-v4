@@ -54,6 +54,10 @@ Manual QA:
 - Next.js 16 is used with the Webpack compiler path because the TensorFlow/MediaPipe face landmark stack is not currently compatible with Turbopack static export analysis.
 - Textures are approved local/procedural assets. Do not reintroduce remote texture loading for export-critical rendering.
 
+## Preset Philosophy
+
+FORMAT presets are adaptive finishing stacks. The Signature family is designed for one-click creator use, with commercial contrast, believable color, and restrained retouching as the default experience. Portrait-safe presets prioritize identity, melanated skin preservation, facial structure, eyes, hair, brows, beards, tattoos, and believable skin texture. Graphic and Experimental presets are intentionally destructive, clearly labeled, and separated from default premium-safe looks. Editing and preset adaptation remain client-side.
+
 ## Browser limitations
 
 - WebGL is required for TensorFlow face landmark detection. When WebGL is unavailable, FORMAT keeps the standard image controls available and disables face-aware detection.

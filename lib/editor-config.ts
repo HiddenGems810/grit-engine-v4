@@ -128,6 +128,14 @@ export const PORTRAIT_CONTROL_LIMITS: Record<PortraitControlKey, { min: number; 
 };
 
 export const CATEGORY_SHORT_LABELS: Record<string, string> = {
+  'FORMAT Signature': 'Signature',
+  'Portrait + Beauty': 'Portrait',
+  'Film + Camera': 'Film',
+  'Social + Creator': 'Social',
+  'Cinematic': 'Cinematic',
+  'Product + Brand': 'Product',
+  'Graphic + Print': 'Graphic',
+  'Experimental': 'Experimental',
   'Airbrush & Face Retouch': 'Portrait Finish',
   'Yulian Graphics (Viral)': 'Graphic Viral',
   'Camera Simulation': 'Camera Sim',
@@ -145,10 +153,10 @@ export const CATEGORY_SHORT_LABELS: Record<string, string> = {
   'Cinematic & Blockbuster': 'Cinematic',
   'Anime & Cel Shaded': 'Cel Shaded',
   'Gothic & Dark Academia': 'Dark Academia',
-  'Cyberpunk 2077 Core': 'Cyberpunk',
+  'Neon Future Core': 'Neon Future',
   'Glitchcore & Webcore': 'Webcore',
   'Analog Horror / Found Footage': 'Found Footage',
-  'Music Video (2000s MTV)': 'Music Video',
+  'Music Video (2000s)': 'Music Video',
   'Dreamcore & Liminal Space': 'Dreamcore'
 };
 
@@ -331,6 +339,19 @@ export const buildPresetFromSnapshot = (snapshot: EngineSnapshot, name: string):
   id: `custom-${Date.now()}`,
   name,
   category: CUSTOM_PRESET_CATEGORY,
+  family: 'signature',
+  tier: 'standard',
+  intensity: snapshot.threshold >= 120 || snapshot.halftone > 0 || snapshot.scanlines > 40 ? 'bold' : 'medium',
+  subjectBias: snapshot.skinSmoothing > 0 || snapshot.beautyBoost > 0 || snapshot.skinPolish > 0 ? 'portrait' : 'general',
+  previewTone: snapshot.monochrome ? 'mono' : snapshot.gradientMap !== 'none' ? 'experimental' : 'clean',
+  skinSafe: snapshot.threshold < 120 && snapshot.gradientMap === 'none' && Math.abs(snapshot.hueShift) <= 18,
+  bestFor: ['saved local workflow'],
+  avoidFor: ['unreviewed release preset library'],
+  oneClickScore: 60,
+  commercialScore: 50,
+  viralScore: 50,
+  description: 'Custom local preset saved from the current FORMAT control stack.',
+  usageTags: ['custom', 'local'],
   inkBleed: snapshot.inkBleed,
   shadowCrush: snapshot.shadowCrush,
   midtones: snapshot.midtones,

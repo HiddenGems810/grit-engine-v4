@@ -5,8 +5,8 @@
  */
 
 export { clampNumber, createSeededRandom, buildDeterministicSeed, smoothStep } from './math-utils';
-export { sampleImageProfile, adaptPresetToImage, computeAutoTone } from './image-analysis';
-export type { ImageProfile, AutoToneResult } from './image-analysis';
+export { sampleImageProfile, sampleImageAestheticProfile, adaptPresetToImage, adaptPresetToAestheticProfile, computeAutoTone } from './image-analysis';
+export type { ImageProfile, ImageAestheticProfile, AutoToneResult } from './image-analysis';
 export { buildPortraitGuide, scalePortraitGuide } from './portrait-guide';
 export { getCameraProfile, CAMERA_IDS } from './camera-profiles';
 export type { CameraProfile, CameraId } from './camera-profiles';
