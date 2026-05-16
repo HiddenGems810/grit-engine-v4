@@ -70,7 +70,10 @@ export const PRESET_CATEGORIES = [
   'Analog Horror / Found Footage',
   'Music Video (2000s)',
   'Dreamcore & Liminal Space'
-];
+] as const;
+
+type PresetCategory = (typeof PRESET_CATEGORIES)[number];
+const PRESET_CATEGORY_SET = new Set<string>(PRESET_CATEGORIES);
 
 const RAW_PRESETS: Preset[] = [
   // --- AIRBRUSH & FACE RETOUCH ---
@@ -101,7 +104,7 @@ const RAW_PRESETS: Preset[] = [
   { id: 'v6', name: '1970 35mm Point & Shoot', category: 'Vintage Cameras (Pre-1980)', inkBleed: 4, shadowCrush: 40, grain: 55, threshold: 0, saturation: 90, hueShift: -5, halation: 10, chromaOffset: 8, monochrome: false, halftone: 0, scanlines: 0 },
   { id: 'v7', name: '1973 Instamatic Flash', category: 'Vintage Cameras (Pre-1980)', inkBleed: 3, shadowCrush: 95, grain: 40, threshold: 0, saturation: 130, hueShift: -15, halation: 21, chromaOffset: 15, monochrome: false, halftone: 0, scanlines: 0 },
   { id: 'v8', name: '1976 Polaroid SX-70', category: 'Vintage Cameras (Pre-1980)', inkBleed: 2, shadowCrush: 30, grain: 25, threshold: 0, saturation: 85, hueShift: 20, halation: 19, chromaOffset: 5, monochrome: false, halftone: 0, scanlines: 0 },
-  { id: 'v9', name: '1978 Expired Ektachrome', category: 'Vintage Cameras (Pre-1980)', inkBleed: 1, shadowCrush: 45, grain: 65, threshold: 0, saturation: 140, hueShift: -35, halation: 12, chromaOffset: 10, monochrome: false, halftone: 0, scanlines: 0 },
+  { id: 'v9', name: '1978 Slide Film Fade', category: 'Vintage Cameras (Pre-1980)', inkBleed: 1, shadowCrush: 45, grain: 65, threshold: 0, saturation: 140, hueShift: -35, halation: 12, chromaOffset: 10, monochrome: false, halftone: 0, scanlines: 0 },
   { id: 'v10', name: 'Silver Gelatin Archive', category: 'Vintage Cameras (Pre-1980)', inkBleed: 4, shadowCrush: 85, grain: 60, threshold: 0, saturation: 0, hueShift: 0, halation: 8, chromaOffset: 0, monochrome: true, halftone: 0, scanlines: 0 },
 
   // --- RETRO TECH (1980s) ---
@@ -113,7 +116,7 @@ const RAW_PRESETS: Preset[] = [
   { id: 'r6', name: '1988 CCTV Security', category: 'Retro Tech (1980s)', inkBleed: 3, shadowCrush: 80, grain: 90, threshold: 0, saturation: 0, hueShift: 0, halation: 7, chromaOffset: 10, monochrome: true, halftone: 0, scanlines: 85 },
   { id: 'r7', name: '1989 First Digital Camera', category: 'Retro Tech (1980s)', inkBleed: 1, shadowCrush: 100, grain: 55, threshold: 128, saturation: 0, hueShift: 0, halation: 0, chromaOffset: 0, monochrome: true, halftone: 12, scanlines: 0 },
   { id: 'r8', name: 'Synthwave Neon Laser', category: 'Retro Tech (1980s)', inkBleed: 2, shadowCrush: 100, grain: 30, threshold: 0, saturation: 250, hueShift: 110, halation: 31, chromaOffset: 40, monochrome: false, halftone: 0, scanlines: 60 },
-  { id: 'r9', name: 'Betamax Tracking Error', category: 'Retro Tech (1980s)', inkBleed: 2, shadowCrush: 70, grain: 100, threshold: 0, saturation: 110, hueShift: -60, halation: 10, chromaOffset: 80, monochrome: false, halftone: 0, scanlines: 90 },
+  { id: 'r9', name: 'Analog Tape Drift', category: 'Retro Tech (1980s)', inkBleed: 2, shadowCrush: 70, grain: 100, threshold: 0, saturation: 110, hueShift: -60, halation: 10, chromaOffset: 80, monochrome: false, halftone: 0, scanlines: 90 },
   { id: 'r10', name: 'Microcassette Lo-Fi', category: 'Retro Tech (1980s)', inkBleed: 3, shadowCrush: 60, grain: 85, threshold: 0, saturation: 50, hueShift: 20, halation: 10, chromaOffset: 30, monochrome: false, halftone: 0, scanlines: 50 },
 
   // --- DIGITAL DAWN (1990s) ---
@@ -169,7 +172,7 @@ const RAW_PRESETS: Preset[] = [
   { id: 'vi1', name: 'Aura Heatmap Oracle', category: 'Viral & Social', inkBleed: 1, shadowCrush: 40, grain: 15, threshold: 0, saturation: 160, hueShift: 0, halation: 28, chromaOffset: 15, monochrome: false, halftone: 0, scanlines: 0, vignette: 20, gradientMap: 'thermal' },
   { id: 'vi2', name: 'Sin City (Red Splash)', category: 'Viral & Social', inkBleed: 2, shadowCrush: 110, grain: 30, threshold: 0, saturation: 150, hueShift: 0, halation: 14, chromaOffset: 0, monochrome: false, halftone: 0, scanlines: 0, vignette: 65, colorKnockout: 'red' },
   { id: 'vi3', name: 'Glamour Skin Glow', category: 'Viral & Social', inkBleed: 0, shadowCrush: 30, grain: 5, threshold: 0, saturation: 90, hueShift: 5, halation: 8, chromaOffset: 0, monochrome: false, halftone: 0, scanlines: 0, vignette: 10, skinSmoothing: 16, colorKnockout: 'warm' },
-  { id: 'vi4', name: 'Night City Cyber Grade', category: 'Viral & Social', inkBleed: 2, shadowCrush: 95, grain: 45, threshold: 0, saturation: 100, hueShift: 0, halation: 22, chromaOffset: 25, monochrome: false, halftone: 0, scanlines: 10, vignette: 65, gradientMap: 'cyberpunk' },
+  { id: 'vi4', name: 'Neon Alley Cyber Grade', category: 'Viral & Social', inkBleed: 2, shadowCrush: 95, grain: 45, threshold: 0, saturation: 100, hueShift: 0, halation: 22, chromaOffset: 25, monochrome: false, halftone: 0, scanlines: 10, vignette: 65, gradientMap: 'cyberpunk' },
   { id: 'vi5', name: 'Film Burnout', category: 'Viral & Social', inkBleed: 2, shadowCrush: 80, grain: 50, threshold: 0, saturation: 130, hueShift: -10, halation: 8, chromaOffset: 5, monochrome: false, halftone: 0, scanlines: 0, vignette: 50, lightLeak: 85, dustAndScratches: 40 },
   { id: 'vi6', name: 'CCTV Night Vision', category: 'Viral & Social', inkBleed: 3, shadowCrush: 85, grain: 90, threshold: 0, saturation: 100, hueShift: 0, halation: 17, chromaOffset: 10, monochrome: false, halftone: 0, scanlines: 60, vignette: 80, gradientMap: 'nightvision' },
   { id: 'vi7', name: 'Angelic Dreamcore', category: 'Viral & Social', inkBleed: 2, shadowCrush: 20, grain: 15, threshold: 0, saturation: 110, hueShift: 45, halation: 35, chromaOffset: 5, monochrome: false, halftone: 0, scanlines: 0, vignette: 10, lightLeak: 30, sparkles: 80, prismBlur: 15 },
@@ -263,7 +266,7 @@ const clampNumber = (value: number, min: number, max: number) => Math.min(max, M
 
 type TonePolicy = 'portrait-premium' | 'product-clean' | 'cinematic-grade' | 'graphic-impact' | 'grit-texture';
 
-const CATEGORY_PROFILES: Record<string, {
+const CATEGORY_PROFILES: Record<PresetCategory, {
   tonePolicy: TonePolicy;
   shadowCap: number;
   saturationCap: number;
@@ -415,7 +418,7 @@ const CATEGORY_PROFILES: Record<string, {
     defaultMidtones: 0,
     defaultHighlights: 2
   },
-  'Cyberpunk 2077 Core': {
+  'Neon Future Core': {
     tonePolicy: 'graphic-impact',
     shadowCap: 96,
     saturationCap: 188,
@@ -431,7 +434,7 @@ const CATEGORY_PROFILES: Record<string, {
     defaultMidtones: 0,
     defaultHighlights: 2
   },
-  'Music Video (2000s MTV)': {
+  'Music Video (2000s)': {
     tonePolicy: 'portrait-premium',
     shadowCap: 62,
     saturationCap: 145,
@@ -458,12 +461,14 @@ const PROFESSIONAL_BASELINE = {
   defaultHighlights: 3
 };
 
+const isPresetCategory = (category: string): category is PresetCategory => PRESET_CATEGORY_SET.has(category);
+
 const isThresholdDrivenPreset = (preset: Preset) => preset.threshold >= 120 || preset.monochrome;
 
 const hasPortraitSubjectBias = (preset: Preset) => (
   preset.category === 'Airbrush & Face Retouch'
   || preset.category === 'Influencer Portraits'
-  || preset.category === 'Music Video (2000s MTV)'
+  || preset.category === 'Music Video (2000s)'
   || preset.skinSmoothing !== undefined
   || preset.blemishRemoval !== undefined
   || preset.beautyBoost !== undefined
@@ -536,7 +541,7 @@ const applyNameIntent = (
     }
   }
 
-  if (nameHasAny(preset, ['glitch', 'error', 'datamosh', 'web', 'crt', 'vhs', 'camcorder', 'trash', 'lo-fi', 'found footage', 'horror'])) {
+  if (nameHasAny(preset, ['glitch', 'error', 'datamosh', 'web', 'crt', 'vhs', 'camcorder', 'tape drift', 'lo-fi', 'found footage', 'horror'])) {
     if (!thresholdDriven) {
       next.shadowCrush = clampNumber(next.shadowCrush + 4, 0, 110);
     }
@@ -545,7 +550,7 @@ const applyNameIntent = (
     }
   }
 
-  if (nameHasAny(preset, ['cyber', 'neon', 'night city', 'edgerunners', 'tokyo', 'thermal'])) {
+  if (nameHasAny(preset, ['cyber', 'neon', 'hologram', 'neural', 'tokyo', 'thermal'])) {
     next.saturation = clampNumber(next.saturation, preset.monochrome ? 0 : 95, preset.monochrome ? 100 : 175);
     next.highlights = clampNumber(next.highlights + 1, 0, 18);
   }
@@ -571,10 +576,10 @@ const buildPresetDescription = (preset: Preset) => {
   if (nameHasAny(preset, ['print', 'halftone', 'xerox', 'fax', 'screenprint', 'risograph', 'comic', 'dither', 'bitmap'])) {
     return 'Graphic reproduction styling tuned for flatter tonal grouping, ink character, and shape-first rendering.';
   }
-  if (nameHasAny(preset, ['glitch', 'crt', 'vhs', 'camcorder', 'datamosh', 'error', 'horror'])) {
+  if (nameHasAny(preset, ['glitch', 'crt', 'vhs', 'camcorder', 'tape drift', 'datamosh', 'error', 'horror'])) {
     return 'Deliberate degradation with stronger texture, artifact flavor, and mood-driven contrast.';
   }
-  if (nameHasAny(preset, ['cyber', 'neon', 'thermal', 'tokyo'])) {
+  if (nameHasAny(preset, ['cyber', 'neon', 'hologram', 'neural', 'thermal', 'tokyo'])) {
     return 'Synthetic color styling aimed at chroma energy, futuristic light, and harder visual separation.';
   }
   if (nameHasAny(preset, ['kodachrome', 'polaroid', 'film', 'instamatic', 'leica', 'daguerreotype'])) {
@@ -590,9 +595,9 @@ const buildPresetUsageTags = (preset: Preset) => {
   if (nameHasAny(preset, ['clean', 'editorial', 'luxury', 'campaign', 'hero'])) tags.add('commercial');
   if (nameHasAny(preset, ['soft', 'glow', 'dream', 'angelic'])) tags.add('soft-light');
   if (nameHasAny(preset, ['print', 'halftone', 'xerox', 'fax', 'screenprint', 'dither', 'bitmap'])) tags.add('graphic');
-  if (nameHasAny(preset, ['glitch', 'crt', 'vhs', 'camcorder', 'error', 'horror'])) tags.add('texture-heavy');
+  if (nameHasAny(preset, ['glitch', 'crt', 'vhs', 'camcorder', 'tape drift', 'error', 'horror'])) tags.add('texture-heavy');
   if (nameHasAny(preset, ['night', 'midnight', 'cctv', 'security', 'gothic'])) tags.add('dark-scene');
-  if (nameHasAny(preset, ['cyber', 'neon', 'thermal', 'tokyo'])) tags.add('color-bold');
+  if (nameHasAny(preset, ['cyber', 'neon', 'hologram', 'neural', 'thermal', 'tokyo'])) tags.add('color-bold');
   if (preset.threshold >= 120 || preset.monochrome) tags.add('extreme');
 
   if (tags.size === 0) tags.add('balanced');
@@ -660,7 +665,7 @@ const applyTonePolicy = (
 };
 
 const normalizePresetForProfessionalOutput = (preset: Preset): Preset => {
-  const profile = CATEGORY_PROFILES[preset.category] ?? PROFESSIONAL_BASELINE;
+  const profile = isPresetCategory(preset.category) ? CATEGORY_PROFILES[preset.category] : PROFESSIONAL_BASELINE;
   const thresholdDriven = isThresholdDrivenPreset(preset);
   const shadowCap = thresholdDriven ? Math.max(profile.shadowCap, 92) : profile.shadowCap;
   const shadowCrush = clampNumber(preset.shadowCrush, 0, shadowCap);

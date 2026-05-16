@@ -226,7 +226,7 @@ export default function FormatWorkspace() {
   const allPresets = [...customPresets, ...PRESETS];
   const availableCategories = customPresets.length > 0
     ? [CUSTOM_PRESET_CATEGORY, ...PRESET_CATEGORIES]
-    : PRESET_CATEGORIES;
+    : [...PRESET_CATEGORIES];
   const portraitControlBindings: Record<PortraitControlKey, { value: number; setValue: (value: number) => void }> = {
     skinSmoothing: { value: skinSmoothing, setValue: setSkinSmoothing },
     glowUp: { value: glowUp, setValue: setGlowUp },
