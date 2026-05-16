@@ -65,10 +65,10 @@ export const PRESET_CATEGORIES = [
   'Cinematic & Blockbuster',
   'Anime & Cel Shaded',
   'Gothic & Dark Academia',
-  'Cyberpunk 2077 Core',
+  'Neon Future Core',
   'Glitchcore & Webcore',
   'Analog Horror / Found Footage',
-  'Music Video (2000s MTV)',
+  'Music Video (2000s)',
   'Dreamcore & Liminal Space'
 ];
 
@@ -83,7 +83,7 @@ const RAW_PRESETS: Preset[] = [
   { id: 'yg1', name: 'Halftone Print (Magenta)', category: 'Yulian Graphics (Viral)', inkBleed: 0, shadowCrush: 90, grain: 30, threshold: 0, saturation: 160, hueShift: 0, halation: 20, chromaOffset: 25, monochrome: false, halftone: 4, scanlines: 0, textureType: '4k_vintage_paper', textureIntensity: 60, sparkles: 0 },
   { id: 'yg2', name: 'Scuffed B&W Glitch', category: 'Yulian Graphics (Viral)', inkBleed: 5, shadowCrush: 120, grain: 50, threshold: 0, saturation: 0, hueShift: 0, halation: 15, chromaOffset: 40, monochrome: true, halftone: 0, scanlines: 0, textureType: '4k_grunge_wall', textureIntensity: 80, prismBlur: 10, clarity: 50 },
   { id: 'yg3', name: 'Y2K Thermal Cyber', category: 'Yulian Graphics (Viral)', inkBleed: 2, shadowCrush: 80, grain: 20, threshold: 0, saturation: 140, hueShift: 40, halation: 35, chromaOffset: 15, monochrome: false, halftone: 0, scanlines: 10, gradientMap: 'cyberpunk', sparkles: 40, textureType: '4k_crushed_plastic', textureIntensity: 30 },
-  { id: 'yg4', name: '00s Trash Cam', category: 'Yulian Graphics (Viral)', inkBleed: 0, shadowCrush: 60, grain: 15, threshold: 0, saturation: 120, hueShift: 10, halation: 10, chromaOffset: 8, monochrome: false, halftone: 0, scanlines: 0, textureType: 'none', textureIntensity: 0, clarity: 30, skinSmoothing: 20, glowUp: 10 },
+  { id: 'yg4', name: '00s Flash Burn Cam', category: 'Yulian Graphics (Viral)', inkBleed: 0, shadowCrush: 60, grain: 15, threshold: 0, saturation: 120, hueShift: 10, halation: 10, chromaOffset: 8, monochrome: false, halftone: 0, scanlines: 0, textureType: 'none', textureIntensity: 0, clarity: 30, skinSmoothing: 20, glowUp: 10 },
   { id: 'yg5', name: 'Star-Crossed Glow', category: 'Yulian Graphics (Viral)', inkBleed: 0, shadowCrush: 70, grain: 10, threshold: 0, saturation: 110, hueShift: 0, halation: 15, chromaOffset: 5, monochrome: false, halftone: 0, scanlines: 0, textureType: 'none', textureIntensity: 0, clarity: 40, skinSmoothing: 5, sparkles: 60, teethWhitening: 20 },
 
   // --- CAMERA SIMULATION ---
@@ -101,8 +101,8 @@ const RAW_PRESETS: Preset[] = [
   { id: 'v6', name: '1970 35mm Point & Shoot', category: 'Vintage Cameras (Pre-1980)', inkBleed: 4, shadowCrush: 40, grain: 55, threshold: 0, saturation: 90, hueShift: -5, halation: 10, chromaOffset: 8, monochrome: false, halftone: 0, scanlines: 0 },
   { id: 'v7', name: '1973 Instamatic Flash', category: 'Vintage Cameras (Pre-1980)', inkBleed: 3, shadowCrush: 95, grain: 40, threshold: 0, saturation: 130, hueShift: -15, halation: 21, chromaOffset: 15, monochrome: false, halftone: 0, scanlines: 0 },
   { id: 'v8', name: '1976 Polaroid SX-70', category: 'Vintage Cameras (Pre-1980)', inkBleed: 2, shadowCrush: 30, grain: 25, threshold: 0, saturation: 85, hueShift: 20, halation: 19, chromaOffset: 5, monochrome: false, halftone: 0, scanlines: 0 },
-  { id: 'v9', name: '1978 expired Ektachrome', category: 'Vintage Cameras (Pre-1980)', inkBleed: 1, shadowCrush: 45, grain: 65, threshold: 0, saturation: 140, hueShift: -35, halation: 12, chromaOffset: 10, monochrome: false, halftone: 0, scanlines: 0 },
-  { id: 'v10', name: 'Old Silver Gelatin', category: 'Vintage Cameras (Pre-1980)', inkBleed: 4, shadowCrush: 85, grain: 60, threshold: 0, saturation: 0, hueShift: 0, halation: 8, chromaOffset: 0, monochrome: true, halftone: 0, scanlines: 0 },
+  { id: 'v9', name: '1978 Expired Ektachrome', category: 'Vintage Cameras (Pre-1980)', inkBleed: 1, shadowCrush: 45, grain: 65, threshold: 0, saturation: 140, hueShift: -35, halation: 12, chromaOffset: 10, monochrome: false, halftone: 0, scanlines: 0 },
+  { id: 'v10', name: 'Silver Gelatin Archive', category: 'Vintage Cameras (Pre-1980)', inkBleed: 4, shadowCrush: 85, grain: 60, threshold: 0, saturation: 0, hueShift: 0, halation: 8, chromaOffset: 0, monochrome: true, halftone: 0, scanlines: 0 },
 
   // --- RETRO TECH (1980s) ---
   { id: 'r1', name: '1982 Arcade CRT', category: 'Retro Tech (1980s)', inkBleed: 1, shadowCrush: 80, grain: 50, threshold: 0, saturation: 200, hueShift: 40, halation: 14, chromaOffset: 30, monochrome: false, halftone: 0, scanlines: 100 },
@@ -113,25 +113,25 @@ const RAW_PRESETS: Preset[] = [
   { id: 'r6', name: '1988 CCTV Security', category: 'Retro Tech (1980s)', inkBleed: 3, shadowCrush: 80, grain: 90, threshold: 0, saturation: 0, hueShift: 0, halation: 7, chromaOffset: 10, monochrome: true, halftone: 0, scanlines: 85 },
   { id: 'r7', name: '1989 First Digital Camera', category: 'Retro Tech (1980s)', inkBleed: 1, shadowCrush: 100, grain: 55, threshold: 128, saturation: 0, hueShift: 0, halation: 0, chromaOffset: 0, monochrome: true, halftone: 12, scanlines: 0 },
   { id: 'r8', name: 'Synthwave Neon Laser', category: 'Retro Tech (1980s)', inkBleed: 2, shadowCrush: 100, grain: 30, threshold: 0, saturation: 250, hueShift: 110, halation: 31, chromaOffset: 40, monochrome: false, halftone: 0, scanlines: 60 },
-  { id: 'r9', name: 'Betamax tracking error', category: 'Retro Tech (1980s)', inkBleed: 2, shadowCrush: 70, grain: 100, threshold: 0, saturation: 110, hueShift: -60, halation: 10, chromaOffset: 80, monochrome: false, halftone: 0, scanlines: 90 },
+  { id: 'r9', name: 'Betamax Tracking Error', category: 'Retro Tech (1980s)', inkBleed: 2, shadowCrush: 70, grain: 100, threshold: 0, saturation: 110, hueShift: -60, halation: 10, chromaOffset: 80, monochrome: false, halftone: 0, scanlines: 90 },
   { id: 'r10', name: 'Microcassette Lo-Fi', category: 'Retro Tech (1980s)', inkBleed: 3, shadowCrush: 60, grain: 85, threshold: 0, saturation: 50, hueShift: 20, halation: 10, chromaOffset: 30, monochrome: false, halftone: 0, scanlines: 50 },
 
   // --- DIGITAL DAWN (1990s) ---
   { id: 'd1', name: '1992 Disposable Camera', category: 'Digital Dawn (1990s)', inkBleed: 3, shadowCrush: 90, grain: 65, threshold: 0, saturation: 160, hueShift: 5, halation: 28, chromaOffset: 10, monochrome: false, halftone: 0, scanlines: 0 },
   { id: 'd2', name: '1995 Early Web JPEG', category: 'Digital Dawn (1990s)', inkBleed: 2, shadowCrush: 50, grain: 40, threshold: 0, saturation: 130, hueShift: -10, halation: 0, chromaOffset: 25, monochrome: false, halftone: 4, scanlines: 0 },
   { id: 'd3', name: '1996 MiniDV Camcorder', category: 'Digital Dawn (1990s)', inkBleed: 2, shadowCrush: 85, grain: 45, threshold: 0, saturation: 110, hueShift: -5, halation: 8, chromaOffset: 15, monochrome: false, halftone: 0, scanlines: 30 },
-  { id: 'd4', name: '1998 Game Boy Camera', category: 'Digital Dawn (1990s)', inkBleed: 0, shadowCrush: 100, grain: 0, threshold: 128, saturation: 100, hueShift: 90, halation: 0, chromaOffset: 0, monochrome: true, halftone: 5, scanlines: 10 },
-  { id: 'd5', name: '1999 Sony Mavica Floppy', category: 'Digital Dawn (1990s)', inkBleed: 4, shadowCrush: 60, grain: 80, threshold: 0, saturation: 90, hueShift: 15, halation: 10, chromaOffset: 45, monochrome: false, halftone: 2, scanlines: 0 },
-  { id: 'd6', name: 'Nokia 7650 Early Cam', category: 'Digital Dawn (1990s)', inkBleed: 1, shadowCrush: 80, grain: 90, threshold: 0, saturation: 140, hueShift: 20, halation: 15, chromaOffset: 20, monochrome: false, halftone: 3, scanlines: 0 },
+  { id: 'd4', name: '1998 Pocket Pixel Camera', category: 'Digital Dawn (1990s)', inkBleed: 0, shadowCrush: 100, grain: 0, threshold: 128, saturation: 100, hueShift: 90, halation: 0, chromaOffset: 0, monochrome: true, halftone: 5, scanlines: 10 },
+  { id: 'd5', name: '1999 Floppy Disk Digital', category: 'Digital Dawn (1990s)', inkBleed: 4, shadowCrush: 60, grain: 80, threshold: 0, saturation: 90, hueShift: 15, halation: 10, chromaOffset: 45, monochrome: false, halftone: 2, scanlines: 0 },
+  { id: 'd6', name: 'Early Camera Phone Bloom', category: 'Digital Dawn (1990s)', inkBleed: 1, shadowCrush: 80, grain: 90, threshold: 0, saturation: 140, hueShift: 20, halation: 15, chromaOffset: 20, monochrome: false, halftone: 3, scanlines: 0 },
   { id: 'd7', name: 'Dial-Up Glitch', category: 'Digital Dawn (1990s)', inkBleed: 2, shadowCrush: 100, grain: 100, threshold: 0, saturation: 200, hueShift: 140, halation: 35, chromaOffset: 95, monochrome: false, halftone: 0, scanlines: 60 },
-  { id: 'd8', name: 'Matrix Cinema (1999)', category: 'Digital Dawn (1990s)', inkBleed: 2, shadowCrush: 85, grain: 50, threshold: 0, saturation: 120, hueShift: 55, halation: 7, chromaOffset: 10, monochrome: false, halftone: 0, scanlines: 0 },
+  { id: 'd8', name: 'Green Code Cinema', category: 'Digital Dawn (1990s)', inkBleed: 2, shadowCrush: 85, grain: 50, threshold: 0, saturation: 120, hueShift: 55, halation: 7, chromaOffset: 10, monochrome: false, halftone: 0, scanlines: 0 },
   { id: 'd9', name: 'CRT Monitor Glare', category: 'Digital Dawn (1990s)', inkBleed: 4, shadowCrush: 40, grain: 20, threshold: 0, saturation: 150, hueShift: -10, halation: 28, chromaOffset: 35, monochrome: false, halftone: 0, scanlines: 80 },
   { id: 'd10', name: 'Y2K Midnight Flash', category: 'Digital Dawn (1990s)', inkBleed: 1, shadowCrush: 95, grain: 35, threshold: 0, saturation: 180, hueShift: 0, halation: 31, chromaOffset: 15, monochrome: false, halftone: 0, scanlines: 0 },
 
   // --- Y2K & STREETWEAR ---
   { id: 'y1', name: 'Phonk Glitch Heavy', category: 'Y2K & Streetwear', inkBleed: 4, shadowCrush: 90, grain: 75, threshold: 0, saturation: 120, hueShift: -30, halation: 21, chromaOffset: 85, monochrome: false, halftone: 0, scanlines: 15 },
-  { id: 'y2', name: 'Cyberpunk Chrome', category: 'Y2K & Streetwear', inkBleed: 0, shadowCrush: 95, grain: 40, threshold: 0, saturation: 0, hueShift: 0, halation: 15, chromaOffset: 100, monochrome: true, halftone: 0, scanlines: 0 },
-  { id: 'y3', name: 'Off-White Stamp', category: 'Y2K & Streetwear', inkBleed: 2, shadowCrush: 90, grain: 60, threshold: 140, saturation: 0, hueShift: 0, halation: 0, chromaOffset: 0, monochrome: true, halftone: 0, scanlines: 0 },
+  { id: 'y2', name: 'Street Chrome Monochrome', category: 'Y2K & Streetwear', inkBleed: 0, shadowCrush: 95, grain: 40, threshold: 0, saturation: 0, hueShift: 0, halation: 15, chromaOffset: 100, monochrome: true, halftone: 0, scanlines: 0 },
+  { id: 'y3', name: 'Gallery Stamp Monochrome', category: 'Y2K & Streetwear', inkBleed: 2, shadowCrush: 90, grain: 60, threshold: 140, saturation: 0, hueShift: 0, halation: 0, chromaOffset: 0, monochrome: true, halftone: 0, scanlines: 0 },
   { id: 'y4', name: 'Hypebeast Flash', category: 'Y2K & Streetwear', inkBleed: 0, shadowCrush: 70, grain: 30, threshold: 0, saturation: 120, hueShift: 0, halation: 8, chromaOffset: 10, monochrome: false, halftone: 0, scanlines: 0 },
   { id: 'y5', name: 'Thermal Camo', category: 'Y2K & Streetwear', inkBleed: 3, shadowCrush: 40, grain: 50, threshold: 0, saturation: 300, hueShift: -160, halation: 14, chromaOffset: 15, monochrome: false, halftone: 0, scanlines: 20 },
   { id: 'y6', name: 'Y2K Acid Wrap', category: 'Y2K & Streetwear', inkBleed: 2, shadowCrush: 50, grain: 80, threshold: 0, saturation: 250, hueShift: 135, halation: 28, chromaOffset: 65, monochrome: false, halftone: 0, scanlines: 0 },
@@ -166,10 +166,10 @@ const RAW_PRESETS: Preset[] = [
   { id: 'h4', name: 'New Year Fireworks', category: 'Holidays & Events', inkBleed: 2, shadowCrush: 100, grain: 60, threshold: 0, saturation: 180, hueShift: 0, halation: 31, chromaOffset: 25, monochrome: false, halftone: 0, scanlines: 0, vignette: 90 },
 
   // --- VIRAL & SOCIAL ---
-  { id: 'vi1', name: 'Aura Heatmap Trend', category: 'Viral & Social', inkBleed: 1, shadowCrush: 40, grain: 15, threshold: 0, saturation: 160, hueShift: 0, halation: 28, chromaOffset: 15, monochrome: false, halftone: 0, scanlines: 0, vignette: 20, gradientMap: 'thermal' },
+  { id: 'vi1', name: 'Aura Heatmap Oracle', category: 'Viral & Social', inkBleed: 1, shadowCrush: 40, grain: 15, threshold: 0, saturation: 160, hueShift: 0, halation: 28, chromaOffset: 15, monochrome: false, halftone: 0, scanlines: 0, vignette: 20, gradientMap: 'thermal' },
   { id: 'vi2', name: 'Sin City (Red Splash)', category: 'Viral & Social', inkBleed: 2, shadowCrush: 110, grain: 30, threshold: 0, saturation: 150, hueShift: 0, halation: 14, chromaOffset: 0, monochrome: false, halftone: 0, scanlines: 0, vignette: 65, colorKnockout: 'red' },
-  { id: 'vi3', name: 'Glamour Portrait', category: 'Viral & Social', inkBleed: 0, shadowCrush: 30, grain: 5, threshold: 0, saturation: 90, hueShift: 5, halation: 8, chromaOffset: 0, monochrome: false, halftone: 0, scanlines: 0, vignette: 10, skinSmoothing: 16, colorKnockout: 'warm' },
-  { id: 'vi4', name: 'Cyberpunk 2077', category: 'Viral & Social', inkBleed: 2, shadowCrush: 95, grain: 45, threshold: 0, saturation: 100, hueShift: 0, halation: 22, chromaOffset: 25, monochrome: false, halftone: 0, scanlines: 10, vignette: 65, gradientMap: 'cyberpunk' },
+  { id: 'vi3', name: 'Glamour Skin Glow', category: 'Viral & Social', inkBleed: 0, shadowCrush: 30, grain: 5, threshold: 0, saturation: 90, hueShift: 5, halation: 8, chromaOffset: 0, monochrome: false, halftone: 0, scanlines: 0, vignette: 10, skinSmoothing: 16, colorKnockout: 'warm' },
+  { id: 'vi4', name: 'Night City Cyber Grade', category: 'Viral & Social', inkBleed: 2, shadowCrush: 95, grain: 45, threshold: 0, saturation: 100, hueShift: 0, halation: 22, chromaOffset: 25, monochrome: false, halftone: 0, scanlines: 10, vignette: 65, gradientMap: 'cyberpunk' },
   { id: 'vi5', name: 'Film Burnout', category: 'Viral & Social', inkBleed: 2, shadowCrush: 80, grain: 50, threshold: 0, saturation: 130, hueShift: -10, halation: 8, chromaOffset: 5, monochrome: false, halftone: 0, scanlines: 0, vignette: 50, lightLeak: 85, dustAndScratches: 40 },
   { id: 'vi6', name: 'CCTV Night Vision', category: 'Viral & Social', inkBleed: 3, shadowCrush: 85, grain: 90, threshold: 0, saturation: 100, hueShift: 0, halation: 17, chromaOffset: 10, monochrome: false, halftone: 0, scanlines: 60, vignette: 80, gradientMap: 'nightvision' },
   { id: 'vi7', name: 'Angelic Dreamcore', category: 'Viral & Social', inkBleed: 2, shadowCrush: 20, grain: 15, threshold: 0, saturation: 110, hueShift: 45, halation: 35, chromaOffset: 5, monochrome: false, halftone: 0, scanlines: 0, vignette: 10, lightLeak: 30, sparkles: 80, prismBlur: 15 },
@@ -196,39 +196,39 @@ const RAW_PRESETS: Preset[] = [
 
 
   // --- BITMAP & DITHER ---
-  { id: 'b1', name: 'Atari 2600 Bitmap', category: 'Bitmap & Dither', inkBleed: 0, shadowCrush: 80, grain: 0, threshold: 128, saturation: 150, hueShift: -40, halation: 0, chromaOffset: 0, monochrome: false, halftone: 0, scanlines: 20, vignette: 0 },
+  { id: 'b1', name: 'Console Bitmap 2600', category: 'Bitmap & Dither', inkBleed: 0, shadowCrush: 80, grain: 0, threshold: 128, saturation: 150, hueShift: -40, halation: 0, chromaOffset: 0, monochrome: false, halftone: 0, scanlines: 20, vignette: 0 },
   { id: 'b2', name: 'High-Contrast Litho', category: 'Bitmap & Dither', inkBleed: 0, shadowCrush: 120, grain: 25, threshold: 150, saturation: 0, hueShift: 0, halation: 0, chromaOffset: 0, monochrome: true, halftone: 0, scanlines: 0, vignette: 0 },
   { id: 'b3', name: 'Dithered Glitch', category: 'Bitmap & Dither', inkBleed: 0, shadowCrush: 90, grain: 10, threshold: 140, saturation: 180, hueShift: 60, halation: 0, chromaOffset: 50, monochrome: false, halftone: 0, scanlines: 0, vignette: 0 },
   { id: 'b4', name: '1-Bit Newsprint', category: 'Bitmap & Dither', inkBleed: 2, shadowCrush: 100, grain: 50, threshold: 128, saturation: 0, hueShift: 0, halation: 0, chromaOffset: 0, monochrome: true, halftone: 8, scanlines: 0, vignette: 10 },
 
   // --- CINEMATIC & BLOCKBUSTER ---
-  { id: 'cb1', name: 'Blade Runner 2049', category: 'Cinematic & Blockbuster', inkBleed: 0, shadowCrush: 80, grain: 25, threshold: 0, saturation: 140, hueShift: 10, halation: 12, chromaOffset: 5, monochrome: false, halftone: 0, scanlines: 0, vignette: 40, textureType: 'none', textureIntensity: 0 },
-  { id: 'cb2', name: 'Matrix Green Wash', category: 'Cinematic & Blockbuster', inkBleed: 2, shadowCrush: 70, grain: 30, threshold: 0, saturation: 90, hueShift: 55, halation: 15, chromaOffset: 0, monochrome: false, halftone: 0, scanlines: 0, vignette: 30 },
-  { id: 'cb3', name: 'Oppenheimer B&W', category: 'Cinematic & Blockbuster', inkBleed: 1, shadowCrush: 90, grain: 40, threshold: 0, saturation: 0, hueShift: 0, halation: 10, chromaOffset: 0, monochrome: true, halftone: 0, scanlines: 0, vignette: 60, textureType: 'none', textureIntensity: 0 },
-  { id: 'cb4', name: 'Dune Desert Heat', category: 'Cinematic & Blockbuster', inkBleed: 0, shadowCrush: 50, grain: 20, threshold: 0, saturation: 120, hueShift: -10, halation: 15, chromaOffset: 0, monochrome: false, halftone: 0, scanlines: 0, vignette: 20 },
+  { id: 'cb1', name: 'Amber Neon Noir', category: 'Cinematic & Blockbuster', inkBleed: 0, shadowCrush: 80, grain: 25, threshold: 0, saturation: 140, hueShift: 10, halation: 12, chromaOffset: 5, monochrome: false, halftone: 0, scanlines: 0, vignette: 40, textureType: 'none', textureIntensity: 0 },
+  { id: 'cb2', name: 'Green Code Wash', category: 'Cinematic & Blockbuster', inkBleed: 2, shadowCrush: 70, grain: 30, threshold: 0, saturation: 90, hueShift: 55, halation: 15, chromaOffset: 0, monochrome: false, halftone: 0, scanlines: 0, vignette: 30 },
+  { id: 'cb3', name: 'Monochrome Firestorm', category: 'Cinematic & Blockbuster', inkBleed: 1, shadowCrush: 90, grain: 40, threshold: 0, saturation: 0, hueShift: 0, halation: 10, chromaOffset: 0, monochrome: true, halftone: 0, scanlines: 0, vignette: 60, textureType: 'none', textureIntensity: 0 },
+  { id: 'cb4', name: 'Desert Heat Epic', category: 'Cinematic & Blockbuster', inkBleed: 0, shadowCrush: 50, grain: 20, threshold: 0, saturation: 120, hueShift: -10, halation: 15, chromaOffset: 0, monochrome: false, halftone: 0, scanlines: 0, vignette: 20 },
   { id: 'cb5', name: 'Cyber Neon Rain', category: 'Cinematic & Blockbuster', inkBleed: 1, shadowCrush: 100, grain: 35, threshold: 0, saturation: 180, hueShift: -25, halation: 28, chromaOffset: 15, monochrome: false, halftone: 0, scanlines: 0, vignette: 80, prismBlur: 2 },
-  { id: 'cb6', name: 'Arthouse Film (A24)', category: 'Cinematic & Blockbuster', inkBleed: 3, shadowCrush: 60, grain: 60, threshold: 0, saturation: 85, hueShift: 5, halation: 10, chromaOffset: 5, monochrome: false, halftone: 0, scanlines: 0, vignette: 50, skinSmoothing: 4 },
+  { id: 'cb6', name: 'Arthouse Matte Film', category: 'Cinematic & Blockbuster', inkBleed: 3, shadowCrush: 60, grain: 60, threshold: 0, saturation: 85, hueShift: 5, halation: 10, chromaOffset: 5, monochrome: false, halftone: 0, scanlines: 0, vignette: 50, skinSmoothing: 4 },
 
   // --- ANIME & CEL SHADED ---
   { id: 'an1', name: '90s Anime Retro', category: 'Anime & Cel Shaded', inkBleed: 2, shadowCrush: 40, grain: 15, threshold: 0, saturation: 130, hueShift: 5, halation: 21, chromaOffset: 10, monochrome: false, halftone: 0, scanlines: 10, vignette: 10 },
-  { id: 'an2', name: 'Ghibli Dreamscape', category: 'Anime & Cel Shaded', inkBleed: 4, shadowCrush: 20, grain: 10, threshold: 0, saturation: 150, hueShift: 20, halation: 12, chromaOffset: 0, monochrome: false, halftone: 0, scanlines: 0, vignette: 10 },
+  { id: 'an2', name: 'Hand-Painted Dreamscape', category: 'Anime & Cel Shaded', inkBleed: 4, shadowCrush: 20, grain: 10, threshold: 0, saturation: 150, hueShift: 20, halation: 12, chromaOffset: 0, monochrome: false, halftone: 0, scanlines: 0, vignette: 10 },
   { id: 'an3', name: 'Cel Shaded Edge', category: 'Anime & Cel Shaded', inkBleed: 2, shadowCrush: 120, grain: 0, threshold: 0, saturation: 200, hueShift: 0, halation: 0, chromaOffset: 0, monochrome: false, halftone: 0, scanlines: 0, vignette: 0, skinSmoothing: 20 },
-  { id: 'an4', name: 'Ghost in the Shell', category: 'Anime & Cel Shaded', inkBleed: 1, shadowCrush: 85, grain: 30, threshold: 0, saturation: 90, hueShift: 40, halation: 8, chromaOffset: 15, monochrome: false, halftone: 0, scanlines: 20, vignette: 40, gradientMap: 'cyberpunk' },
-  { id: 'an5', name: 'Evangelion LCL', category: 'Anime & Cel Shaded', inkBleed: 2, shadowCrush: 70, grain: 20, threshold: 0, saturation: 140, hueShift: -30, halation: 24, chromaOffset: 5, monochrome: false, halftone: 0, scanlines: 0, vignette: 30 },
+  { id: 'an4', name: 'Ghost Circuit Shell', category: 'Anime & Cel Shaded', inkBleed: 1, shadowCrush: 85, grain: 30, threshold: 0, saturation: 90, hueShift: 40, halation: 8, chromaOffset: 15, monochrome: false, halftone: 0, scanlines: 20, vignette: 40, gradientMap: 'cyberpunk' },
+  { id: 'an5', name: 'Neon Genesis Amber', category: 'Anime & Cel Shaded', inkBleed: 2, shadowCrush: 70, grain: 20, threshold: 0, saturation: 140, hueShift: -30, halation: 24, chromaOffset: 5, monochrome: false, halftone: 0, scanlines: 0, vignette: 30 },
 
   // --- GOTHIC & DARK ACADEMIA ---
   { id: 'gd1', name: 'Vampire Gothic', category: 'Gothic & Dark Academia', inkBleed: 1, shadowCrush: 110, grain: 40, threshold: 0, saturation: 60, hueShift: 0, halation: 15, chromaOffset: 0, monochrome: false, halftone: 0, scanlines: 0, vignette: 80, skinSmoothing: 10, colorKnockout: 'red' },
-  { id: 'gd2', name: 'Old Library Archive', category: 'Gothic & Dark Academia', inkBleed: 2, shadowCrush: 60, grain: 30, threshold: 0, saturation: 70, hueShift: 15, halation: 10, chromaOffset: 0, monochrome: false, halftone: 0, scanlines: 0, vignette: 60, textureType: 'paper', textureIntensity: 50 },
+  { id: 'gd2', name: 'Library Dust Archive', category: 'Gothic & Dark Academia', inkBleed: 2, shadowCrush: 60, grain: 30, threshold: 0, saturation: 70, hueShift: 15, halation: 10, chromaOffset: 0, monochrome: false, halftone: 0, scanlines: 0, vignette: 60, textureType: 'paper', textureIntensity: 50 },
   { id: 'gd3', name: 'Rainy London 1890', category: 'Gothic & Dark Academia', inkBleed: 2, shadowCrush: 85, grain: 55, threshold: 0, saturation: 30, hueShift: 50, halation: 5, chromaOffset: 0, monochrome: false, halftone: 0, scanlines: 0, vignette: 90 },
   { id: 'gd4', name: 'Candlelight Study', category: 'Gothic & Dark Academia', inkBleed: 3, shadowCrush: 90, grain: 45, threshold: 0, saturation: 110, hueShift: -25, halation: 29, chromaOffset: 0, monochrome: false, halftone: 0, scanlines: 0, vignette: 75, skinSmoothing: 4 },
   { id: 'gd5', name: 'Dark Academia Mood', category: 'Gothic & Dark Academia', inkBleed: 1, shadowCrush: 80, grain: 35, threshold: 0, saturation: 80, hueShift: 10, halation: 7, chromaOffset: 0, monochrome: false, halftone: 0, scanlines: 0, vignette: 65, textureType: 'canvas', textureIntensity: 30 },
 
-  // --- CYBERPUNK 2077 CORE ---
-  { id: 'cpn1', name: 'Night City Overdrive', category: 'Cyberpunk 2077 Core', inkBleed: 2, shadowCrush: 95, grain: 40, threshold: 0, saturation: 160, hueShift: -10, halation: 31, chromaOffset: 30, monochrome: false, halftone: 0, scanlines: 10, vignette: 50, lightLeak: 20, prismBlur: 3 },
-  { id: 'cpn2', name: 'Edgerunners Speed', category: 'Cyberpunk 2077 Core', inkBleed: 3, shadowCrush: 80, grain: 25, threshold: 0, saturation: 200, hueShift: 30, halation: 21, chromaOffset: 80, monochrome: false, halftone: 0, scanlines: 0, vignette: 40, prismBlur: 11 },
-  { id: 'cpn3', name: 'Chrome & Metal', category: 'Cyberpunk 2077 Core', inkBleed: 2, shadowCrush: 110, grain: 50, threshold: 0, saturation: 40, hueShift: 0, halation: 14, chromaOffset: 15, monochrome: false, halftone: 0, scanlines: 5, vignette: 70 },
-  { id: 'cpn4', name: 'Hologram Glitch', category: 'Cyberpunk 2077 Core', inkBleed: 2, shadowCrush: 60, grain: 80, threshold: 0, saturation: 140, hueShift: 120, halation: 35, chromaOffset: 60, monochrome: false, halftone: 0, scanlines: 40, vignette: 20, prismBlur: 7 },
-  { id: 'cpn5', name: 'Braindance Memory', category: 'Cyberpunk 2077 Core', inkBleed: 1, shadowCrush: 40, grain: 20, threshold: 0, saturation: 90, hueShift: -40, halation: 35, chromaOffset: 20, monochrome: false, halftone: 0, scanlines: 0, vignette: 50, prismBlur: 15, skinSmoothing: 10 },
+  // --- NEON FUTURE CORE ---
+  { id: 'cpn1', name: 'Neon District Overdrive', category: 'Neon Future Core', inkBleed: 2, shadowCrush: 95, grain: 40, threshold: 0, saturation: 160, hueShift: -10, halation: 31, chromaOffset: 30, monochrome: false, halftone: 0, scanlines: 10, vignette: 50, lightLeak: 20, prismBlur: 3 },
+  { id: 'cpn2', name: 'Neon Runner Speed', category: 'Neon Future Core', inkBleed: 3, shadowCrush: 80, grain: 25, threshold: 0, saturation: 200, hueShift: 30, halation: 21, chromaOffset: 80, monochrome: false, halftone: 0, scanlines: 0, vignette: 40, prismBlur: 11 },
+  { id: 'cpn3', name: 'Chrome Metal Noir', category: 'Neon Future Core', inkBleed: 2, shadowCrush: 110, grain: 50, threshold: 0, saturation: 40, hueShift: 0, halation: 14, chromaOffset: 15, monochrome: false, halftone: 0, scanlines: 5, vignette: 70 },
+  { id: 'cpn4', name: 'Hologram Signal Break', category: 'Neon Future Core', inkBleed: 2, shadowCrush: 60, grain: 80, threshold: 0, saturation: 140, hueShift: 120, halation: 35, chromaOffset: 60, monochrome: false, halftone: 0, scanlines: 40, vignette: 20, prismBlur: 7 },
+  { id: 'cpn5', name: 'Neural Memory Bloom', category: 'Neon Future Core', inkBleed: 1, shadowCrush: 40, grain: 20, threshold: 0, saturation: 90, hueShift: -40, halation: 35, chromaOffset: 20, monochrome: false, halftone: 0, scanlines: 0, vignette: 50, prismBlur: 15, skinSmoothing: 10 },
 
   // --- GLITCHCORE & WEBCORE ---
   { id: 'gl1', name: 'Dial-Up Error 404', category: 'Glitchcore & Webcore', inkBleed: 5, shadowCrush: 70, grain: 60, threshold: 0, saturation: 180, hueShift: 45, halation: 8, chromaOffset: 100, monochrome: false, halftone: 0, scanlines: 25, vignette: 10 },
@@ -238,18 +238,18 @@ const RAW_PRESETS: Preset[] = [
   { id: 'gl5', name: 'Shattered CRT', category: 'Glitchcore & Webcore', inkBleed: 3, shadowCrush: 90, grain: 80, threshold: 0, saturation: 140, hueShift: -25, halation: 24, chromaOffset: 90, monochrome: false, halftone: 0, scanlines: 80, vignette: 60, prismBlur: 10 },
 
   // --- ANALOG HORROR / FOUND FOOTAGE ---
-  { id: 'ah1', name: 'Slender Forest', category: 'Analog Horror / Found Footage', inkBleed: 3, shadowCrush: 110, grain: 95, threshold: 0, saturation: 20, hueShift: 50, halation: 10, chromaOffset: 15, monochrome: false, halftone: 0, scanlines: 10, vignette: 90, dustAndScratches: 60 },
+  { id: 'ah1', name: 'Tall Shadow Forest', category: 'Analog Horror / Found Footage', inkBleed: 3, shadowCrush: 110, grain: 95, threshold: 0, saturation: 20, hueShift: 50, halation: 10, chromaOffset: 15, monochrome: false, halftone: 0, scanlines: 10, vignette: 90, dustAndScratches: 60 },
   { id: 'ah2', name: 'Cursed VHS Tape', category: 'Analog Horror / Found Footage', inkBleed: 6, shadowCrush: 85, grain: 100, threshold: 0, saturation: 40, hueShift: -10, halation: 14, chromaOffset: 65, monochrome: false, halftone: 0, scanlines: 45, vignette: 100, dustAndScratches: 80, camcorderOSD: true },
   { id: 'ah3', name: 'Security Camera 4', category: 'Analog Horror / Found Footage', inkBleed: 1, shadowCrush: 120, grain: 80, threshold: 0, saturation: 0, hueShift: 0, halation: 10, chromaOffset: 0, monochrome: true, halftone: 0, scanlines: 60, vignette: 80, camcorderOSD: true },
   { id: 'ah4', name: 'Deep Web Upload', category: 'Analog Horror / Found Footage', inkBleed: 15, shadowCrush: 150, grain: 70, threshold: 0, saturation: 80, hueShift: 80, halation: 7, chromaOffset: 45, monochrome: false, halftone: 0, scanlines: 15, vignette: 75, prismBlur: 2 },
-  { id: 'ah5', name: 'The Backrooms', category: 'Analog Horror / Found Footage', inkBleed: 2, shadowCrush: 60, grain: 65, threshold: 0, saturation: 110, hueShift: 35, halation: 17, chromaOffset: 5, monochrome: false, halftone: 0, scanlines: 5, vignette: 30, gradientMap: 'thermal' },
+  { id: 'ah5', name: 'Yellow Hallway Liminal', category: 'Analog Horror / Found Footage', inkBleed: 2, shadowCrush: 60, grain: 65, threshold: 0, saturation: 110, hueShift: 35, halation: 17, chromaOffset: 5, monochrome: false, halftone: 0, scanlines: 5, vignette: 30, gradientMap: 'thermal' },
 
-  // --- MUSIC VIDEO (2000s MTV) ---
-  { id: 'mv1', name: '2004 Rap Video', category: 'Music Video (2000s MTV)', inkBleed: 1, shadowCrush: 90, grain: 15, threshold: 0, saturation: 150, hueShift: -5, halation: 15, chromaOffset: 5, monochrome: false, halftone: 0, scanlines: 0, vignette: 20, skinSmoothing: 16 },
-  { id: 'mv2', name: 'Pop Punk Fish-Eye', category: 'Music Video (2000s MTV)', inkBleed: 2, shadowCrush: 80, grain: 40, threshold: 0, saturation: 180, hueShift: 15, halation: 7, chromaOffset: 25, monochrome: false, halftone: 0, scanlines: 0, vignette: 70 },
-  { id: 'mv3', name: 'TRL Boyband Shine', category: 'Music Video (2000s MTV)', inkBleed: 0, shadowCrush: 40, grain: 10, threshold: 0, saturation: 120, hueShift: 0, halation: 28, chromaOffset: 0, monochrome: false, halftone: 0, scanlines: 0, vignette: 10, skinSmoothing: 20, sparkles: 30 },
-  { id: 'mv4', name: 'Nu-Metal Grime', category: 'Music Video (2000s MTV)', inkBleed: 4, shadowCrush: 120, grain: 60, threshold: 0, saturation: 50, hueShift: 45, halation: 15, chromaOffset: 10, monochrome: false, halftone: 0, scanlines: 0, vignette: 60, textureType: 'grunge', textureIntensity: 40 },
-  { id: 'mv5', name: 'Indie Sleaze Flash', category: 'Music Video (2000s MTV)', inkBleed: 2, shadowCrush: 110, grain: 50, threshold: 0, saturation: 140, hueShift: 0, halation: 17, chromaOffset: 5, monochrome: false, halftone: 0, scanlines: 0, vignette: 80 },
+  // --- MUSIC VIDEO (2000s) ---
+  { id: 'mv1', name: '2004 Rap Video Flash', category: 'Music Video (2000s)', inkBleed: 1, shadowCrush: 90, grain: 15, threshold: 0, saturation: 150, hueShift: -5, halation: 15, chromaOffset: 5, monochrome: false, halftone: 0, scanlines: 0, vignette: 20, skinSmoothing: 16 },
+  { id: 'mv2', name: 'Pop Punk Fish-Eye', category: 'Music Video (2000s)', inkBleed: 2, shadowCrush: 80, grain: 40, threshold: 0, saturation: 180, hueShift: 15, halation: 7, chromaOffset: 25, monochrome: false, halftone: 0, scanlines: 0, vignette: 70 },
+  { id: 'mv3', name: 'Teen Pop Studio Shine', category: 'Music Video (2000s)', inkBleed: 0, shadowCrush: 40, grain: 10, threshold: 0, saturation: 120, hueShift: 0, halation: 28, chromaOffset: 0, monochrome: false, halftone: 0, scanlines: 0, vignette: 10, skinSmoothing: 20, sparkles: 30 },
+  { id: 'mv4', name: 'Nu-Metal Grime', category: 'Music Video (2000s)', inkBleed: 4, shadowCrush: 120, grain: 60, threshold: 0, saturation: 50, hueShift: 45, halation: 15, chromaOffset: 10, monochrome: false, halftone: 0, scanlines: 0, vignette: 60, textureType: 'grunge', textureIntensity: 40 },
+  { id: 'mv5', name: 'Indie Sleaze Flash', category: 'Music Video (2000s)', inkBleed: 2, shadowCrush: 110, grain: 50, threshold: 0, saturation: 140, hueShift: 0, halation: 17, chromaOffset: 5, monochrome: false, halftone: 0, scanlines: 0, vignette: 80 },
 
   // --- DREAMCORE & LIMINAL SPACE ---
   { id: 'dc1', name: 'Fever Dream', category: 'Dreamcore & Liminal Space', inkBleed: 10, shadowCrush: 10, grain: 20, threshold: 0, saturation: 180, hueShift: -60, halation: 35, chromaOffset: 40, monochrome: false, halftone: 0, scanlines: 0, vignette: 20, prismBlur: 15 },
