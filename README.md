@@ -58,6 +58,10 @@ Manual QA:
 
 FORMAT presets are adaptive finishing stacks. The Signature family is designed for one-click creator use, with commercial contrast, believable color, and restrained retouching as the default experience. Portrait-safe presets prioritize identity, melanated skin preservation, facial structure, eyes, hair, brows, beards, tattoos, and believable skin texture. Graphic and Experimental presets are intentionally destructive, clearly labeled, and separated from default premium-safe looks. Editing and preset adaptation remain client-side.
 
+## Material Finish Philosophy
+
+FORMAT material finishes are procedural/local render passes, not remote stock texture hotlinks. Film, print, paper, dither, and optical finishes are designed to respond to luminance, edges, and preset intent so they feel physically integrated instead of pasted over the image. Portrait-safe material settings keep face protection on by default; product-oriented settings prioritize edge clarity and believable color. Graphic and Experimental material finishes can be destructive, but they are labeled and kept out of the default safe preset experience.
+
 ## Browser limitations
 
 - WebGL is required for TensorFlow face landmark detection. When WebGL is unavailable, FORMAT keeps the standard image controls available and disables face-aware detection.

@@ -60,6 +60,9 @@ import { TEXTURE_ASSETS } from '@/lib/textures';
 import { buildPortraitMasks, createFaceMask } from '@/lib/engine/portrait-masks';
 import { drawCanvasToPreview } from '@/lib/engine/canvas-utils';
 import { generateTextureTile, applyTextureTile } from '@/lib/engine/texture-engine';
+import { applyMaterialFinish } from '@/lib/materials/material-engine';
+import { MATERIAL_PRESETS } from '@/lib/materials/material-registry';
+import type { FilmProfile, OpticalProfile, PaperSurface, PrintMode } from '@/lib/materials/material-types';
 import { renderSparkles } from '@/lib/engine/sparkle-engine';
 import { renderGrain, renderVignette, renderDustAndScratches } from '@/lib/engine/film-effects';
 import {
@@ -124,6 +127,14 @@ export default function FormatWorkspace() {
   const [colorKnockout, setColorKnockout] = useState<'none'|'red'|'green'|'blue'|'warm'>('none');
   const [textureType, setTextureType] = useState<string>('none');
   const [textureIntensity, setTextureIntensity] = useState(50);
+  const [materialProfile, setMaterialProfile] = useState('none');
+  const [materialStrength, setMaterialStrength] = useState(0);
+  const [printProfile, setPrintProfile] = useState<PrintMode>('none');
+  const [paperSurface, setPaperSurface] = useState<PaperSurface>('none');
+  const [filmProfile, setFilmProfile] = useState<FilmProfile>('none');
+  const [opticalProfile, setOpticalProfile] = useState<OpticalProfile>('none');
+  const [materialFaceProtection, setMaterialFaceProtection] = useState(true);
+  const [materialEdgeProtection, setMaterialEdgeProtection] = useState(true);
 
   // -- UI States --
   const [zoomLevel, setZoomLevel] = useState<'FIT' | '1:1'>('FIT');
@@ -153,7 +164,7 @@ export default function FormatWorkspace() {
   );
   
   // -- Toggles --
-  const [openPanels, setOpenPanels] = useState({ camera: false, tones: true, retouch: true, optics: false, texture: false, print: false });
+  const [openPanels, setOpenPanels] = useState({ camera: false, tones: true, retouch: true, optics: false, texture: false, material: false, print: false });
   const [leftPanels, setLeftPanels] = useState({ specifications: true, presets: true, lastEdits: false, history: false });
   const [activeMenu, setActiveMenu] = useState<MenuKey>(null);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -414,8 +425,16 @@ export default function FormatWorkspace() {
     colorKnockout,
     textureType,
     textureIntensity,
+    materialProfile,
+    materialStrength,
+    printProfile,
+    paperSurface,
+    filmProfile,
+    opticalProfile,
+    materialFaceProtection,
+    materialEdgeProtection,
     activeCamera
-  }), [monochrome, saturation, hueShift, shadowCrush, midtones, highlights, activeLUT, inkBleed, halation, chromaOffset, grain, threshold, halftone, scanlines, vignette, lightLeak, lightLeakStyle, gradientMap, dustAndScratches, sparkles, camcorderOSD, prismBlur, skinSmoothing, clarity, glowUp, faceSlimming, blemishRemoval, expressionLift, beautyBoost, ageShift, eyeBrightening, jawDefinition, skinPolish, teethWhitening, makeupStrength, artifactRemoval, colorKnockout, textureType, textureIntensity, activeCamera]);
+  }), [monochrome, saturation, hueShift, shadowCrush, midtones, highlights, activeLUT, inkBleed, halation, chromaOffset, grain, threshold, halftone, scanlines, vignette, lightLeak, lightLeakStyle, gradientMap, dustAndScratches, sparkles, camcorderOSD, prismBlur, skinSmoothing, clarity, glowUp, faceSlimming, blemishRemoval, expressionLift, beautyBoost, ageShift, eyeBrightening, jawDefinition, skinPolish, teethWhitening, makeupStrength, artifactRemoval, colorKnockout, textureType, textureIntensity, materialProfile, materialStrength, printProfile, paperSurface, filmProfile, opticalProfile, materialFaceProtection, materialEdgeProtection, activeCamera]);
 
   const applySnapshot = (snapshot: EngineSnapshot, options: { skipHistory?: boolean } = { skipHistory: true }) => {
     const normalizedSnapshot = reduceEditorSnapshot(createNeutralSnapshot(), { type: 'apply-snapshot', snapshot });
@@ -461,6 +480,14 @@ export default function FormatWorkspace() {
     setColorKnockout(normalizedSnapshot.colorKnockout);
     setTextureType(normalizedSnapshot.textureType);
     setTextureIntensity(normalizedSnapshot.textureIntensity);
+    setMaterialProfile(normalizedSnapshot.materialProfile);
+    setMaterialStrength(normalizedSnapshot.materialStrength);
+    setPrintProfile(normalizedSnapshot.printProfile);
+    setPaperSurface(normalizedSnapshot.paperSurface);
+    setFilmProfile(normalizedSnapshot.filmProfile);
+    setOpticalProfile(normalizedSnapshot.opticalProfile);
+    setMaterialFaceProtection(normalizedSnapshot.materialFaceProtection);
+    setMaterialEdgeProtection(normalizedSnapshot.materialEdgeProtection);
     setActiveCamera(normalizedSnapshot.activeCamera);
   };
 
@@ -931,6 +958,20 @@ export default function FormatWorkspace() {
       renderDustAndScratches(ctx, canvas.width, canvas.height, dustAndScratches, distressRandom);
     }
 
+    if (materialProfile !== 'none' || printProfile !== 'none' || filmProfile !== 'none' || opticalProfile !== 'none' || paperSurface !== 'none') {
+      const materialRandom = createSeededRandom(deterministicSeed ^ 0x4d47544d);
+      applyMaterialFinish(ctx, canvas, {
+        materialProfile,
+        materialStrength: isSliderInteracting ? Math.min(materialStrength, 36) : materialStrength,
+        printProfile,
+        paperSurface,
+        filmProfile,
+        opticalProfile,
+        faceProtection: materialFaceProtection,
+        edgeProtection: materialEdgeProtection
+      }, materialRandom);
+    }
+
     if (camcorderOSD) {
       const pad = Math.max(18, canvas.width * 0.02);
       ctx.save();
@@ -973,7 +1014,7 @@ export default function FormatWorkspace() {
 
     drawCanvasToPreview(canvas, previewCanvas);
     setRenderRevision((value) => value + 1);
-  }, [imageReady, portraitGuide, skinSmoothing, glowUp, faceSlimming, blemishRemoval, expressionLift, beautyBoost, ageShift, eyeBrightening, jawDefinition, skinPolish, teethWhitening, makeupStrength, artifactRemoval, clarity, isSliderInteracting, inkBleed, shadowCrush, midtones, highlights, activeLUT, grain, threshold, saturation, hueShift, halation, chromaOffset, monochrome, halftone, scanlines, vignette, lightLeak, lightLeakStyle, gradientMap, prismBlur, colorKnockout, textureType, textureIntensity, dustAndScratches, sparkles, camcorderOSD]);
+  }, [imageReady, portraitGuide, skinSmoothing, glowUp, faceSlimming, blemishRemoval, expressionLift, beautyBoost, ageShift, eyeBrightening, jawDefinition, skinPolish, teethWhitening, makeupStrength, artifactRemoval, clarity, isSliderInteracting, inkBleed, shadowCrush, midtones, highlights, activeLUT, grain, threshold, saturation, hueShift, halation, chromaOffset, monochrome, halftone, scanlines, vignette, lightLeak, lightLeakStyle, gradientMap, prismBlur, colorKnockout, textureType, textureIntensity, dustAndScratches, sparkles, camcorderOSD, materialProfile, materialStrength, printProfile, paperSurface, filmProfile, opticalProfile, materialFaceProtection, materialEdgeProtection]);
 
   useUpscalePreview({
     canvasRef,
@@ -1721,6 +1762,139 @@ export default function FormatWorkspace() {
                         </div>
                         <input type="range" min="0" max="255" value={threshold} onChange={(e) => setThreshold(parseInt(e.target.value))} />
                       </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* MATERIAL FINISH PANEL */}
+            <div className="mb-2">
+              <button
+                type="button"
+                className="w-full px-4 py-2 flex justify-between items-center text-[#ddd] cursor-pointer hover:bg-[#252525] focus:outline-none focus:ring-1 focus:ring-inset focus:ring-[#e8a82d]"
+                onClick={() => togglePanel('material')}
+              >
+                <span className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-2">
+                  <Box className="w-3.5 h-3.5 text-[#e8a82d]" /> Material Finish
+                </span>
+                {openPanels.material ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+              </button>
+              <AnimatePresence>
+                {openPanels.material && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    style={{ overflow: 'hidden' }}
+                  >
+                    <div className="p-4 pt-1 flex flex-col gap-4">
+                      <div className="flex flex-wrap gap-1">
+                        {[
+                          materialFaceProtection ? 'Portrait Safe' : null,
+                          printProfile !== 'none' ? 'Print' : null,
+                          filmProfile !== 'none' ? 'Film' : null,
+                          paperSurface !== 'none' ? 'Paper' : null,
+                          materialProfile.includes('xerox') || materialProfile.includes('bitmap') ? 'Graphic' : null,
+                          materialProfile.includes('jpeg') || materialProfile.includes('crt') ? 'Experimental' : null
+                        ].filter(Boolean).map((badge) => (
+                          <span key={badge} className="rounded-[2px] border border-[#4b4027] bg-[#17130d] px-1.5 py-0.5 text-[8px] uppercase tracking-[0.14em] text-[#d1b170]">{badge}</span>
+                        ))}
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-[11px] text-[#aaa] font-medium uppercase tracking-[0.12em]">Material Profile</span>
+                        <select value={materialProfile} onChange={(event) => setMaterialProfile(event.target.value)} className="w-full bg-[#141414] border border-[#444] text-white text-[12px] p-2 rounded-[3px] focus:outline-none focus:border-[#e8a82d]">
+                          {MATERIAL_PRESETS.map((material) => <option key={material.id} value={material.id}>{material.name}</option>)}
+                        </select>
+                      </div>
+
+                      <ControlSlider label="Material Strength" value={materialStrength} onChange={setMaterialStrength} min={0} max={100} />
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <label className="flex flex-col gap-1 text-[10px] uppercase tracking-[0.12em] text-[#888]">
+                          Print Mode
+                          <select value={printProfile} onChange={(event) => setPrintProfile(event.target.value as PrintMode)} className="bg-[#141414] border border-[#444] text-white text-[11px] p-2 rounded-[3px]">
+                            <option value="none">None</option>
+                            <option value="am-halftone">AM Halftone</option>
+                            <option value="cmyk-halftone">CMYK Halftone</option>
+                            <option value="risograph">Risograph</option>
+                            <option value="xerox">Xerox</option>
+                            <option value="ordered-dither">Ordered Dither</option>
+                            <option value="error-diffusion">Error Diffusion</option>
+                            <option value="manga-tone">Manga Tone</option>
+                            <option value="newsprint">Newsprint</option>
+                          </select>
+                        </label>
+                        <label className="flex flex-col gap-1 text-[10px] uppercase tracking-[0.12em] text-[#888]">
+                          Paper Surface
+                          <select value={paperSurface} onChange={(event) => setPaperSurface(event.target.value as PaperSurface)} className="bg-[#141414] border border-[#444] text-white text-[11px] p-2 rounded-[3px]">
+                            <option value="none">None</option>
+                            <option value="cold-press-paper">Cold Press</option>
+                            <option value="hot-press-paper">Hot Press</option>
+                            <option value="newsprint">Newsprint</option>
+                            <option value="magazine-paper">Magazine</option>
+                            <option value="matte-photo-paper">Matte Photo</option>
+                            <option value="glossy-photo-paper">Glossy Photo</option>
+                            <option value="linen-fiber">Linen</option>
+                            <option value="canvas-tooth">Canvas</option>
+                            <option value="brushed-metal">Metal</option>
+                            <option value="glass-reflection">Glass</option>
+                          </select>
+                        </label>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <label className="flex flex-col gap-1 text-[10px] uppercase tracking-[0.12em] text-[#888]">
+                          Grain Type
+                          <select value={filmProfile} onChange={(event) => setFilmProfile(event.target.value as FilmProfile)} className="bg-[#141414] border border-[#444] text-white text-[11px] p-2 rounded-[3px]">
+                            <option value="none">None</option>
+                            <option value="fine-35mm">Fine 35mm</option>
+                            <option value="pushed-35mm">Pushed 35mm</option>
+                            <option value="expired-film">Expired Film</option>
+                            <option value="super-8">Super 8</option>
+                            <option value="disposable-flash">Disposable</option>
+                            <option value="soft-pro-mist">Soft Pro Mist</option>
+                            <option value="silver-gelatin">Silver Gelatin</option>
+                            <option value="high-iso-phone-night">Phone Night</option>
+                          </select>
+                        </label>
+                        <label className="flex flex-col gap-1 text-[10px] uppercase tracking-[0.12em] text-[#888]">
+                          Optical Finish
+                          <select value={opticalProfile} onChange={(event) => setOpticalProfile(event.target.value as OpticalProfile)} className="bg-[#141414] border border-[#444] text-white text-[11px] p-2 rounded-[3px]">
+                            <option value="none">None</option>
+                            <option value="lens-bloom">Lens Bloom</option>
+                            <option value="pro-mist">Pro Mist</option>
+                            <option value="glass-diffusion">Glass Diffusion</option>
+                            <option value="anamorphic-streak">Anamorphic</option>
+                            <option value="lens-dirt">Lens Dirt</option>
+                            <option value="film-burn">Film Burn</option>
+                            <option value="edge-glow">Edge Glow</option>
+                          </select>
+                        </label>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2 text-[11px] text-[#aaa]">
+                        <label className="flex items-center gap-2"><input type="checkbox" checked={materialFaceProtection} onChange={(event) => setMaterialFaceProtection(event.target.checked)} /> Face Protection</label>
+                        <label className="flex items-center gap-2"><input type="checkbox" checked={materialEdgeProtection} onChange={(event) => setMaterialEdgeProtection(event.target.checked)} /> Edge Protection</label>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMaterialProfile('none');
+                          setMaterialStrength(0);
+                          setPrintProfile('none');
+                          setPaperSurface('none');
+                          setFilmProfile('none');
+                          setOpticalProfile('none');
+                          setMaterialFaceProtection(true);
+                          setMaterialEdgeProtection(true);
+                        }}
+                        className="rounded-[3px] border border-[#444] px-3 py-2 text-[10px] uppercase tracking-[0.16em] text-[#ccc] hover:border-[#e8a82d] hover:text-white"
+                      >
+                        Reset Material
+                      </button>
                     </div>
                   </motion.div>
                 )}

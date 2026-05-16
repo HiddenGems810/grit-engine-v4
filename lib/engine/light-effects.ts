@@ -115,3 +115,66 @@ export function applyPrismEdgeBlur(
   ctx.globalAlpha = 1.0;
   ctx.globalCompositeOperation = 'source-over';
 }
+
+type SeededRNG = () => number;
+
+export function applyOpticalFinish(
+  ctx: CanvasRenderingContext2D,
+  canvas: HTMLCanvasElement,
+  opticalProfile: string,
+  strength: number,
+  rng: SeededRNG,
+  faceProtection: boolean
+): void {
+  if (opticalProfile === 'none' || strength <= 0) return;
+
+  const amount = Math.min(1, strength / 100);
+  const bloomCanvas = document.createElement('canvas');
+  bloomCanvas.width = canvas.width;
+  bloomCanvas.height = canvas.height;
+  const bloomCtx = bloomCanvas.getContext('2d')!;
+  bloomCtx.filter = `brightness(145%) contrast(170%) blur(${4 + amount * 18}px)`;
+  bloomCtx.drawImage(canvas, 0, 0);
+
+  ctx.save();
+  if (opticalProfile === 'pro-mist' || opticalProfile === 'glass-diffusion' || opticalProfile === 'lens-bloom') {
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = Math.min(faceProtection ? 0.18 : 0.32, amount * (opticalProfile === 'pro-mist' ? 0.30 : 0.22));
+    ctx.drawImage(bloomCanvas, 0, 0);
+  }
+
+  if (opticalProfile === 'anamorphic-streak' || opticalProfile === 'edge-glow') {
+    const y = canvas.height * (0.28 + rng() * 0.28);
+    const gradient = ctx.createLinearGradient(0, y, canvas.width, y);
+    gradient.addColorStop(0, 'rgba(0,0,0,0)');
+    gradient.addColorStop(0.48, `rgba(160,205,255,${(amount * 0.26).toFixed(3)})`);
+    gradient.addColorStop(0.52, `rgba(255,220,170,${(amount * 0.18).toFixed(3)})`);
+    gradient.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.globalCompositeOperation = 'screen';
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, y - 8 - amount * 16, canvas.width, 16 + amount * 32);
+  }
+
+  if (opticalProfile === 'lens-dirt') {
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = Math.min(0.14, amount * 0.16);
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    for (let i = 0; i < 40 * amount; i += 1) {
+      ctx.beginPath();
+      ctx.arc(rng() * canvas.width, rng() * canvas.height, 1 + rng() * 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  if (opticalProfile === 'film-burn') {
+    ctx.globalCompositeOperation = 'screen';
+    const burn = ctx.createRadialGradient(0, canvas.height * 0.2, 0, 0, canvas.height * 0.2, canvas.width * 0.55);
+    burn.addColorStop(0, `rgba(255,94,24,${(amount * 0.8).toFixed(3)})`);
+    burn.addColorStop(0.35, `rgba(255,196,92,${(amount * 0.24).toFixed(3)})`);
+    burn.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = burn;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  ctx.restore();
+}

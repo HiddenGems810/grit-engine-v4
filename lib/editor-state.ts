@@ -26,7 +26,15 @@ export const normalizeEditorSnapshot = (snapshot: EngineSnapshot): EngineSnapsho
   teethWhitening: clampPortraitControlValue('teethWhitening', snapshot.teethWhitening),
   makeupStrength: clampPortraitControlValue('makeupStrength', snapshot.makeupStrength),
   artifactRemoval: clampPortraitControlValue('artifactRemoval', snapshot.artifactRemoval),
-  textureType: normalizeTextureId(snapshot.textureType)
+  textureType: normalizeTextureId(snapshot.textureType),
+  materialProfile: snapshot.materialProfile ?? 'none',
+  materialStrength: Math.min(100, Math.max(0, snapshot.materialStrength ?? 0)),
+  printProfile: snapshot.printProfile ?? 'none',
+  paperSurface: snapshot.paperSurface ?? 'none',
+  filmProfile: snapshot.filmProfile ?? 'none',
+  opticalProfile: snapshot.opticalProfile ?? 'none',
+  materialFaceProtection: snapshot.materialFaceProtection ?? true,
+  materialEdgeProtection: snapshot.materialEdgeProtection ?? true
 });
 
 export const buildSnapshotFromPreset = (baseSnapshot: EngineSnapshot, preset: Preset): EngineSnapshot => normalizeEditorSnapshot({
@@ -69,6 +77,14 @@ export const buildSnapshotFromPreset = (baseSnapshot: EngineSnapshot, preset: Pr
   colorKnockout: preset.colorKnockout || 'none',
   textureType: normalizeTextureId(preset.textureType),
   textureIntensity: preset.textureIntensity || 50,
+  materialProfile: preset.materialProfile || 'none',
+  materialStrength: preset.materialStrength || 0,
+  printProfile: preset.printProfile || 'none',
+  paperSurface: preset.paperSurface || 'none',
+  filmProfile: preset.filmProfile || 'none',
+  opticalProfile: preset.opticalProfile || 'none',
+  materialFaceProtection: preset.skinSafe || preset.subjectBias === 'portrait',
+  materialEdgeProtection: preset.family === 'product' || preset.subjectBias === 'product',
   artifactRemoval: preset.artifactRemoval || 0,
   activeCamera: 'Custom Preset'
 });

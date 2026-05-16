@@ -1,4 +1,5 @@
 import type { Preset } from './presets';
+import type { FilmProfile, OpticalProfile, PaperSurface, PrintMode } from './materials/material-types';
 
 export const CUSTOM_PRESET_CATEGORY = 'Custom Specifications';
 export const CUSTOM_PRESET_STORAGE_KEY = 'format-system-04-custom-presets';
@@ -45,6 +46,14 @@ export type EngineSnapshot = {
   colorKnockout: 'none' | 'red' | 'green' | 'blue' | 'warm';
   textureType: string;
   textureIntensity: number;
+  materialProfile: string;
+  materialStrength: number;
+  printProfile: PrintMode;
+  paperSurface: PaperSurface;
+  filmProfile: FilmProfile;
+  opticalProfile: OpticalProfile;
+  materialFaceProtection: boolean;
+  materialEdgeProtection: boolean;
   activeCamera: string;
 };
 
@@ -200,6 +209,14 @@ export const PARAM_LABELS: Record<keyof EngineSnapshot, string> = {
   colorKnockout: 'Selective Color',
   textureType: 'Texture Surface',
   textureIntensity: 'Texture Intensity',
+  materialProfile: 'Material Profile',
+  materialStrength: 'Material Strength',
+  printProfile: 'Print Profile',
+  paperSurface: 'Paper Surface',
+  filmProfile: 'Film Emulsion',
+  opticalProfile: 'Optical Finish',
+  materialFaceProtection: 'Material Face Protection',
+  materialEdgeProtection: 'Material Edge Protection',
   activeCamera: 'Capture Profile'
 };
 
@@ -288,6 +305,14 @@ export const createNeutralSnapshot = (): EngineSnapshot => ({
   colorKnockout: 'none',
   textureType: 'none',
   textureIntensity: 50,
+  materialProfile: 'none',
+  materialStrength: 0,
+  printProfile: 'none',
+  paperSurface: 'none',
+  filmProfile: 'none',
+  opticalProfile: 'none',
+  materialFaceProtection: true,
+  materialEdgeProtection: true,
   activeCamera: 'Standard Matrix'
 });
 
@@ -390,5 +415,13 @@ export const buildPresetFromSnapshot = (snapshot: EngineSnapshot, name: string):
   colorKnockout: snapshot.colorKnockout,
   textureType: snapshot.textureType,
   textureIntensity: snapshot.textureIntensity,
+  materialProfile: snapshot.materialProfile,
+  materialStrength: snapshot.materialStrength,
+  printProfile: snapshot.printProfile,
+  paperSurface: snapshot.paperSurface,
+  filmProfile: snapshot.filmProfile,
+  opticalProfile: snapshot.opticalProfile,
+  materialFaceProtection: snapshot.materialFaceProtection,
+  materialEdgeProtection: snapshot.materialEdgeProtection,
   artifactRemoval: snapshot.artifactRemoval
 });

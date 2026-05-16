@@ -59,18 +59,23 @@ function buildPresetFilterStack(preset: Preset) {
 }
 
 function buildPresetBadges(preset: Preset) {
+  const usesMaterial = Boolean(preset.materialProfile && preset.materialProfile !== 'none');
+  const usesPrint = Boolean(preset.printProfile && preset.printProfile !== 'none');
+  const usesFilm = Boolean(preset.filmProfile && preset.filmProfile !== 'none');
   const badges = [
     preset.tier === 'hero' ? 'HERO' : null,
     preset.skinSafe ? 'SKIN SAFE' : null,
+    usesPrint ? 'PRINT' : null,
+    usesFilm ? 'FILM' : null,
+    usesMaterial ? 'MATERIAL' : null,
     preset.commercialScore >= 88 ? 'COMMERCIAL' : null,
     preset.viralScore >= 88 ? 'VIRAL' : null,
-    preset.family === 'film' ? 'FILM' : null,
     preset.family === 'product' ? 'PRODUCT' : null,
     preset.family === 'graphic' ? 'GRAPHIC' : null,
     preset.intensity === 'extreme' ? 'EXTREME' : null
   ].filter(Boolean) as string[];
 
-  return Array.from(new Set(badges)).slice(0, 3);
+  return Array.from(new Set(badges)).slice(0, 4);
 }
 
 export function LeftSidebar({

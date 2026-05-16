@@ -1,3 +1,5 @@
+import { applyOrderedDitherToImageData, applyPrintEngine } from './print-engine';
+
 export function applyGradientMap(
   ctx: CanvasRenderingContext2D,
   canvas: HTMLCanvasElement,
@@ -42,35 +44,9 @@ export function applyThresholdBitmap(
 ): void {
   if (threshold <= 0) return;
 
-  const bayer4x4 = [
-     0,  8,  2, 10,
-    12,  4, 14,  6,
-     3, 11,  1,  9,
-    15,  7, 13,  5
-  ];
-  // Normalize bayer matrix to center around 0 for additive luma shifting
-  const bayerNorm = bayer4x4.map(v => (v / 16 - 0.5) * 255); 
-
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const data = imageData.data;
-  const width = canvas.width;
-  
-  for (let i = 0; i < data.length; i += 4) {
-    const px = (i / 4) % width;
-    const py = Math.floor((i / 4) / width);
-    // Map pixel coordinates to 4x4 matrix
-    const b = bayerNorm[(py % 4) * 4 + (px % 4)];
-    
-    // Base Luma
-    const luma = 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
-    
-    // Add bayer bias to luma, then check against threshold
-    const ditherIntensity = Math.min(1.0, threshold / 128); // max dither at half slider
-    const v = (luma + (b * ditherIntensity) >= (255 - threshold)) ? 255 : 0;
-    
-    data[i] = data[i + 1] = data[i + 2] = v;
-  }
-  ctx.putImageData(imageData, 0, 0);
+  const strength = Math.min(100, Math.max(0, threshold / 2.2));
+  ctx.putImageData(applyOrderedDitherToImageData(imageData, strength, threshold > 150 ? 1 : 2), 0, 0);
 }
 
 export function applyHalftone(
@@ -80,27 +56,23 @@ export function applyHalftone(
 ): void {
   if (halftone <= 0) return;
 
-  const htSize = Math.max(2, halftone); // Base dot size
-  const ht = document.createElement('canvas');
-  ht.width = htSize;
-  ht.height = htSize;
-  const hCtx = ht.getContext('2d')!;
-  
-  // Radial dot structure
-  const grad = hCtx.createRadialGradient(htSize/2, htSize/2, 0, htSize/2, htSize/2, htSize/1.2);
-  grad.addColorStop(0, '#fff');
-  grad.addColorStop(1, '#000');
-  
-  hCtx.fillStyle = grad;
-  hCtx.fillRect(0, 0, htSize, htSize);
-
-  ctx.globalCompositeOperation = 'overlay';
-  const ptrn = ctx.createPattern(ht, 'repeat');
-  if (ptrn) {
-    ctx.fillStyle = ptrn;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-  }
-  ctx.globalCompositeOperation = 'source-over';
+  applyPrintEngine(ctx, canvas, {
+    mode: 'am-halftone',
+    strength: Math.min(100, halftone * 7),
+    frequency: Math.max(5, 24 - halftone),
+    angle: 45,
+    dotShape: halftone > 12 ? 'elliptical' : 'round',
+    dotGain: Math.min(70, halftone * 3),
+    inkSpread: Math.min(44, halftone * 2),
+    paperTooth: 12,
+    misregistration: 0,
+    palette: 'standard',
+    faceProtection: true,
+    edgeProtection: true,
+    preserveMidtones: true,
+    outputBitDepth: 4,
+    ditherAlgorithm: 'bayer8'
+  });
 }
 
 export function applyChromaticAberration(

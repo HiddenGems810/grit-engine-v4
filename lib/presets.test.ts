@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { PRESET_CATEGORIES, PRESETS, type PresetFamily, type PresetIntensity, type PresetSubjectBias, type PresetTier, type PresetTone } from '@/lib/presets';
 import { isKnownTextureId, normalizeTextureId } from '@/lib/textures';
+import { MATERIAL_PRESET_MAP } from '@/lib/materials/material-registry';
 
 const families: PresetFamily[] = ['signature', 'portrait', 'film', 'social', 'cinematic', 'product', 'graphic', 'experimental'];
 const tiers: PresetTier[] = ['hero', 'standard', 'pro', 'experimental'];
@@ -112,5 +113,27 @@ describe('premium preset library', () => {
       .map((preset) => preset.name);
 
     expect(mismatchedNames).toEqual([]);
+  });
+
+  it('uses valid material profiles and keeps hero presets out of experimental materials', () => {
+    const invalidMaterials = PRESETS
+      .filter((preset) => preset.materialProfile && !MATERIAL_PRESET_MAP.has(preset.materialProfile))
+      .map((preset) => preset.id);
+    const unsafeHeroMaterials = PRESETS
+      .filter((preset) => {
+        const material = MATERIAL_PRESET_MAP.get(preset.materialProfile ?? 'none');
+        return preset.tier === 'hero' && material?.safety === 'experimental';
+      })
+      .map((preset) => preset.id);
+    const destructiveGraphicWithoutLabel = PRESETS
+      .filter((preset) => {
+        const material = MATERIAL_PRESET_MAP.get(preset.materialProfile ?? 'none');
+        return material?.safety === 'graphic-bold' && preset.family !== 'graphic' && preset.intensity !== 'bold' && preset.intensity !== 'extreme';
+      })
+      .map((preset) => preset.id);
+
+    expect(invalidMaterials).toEqual([]);
+    expect(unsafeHeroMaterials).toEqual([]);
+    expect(destructiveGraphicWithoutLabel).toEqual([]);
   });
 });

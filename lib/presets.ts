@@ -1,4 +1,5 @@
 import { normalizeTextureId } from '@/lib/textures';
+import type { FilmProfile, OpticalProfile, PaperSurface, PrintMode } from '@/lib/materials/material-types';
 
 export type PresetFamily =
   | 'signature'
@@ -33,6 +34,14 @@ export interface Preset {
   description: string;
   usageTags: string[];
   safetyNotes?: string[];
+  materialProfile?: string;
+  materialStrength?: number;
+  printProfile?: PrintMode;
+  paperSurface?: PaperSurface;
+  filmProfile?: FilmProfile;
+  opticalProfile?: OpticalProfile;
+  materialFaceProtection?: boolean;
+  materialEdgeProtection?: boolean;
   inkBleed: number;
   shadowCrush: number;
   midtones?: number;
@@ -141,7 +150,13 @@ const basePreset = {
   colorKnockout: 'none' as const,
   textureType: 'none',
   textureIntensity: 0,
-  artifactRemoval: 0
+  artifactRemoval: 0,
+  materialProfile: 'none',
+  materialStrength: 0,
+  printProfile: 'none' as PrintMode,
+  paperSurface: 'none' as PaperSurface,
+  filmProfile: 'none' as FilmProfile,
+  opticalProfile: 'none' as OpticalProfile
 };
 
 const p = (preset: PresetInput): Preset => ({
@@ -325,15 +340,15 @@ const experimental = (id: string, name: string, overrides: Partial<PresetInput>)
 
 const RAW_PRESETS: Preset[] = [
   signature('sig-format-clean', 'FORMAT Clean', { shadowCrush: 20, midtones: 12, highlights: 8, saturation: 104, clarity: 12, skinSmoothing: 4, skinPolish: 8, blemishRemoval: 6, activeLUT: 'clean-luxe', oneClickScore: 96, commercialScore: 94, viralScore: 88, description: 'The default finished look: clean contrast, believable skin, and polished creator color.' }),
-  signature('sig-creator-glow', 'Creator Glow', { shadowCrush: 18, midtones: 14, highlights: 10, saturation: 108, halation: 8, glowUp: 12, skinSmoothing: 8, beautyBoost: 16, skinPolish: 14, eyeBrightening: 8, previewTone: 'soft', viralScore: 94 }),
-  signature('sig-soft-luxury', 'Soft Luxury', { shadowCrush: 12, midtones: 16, highlights: 9, saturation: 100, clarity: 6, halation: 10, glowUp: 10, skinSmoothing: 10, skinPolish: 16, activeLUT: 'portra-soft', previewTone: 'soft', commercialScore: 92 }),
-  signature('sig-editorial-flash', 'Editorial Flash', { shadowCrush: 30, midtones: 9, highlights: 13, saturation: 106, grain: 6, halation: 12, lightLeak: 10, skinSmoothing: 4, clarity: 16, activeLUT: 'clean-luxe', intensity: 'bold', subjectBias: 'fashion', bestFor: ['fashion', 'night portraits', 'campaign social'] }),
+  signature('sig-creator-glow', 'Creator Glow', { shadowCrush: 18, midtones: 14, highlights: 10, saturation: 108, halation: 8, glowUp: 12, skinSmoothing: 8, beautyBoost: 16, skinPolish: 14, eyeBrightening: 8, previewTone: 'soft', viralScore: 94, materialProfile: 'fine-35mm-grain', materialStrength: 14, filmProfile: 'clean-analog', opticalProfile: 'lens-bloom' }),
+  signature('sig-soft-luxury', 'Soft Luxury', { shadowCrush: 12, midtones: 16, highlights: 9, saturation: 100, clarity: 6, halation: 10, glowUp: 10, skinSmoothing: 10, skinPolish: 16, activeLUT: 'portra-soft', previewTone: 'soft', commercialScore: 92, materialProfile: 'matte-photo-paper', materialStrength: 16, paperSurface: 'matte-photo-paper', opticalProfile: 'glass-diffusion' }),
+  signature('sig-editorial-flash', 'Editorial Flash', { shadowCrush: 30, midtones: 9, highlights: 13, saturation: 106, grain: 6, halation: 12, lightLeak: 10, skinSmoothing: 4, clarity: 16, activeLUT: 'clean-luxe', intensity: 'bold', subjectBias: 'fashion', bestFor: ['fashion', 'night portraits', 'campaign social'], materialProfile: 'fine-35mm-grain', materialStrength: 18, filmProfile: 'disposable-flash', opticalProfile: 'lens-bloom' }),
   signature('sig-commercial-polish', 'Commercial Polish', { shadowCrush: 16, midtones: 13, highlights: 11, saturation: 102, clarity: 18, skinPolish: 12, blemishRemoval: 10, artifactRemoval: 8, commercialScore: 96 }),
   signature('sig-viral-clean', 'Viral Clean', { shadowCrush: 22, midtones: 12, highlights: 9, saturation: 112, clarity: 14, glowUp: 8, skinSmoothing: 6, beautyBoost: 14, eyeBrightening: 10, viralScore: 96 }),
-  signature('sig-warm-film-editorial', 'Warm Film Editorial', { shadowCrush: 26, midtones: 10, highlights: 8, saturation: 108, hueShift: 8, grain: 12, halation: 12, activeLUT: 'portra-soft', previewTone: 'warm' }),
+  signature('sig-warm-film-editorial', 'Warm Film Editorial', { shadowCrush: 26, midtones: 10, highlights: 8, saturation: 108, hueShift: 8, grain: 12, halation: 12, activeLUT: 'portra-soft', previewTone: 'warm', materialProfile: 'fine-35mm-grain', materialStrength: 22, filmProfile: 'fine-35mm', opticalProfile: 'pro-mist' }),
   signature('sig-night-out-flash', 'Night Out Flash', { shadowCrush: 28, midtones: 14, highlights: 14, saturation: 110, grain: 8, halation: 14, lightLeak: 12, lightLeakStyle: 'prism', subjectBias: 'night', bestFor: ['low-light selfies', 'night-out photos', 'flash portraits'] }),
   signature('sig-dark-prestige', 'Dark Prestige', { shadowCrush: 38, midtones: 8, highlights: 8, saturation: 88, clarity: 16, grain: 8, vignette: 26, activeLUT: 'mocha-editorial', previewTone: 'dark', intensity: 'bold', skinSafe: false }),
-  signature('sig-product-gloss', 'Product Gloss', { subjectBias: 'product', skinSafe: false, shadowCrush: 24, midtones: 8, highlights: 16, saturation: 106, clarity: 30, halation: 6, bestFor: ['products', 'skincare', 'packaging'], commercialScore: 96 }),
+  signature('sig-product-gloss', 'Product Gloss', { subjectBias: 'product', skinSafe: false, shadowCrush: 24, midtones: 8, highlights: 16, saturation: 106, clarity: 30, halation: 6, bestFor: ['products', 'skincare', 'packaging'], commercialScore: 96, materialProfile: 'glass-reflection', materialStrength: 18, paperSurface: 'glass-reflection', opticalProfile: 'glass-diffusion' }),
   signature('sig-street-chrome', 'Street Chrome', { subjectBias: 'fashion', skinSafe: false, shadowCrush: 36, midtones: 7, highlights: 12, saturation: 92, clarity: 22, halation: 8, chromaOffset: 3, activeLUT: 'editorial-cool', previewTone: 'cool', viralScore: 90 }),
   signature('sig-cinema-bloom', 'Cinema Bloom', { shadowCrush: 30, midtones: 8, highlights: 10, saturation: 92, grain: 10, halation: 18, prismBlur: 2, activeLUT: 'teal-film', previewTone: 'film', intensity: 'bold', skinSafe: false }),
 
@@ -348,15 +363,15 @@ const RAW_PRESETS: Preset[] = [
   portrait('port-makeup-preserve', 'Makeup Preserve', { shadowCrush: 14, midtones: 12, highlights: 9, saturation: 106, clarity: 12, skinSmoothing: 5, skinPolish: 10, blemishRemoval: 12, makeupStrength: 14, beautyBoost: 12, bestFor: ['makeup portraits', 'beauty reels', 'studio content'] }),
   portrait('port-creator-portrait-pro', 'Creator Portrait Pro', { shadowCrush: 16, midtones: 15, highlights: 11, saturation: 106, clarity: 14, skinSmoothing: 8, skinPolish: 18, blemishRemoval: 18, beautyBoost: 24, expressionLift: 8, eyeBrightening: 12, teethWhitening: 8, viralScore: 90 }),
 
-  film('film-portra-warmth', 'Portra Warmth', { shadowCrush: 30, midtones: 8, highlights: 7, saturation: 106, hueShift: 7, grain: 16, halation: 10, activeLUT: 'portra-soft', oneClickScore: 88 }),
+  film('film-portra-warmth', 'Portra Warmth', { shadowCrush: 30, midtones: 8, highlights: 7, saturation: 106, hueShift: 7, grain: 16, halation: 10, activeLUT: 'portra-soft', oneClickScore: 88, materialProfile: 'fine-35mm-grain', materialStrength: 24, filmProfile: 'fine-35mm', opticalProfile: 'pro-mist' }),
   film('film-fuji-green-life', 'Fuji Green Life', { shadowCrush: 28, midtones: 7, highlights: 8, saturation: 108, hueShift: -8, grain: 14, halation: 8, activeLUT: 'lark', previewTone: 'cool' }),
-  film('film-disposable-flash', 'Disposable Flash', { shadowCrush: 44, midtones: 7, highlights: 12, saturation: 116, grain: 28, halation: 16, lightLeak: 14, chromaOffset: 4, intensity: 'bold' }),
+  film('film-disposable-flash', 'Disposable Flash', { shadowCrush: 44, midtones: 7, highlights: 12, saturation: 116, grain: 28, halation: 16, lightLeak: 14, chromaOffset: 4, intensity: 'bold', materialProfile: 'pushed-35mm-grain', materialStrength: 34, filmProfile: 'disposable-flash', opticalProfile: 'lens-bloom' }),
   film('film-expired-soft', 'Expired Film Soft', { shadowCrush: 24, midtones: 12, highlights: 8, saturation: 88, hueShift: 10, grain: 26, halation: 12, dustAndScratches: 10, previewTone: 'soft' }),
   film('film-super8-warmth', 'Super 8 Warmth', { shadowCrush: 42, midtones: 6, highlights: 7, saturation: 104, hueShift: 12, grain: 34, halation: 18, vignette: 24, dustAndScratches: 18, skinSafe: false }),
   film('film-silver-gelatin', 'Silver Gelatin', { shadowCrush: 46, midtones: 2, highlights: 8, saturation: 0, monochrome: true, grain: 26, halation: 6, clarity: 16, previewTone: 'mono' }),
   film('film-polaroid-fade', 'Polaroid Fade', { shadowCrush: 22, midtones: 13, highlights: 9, saturation: 86, hueShift: 8, grain: 14, halation: 12, vignette: 18, textureType: 'paper', textureIntensity: 12, previewTone: 'soft' }),
   film('film-compact-digital-2004', 'Compact Digital 2004', { shadowCrush: 28, midtones: 8, highlights: 10, saturation: 104, grain: 8, halation: 2, clarity: 18, chromaOffset: 2 }),
-  film('film-pro-mist', 'Pro Mist Film', { shadowCrush: 18, midtones: 14, highlights: 8, saturation: 96, grain: 10, halation: 20, prismBlur: 4, clarity: 2, previewTone: 'soft', oneClickScore: 88 }),
+  film('film-pro-mist', 'Pro Mist Film', { shadowCrush: 18, midtones: 14, highlights: 8, saturation: 96, grain: 10, halation: 20, prismBlur: 4, clarity: 2, previewTone: 'soft', oneClickScore: 88, materialProfile: 'fine-35mm-grain', materialStrength: 18, filmProfile: 'soft-pro-mist', opticalProfile: 'pro-mist' }),
   film('film-clean-analog', 'Clean Analog', { shadowCrush: 26, midtones: 9, highlights: 8, saturation: 102, grain: 10, halation: 8, clarity: 12, activeLUT: 'portra-soft', oneClickScore: 86 }),
 
   social('soc-viral-soft-pop', 'Viral Soft Pop', { shadowCrush: 18, midtones: 14, highlights: 12, saturation: 116, halation: 8, glowUp: 10, skinSmoothing: 7, beautyBoost: 16, viralScore: 95 }),
@@ -381,7 +396,7 @@ const RAW_PRESETS: Preset[] = [
   cinematic('cin-gold-hour-cinema', 'Gold Hour Cinema', { shadowCrush: 34, midtones: 8, highlights: 10, saturation: 104, hueShift: 16, halation: 18, grain: 8, previewTone: 'warm', skinSafe: true }),
   cinematic('cin-desaturated-crime', 'Desaturated Crime', { shadowCrush: 64, midtones: -2, highlights: 6, saturation: 58, clarity: 22, grain: 14, vignette: 40, previewTone: 'dark' }),
 
-  product('prod-product-gloss', 'Product Gloss', { shadowCrush: 24, midtones: 8, highlights: 16, saturation: 106, clarity: 32, halation: 5, oneClickScore: 90 }),
+  product('prod-product-gloss', 'Product Gloss', { shadowCrush: 24, midtones: 8, highlights: 16, saturation: 106, clarity: 32, halation: 5, oneClickScore: 90, materialProfile: 'glass-reflection', materialStrength: 18, paperSurface: 'glossy-photo-paper', opticalProfile: 'glass-diffusion' }),
   product('prod-clean-ecommerce', 'Clean Ecommerce', { shadowCrush: 12, midtones: 10, highlights: 18, saturation: 100, clarity: 26, vignette: 0, activeLUT: 'clean-luxe', commercialScore: 96 }),
   product('prod-luxury-product-contrast', 'Luxury Product Contrast', { shadowCrush: 40, midtones: 4, highlights: 14, saturation: 98, clarity: 34, vignette: 18, activeLUT: 'mocha-editorial' }),
   product('prod-skincare-ad-glow', 'Skincare Ad Glow', { shadowCrush: 10, midtones: 12, highlights: 16, saturation: 104, clarity: 18, halation: 10, glowUp: 0, textureType: '4k_glass_refraction', textureIntensity: 8 }),
@@ -392,27 +407,27 @@ const RAW_PRESETS: Preset[] = [
   product('prod-warm-lifestyle-product', 'Warm Lifestyle Product', { shadowCrush: 22, midtones: 10, highlights: 14, saturation: 110, hueShift: 8, clarity: 22, halation: 8, activeLUT: 'portra-soft' }),
   product('prod-premium-white-studio', 'Premium White Studio', { shadowCrush: 8, midtones: 12, highlights: 18, saturation: 98, clarity: 24, vignette: 0, activeLUT: 'clean-luxe' }),
 
-  graphic('gfx-magazine-halftone', 'Magazine Halftone', { threshold: 132, halftone: 7, shadowCrush: 74, saturation: 124, grain: 12, oneClickScore: 78 }),
-  graphic('gfx-refined-risograph', 'Refined Risograph', { threshold: 134, halftone: 6, shadowCrush: 62, saturation: 132, hueShift: 18, grain: 16, textureType: 'paper', textureIntensity: 18 }),
-  graphic('gfx-xerox-poster', 'Xerox Poster', { monochrome: true, threshold: 158, saturation: 0, shadowCrush: 92, grain: 34, scanlines: 8, previewTone: 'mono' }),
-  graphic('gfx-streetwear-bitmap', 'Streetwear Bitmap', { monochrome: true, threshold: 150, halftone: 4, shadowCrush: 84, grain: 22, chromaOffset: 5, previewTone: 'mono' }),
-  graphic('gfx-editorial-newsprint', 'Editorial Newsprint', { threshold: 128, halftone: 9, shadowCrush: 72, saturation: 92, grain: 22, textureType: 'paper', textureIntensity: 20 }),
+  graphic('gfx-magazine-halftone', 'Magazine Halftone', { threshold: 132, halftone: 7, shadowCrush: 74, saturation: 124, grain: 12, oneClickScore: 78, materialProfile: 'magazine-paper', materialStrength: 58, printProfile: 'cmyk-halftone', paperSurface: 'magazine-paper' }),
+  graphic('gfx-refined-risograph', 'Refined Risograph', { threshold: 134, halftone: 6, shadowCrush: 62, saturation: 132, hueShift: 18, grain: 16, textureType: 'paper', textureIntensity: 18, materialProfile: 'risograph-ink', materialStrength: 66, printProfile: 'risograph', paperSurface: 'hot-press-paper' }),
+  graphic('gfx-xerox-poster', 'Xerox Poster', { monochrome: true, threshold: 158, saturation: 0, shadowCrush: 92, grain: 34, scanlines: 8, previewTone: 'mono', materialProfile: 'toner-xerox', materialStrength: 72, printProfile: 'xerox', paperSurface: 'newsprint' }),
+  graphic('gfx-streetwear-bitmap', 'Streetwear Bitmap', { monochrome: true, threshold: 150, halftone: 4, shadowCrush: 84, grain: 22, chromaOffset: 5, previewTone: 'mono', materialProfile: 'bitmap-dither', materialStrength: 74, printProfile: 'ordered-dither' }),
+  graphic('gfx-editorial-newsprint', 'Editorial Newsprint', { threshold: 128, halftone: 9, shadowCrush: 72, saturation: 92, grain: 22, textureType: 'paper', textureIntensity: 20, materialProfile: 'newsprint', materialStrength: 54, printProfile: 'newsprint', paperSurface: 'newsprint' }),
   graphic('gfx-manga-tone', 'Manga Tone', { monochrome: true, threshold: 144, halftone: 12, shadowCrush: 78, clarity: 22, previewTone: 'mono' }),
   graphic('gfx-screenprint-texture', 'Screenprint Texture', { threshold: 140, halftone: 8, shadowCrush: 78, saturation: 112, grain: 24, textureType: 'grunge', textureIntensity: 22 }),
   graphic('gfx-high-contrast-art-print', 'High-Contrast Art Print', { monochrome: true, threshold: 136, shadowCrush: 96, clarity: 28, grain: 18, previewTone: 'mono', intensity: 'extreme' }),
   graphic('gfx-zine-copy', 'Zine Copy', { monochrome: true, threshold: 168, shadowCrush: 94, grain: 42, scanlines: 22, dustAndScratches: 30, previewTone: 'mono', intensity: 'extreme' }),
   graphic('gfx-poster-damage', 'Poster Damage', { threshold: 148, halftone: 5, shadowCrush: 88, saturation: 78, grain: 48, textureType: 'grunge', textureIntensity: 40, dustAndScratches: 34, intensity: 'extreme' }),
 
-  experimental('exp-thermal-heatmap', 'Thermal Heatmap', { gradientMap: 'thermal', shadowCrush: 42, saturation: 170, hueShift: -90, halation: 10, chromaOffset: 8, subjectBias: 'graphic' }),
+  experimental('exp-thermal-heatmap', 'Thermal Heatmap', { gradientMap: 'thermal', shadowCrush: 42, saturation: 170, hueShift: -90, halation: 10, chromaOffset: 8, subjectBias: 'graphic', materialProfile: 'thermal-print', materialStrength: 72 }),
   experimental('exp-found-footage', 'Found Footage', { shadowCrush: 82, saturation: 46, grain: 82, scanlines: 28, chromaOffset: 24, dustAndScratches: 56, camcorderOSD: true, previewTone: 'dark' }),
   experimental('exp-security-camera', 'Security Camera', { monochrome: true, saturation: 0, shadowCrush: 84, grain: 76, scanlines: 70, vignette: 62, camcorderOSD: true, previewTone: 'mono' }),
   experimental('exp-analog-horror', 'Analog Horror', { shadowCrush: 96, saturation: 44, grain: 90, scanlines: 46, chromaOffset: 36, vignette: 90, dustAndScratches: 64, previewTone: 'dark' }),
   experimental('exp-dreamcore-bloom', 'Dreamcore Bloom', { shadowCrush: 8, midtones: 16, highlights: 12, saturation: 118, hueShift: -8, halation: 28, prismBlur: 12, lightLeak: 28, previewTone: 'soft' }),
   experimental('exp-glitch-spill', 'Glitch Spill', { shadowCrush: 70, saturation: 145, hueShift: 60, grain: 58, chromaOffset: 90, scanlines: 35, prismBlur: 7 }),
-  experimental('exp-deep-web-upload', 'Deep Web Upload', { shadowCrush: 92, saturation: 70, hueShift: 75, grain: 70, chromaOffset: 58, scanlines: 18, prismBlur: 4, vignette: 72 }),
+  experimental('exp-deep-web-upload', 'Deep Web Upload', { shadowCrush: 92, saturation: 70, hueShift: 75, grain: 70, chromaOffset: 58, scanlines: 18, prismBlur: 4, vignette: 72, materialProfile: 'jpeg-compression', materialStrength: 64 }),
   experimental('exp-cctv-night', 'CCTV Night', { gradientMap: 'nightvision', monochrome: false, saturation: 100, shadowCrush: 76, grain: 86, scanlines: 68, vignette: 80, camcorderOSD: true, previewTone: 'experimental' }),
   experimental('exp-liminal-mall', 'Liminal Mall', { shadowCrush: 26, midtones: 10, highlights: 8, saturation: 78, hueShift: 18, grain: 40, halation: 18, prismBlur: 6, vignette: 28, previewTone: 'soft' }),
-  experimental('exp-vhs-damage', 'VHS Damage', { shadowCrush: 68, saturation: 104, grain: 88, scanlines: 82, chromaOffset: 84, dustAndScratches: 46, camcorderOSD: true })
+  experimental('exp-vhs-damage', 'VHS Damage', { shadowCrush: 68, saturation: 104, grain: 88, scanlines: 82, chromaOffset: 84, dustAndScratches: 46, camcorderOSD: true, materialProfile: 'crt-phosphor', materialStrength: 70 })
 ];
 
 const applySkinSafetyLimits = (preset: Preset): Preset => {

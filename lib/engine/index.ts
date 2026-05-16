@@ -17,6 +17,8 @@ export { drawCanvasToPreview } from './canvas-utils';
 export { generateTextureTile, applyTextureTile } from './texture-engine';
 export { renderSparkles } from './sparkle-engine';
 export { renderGrain, renderVignette, renderDustAndScratches } from './film-effects';
+export { applyFilmEmulsion, applyFilmEmulsionToImageData } from './film-emulsion-engine';
+export { applyPrintEngine, applyOrderedDitherToImageData, applyErrorDiffusionToImageData, normalizePrintSettings } from './print-engine';
 export {
   applyFaceSlimming, applySkinSmoothing, applySkinPolish, applyBlemishRemoval,
   applyBeautyBoostCanvas, applyGlowAccent, applyExpressionLift, applyJawDefinition,
