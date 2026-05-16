@@ -6,6 +6,8 @@
  * The engine is fully deterministic (seeded RNG).
  */
 
+import { normalizeTextureId } from '@/lib/textures';
+
 type SeededRNG = () => number;
 
 interface TextureTile {
@@ -154,7 +156,7 @@ export function generateTextureTile(
   textureIntensity: number,
   rng: SeededRNG
 ): TextureTile {
-  const normalizedTexture = textureType.replace(/^4k_/, '');
+  const normalizedTexture = normalizeTextureId(textureType).replace(/^4k_/, '');
   const tileCanvas = drawCanvas(rng, normalizedTexture);
   const glossy = GLOSSY_TEXTURES.has(normalizedTexture);
   return {

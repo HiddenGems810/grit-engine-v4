@@ -18,6 +18,8 @@ Use these checks when validating portrait finishing changes on real images.
 4. Makeup-heavy beauty image
 5. Male grooming portrait
 6. Melanated skin portrait in both soft and directional light
+7. Non-face image to confirm portrait detection falls back without blocking standard editing
+8. Large but valid image near 8192px on one side to confirm memory warnings and upscale fallback behavior
 
 ## What to inspect
 
@@ -48,3 +50,9 @@ Use these checks when validating portrait finishing changes on real images.
 - Luxury Beauty Reel: glam but believable
 - Men's Groomed Camera: clean and sharp without feminizing
 - Gym Selfie Sculpt: crisp, healthy, defined, not over-softened
+
+## Release validation notes
+
+- Validate portrait presets at 100% zoom before export, not only in fit-to-screen preview.
+- Confirm slider movement stays responsive while upscale preview is enabled.
+- Confirm no remote texture requests are required for export; texture rendering must remain local/procedural.

@@ -35,3 +35,14 @@ export const buildDeterministicSeed = (...values: number[]): number => {
   }
   return seed >>> 0;
 };
+
+/**
+ * Hermite smooth-step interpolation.
+ * Returns 0 when x <= edge0, 1 when x >= edge1,
+ * and a smooth cubic curve in between.
+ * Uses a safe divisor guard to prevent NaN when edge0 === edge1.
+ */
+export const smoothStep = (edge0: number, edge1: number, x: number): number => {
+  const t = Math.max(0, Math.min(1, (x - edge0) / Math.max(0.0001, edge1 - edge0)));
+  return t * t * (3 - 2 * t);
+};

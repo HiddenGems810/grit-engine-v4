@@ -1,3 +1,5 @@
+import { normalizeTextureId } from '@/lib/textures';
+
 export interface Preset {
   id: string;
   name: string;
@@ -325,6 +327,70 @@ const CATEGORY_PROFILES: Record<string, {
     defaultMidtones: 0,
     defaultHighlights: 0
   },
+  'Yulian Graphics (Viral)': {
+    tonePolicy: 'graphic-impact',
+    shadowCap: 88,
+    saturationCap: 178,
+    clarityCap: 44,
+    defaultMidtones: 3,
+    defaultHighlights: 3
+  },
+  'Camera Simulation': {
+    tonePolicy: 'cinematic-grade',
+    shadowCap: 78,
+    saturationCap: 142,
+    clarityCap: 34,
+    defaultMidtones: 4,
+    defaultHighlights: 3
+  },
+  'Vintage Cameras (Pre-1980)': {
+    tonePolicy: 'cinematic-grade',
+    shadowCap: 86,
+    saturationCap: 150,
+    clarityCap: 34,
+    defaultMidtones: 3,
+    defaultHighlights: 2
+  },
+  'Retro Tech (1980s)': {
+    tonePolicy: 'graphic-impact',
+    shadowCap: 92,
+    saturationCap: 210,
+    clarityCap: 38,
+    defaultMidtones: 0,
+    defaultHighlights: 2
+  },
+  'Digital Dawn (1990s)': {
+    tonePolicy: 'graphic-impact',
+    shadowCap: 92,
+    saturationCap: 190,
+    clarityCap: 38,
+    defaultMidtones: 2,
+    defaultHighlights: 2
+  },
+  'Y2K & Streetwear': {
+    tonePolicy: 'graphic-impact',
+    shadowCap: 90,
+    saturationCap: 200,
+    clarityCap: 42,
+    defaultMidtones: 2,
+    defaultHighlights: 3
+  },
+  'Seasons & Nature': {
+    tonePolicy: 'cinematic-grade',
+    shadowCap: 78,
+    saturationCap: 155,
+    clarityCap: 36,
+    defaultMidtones: 5,
+    defaultHighlights: 4
+  },
+  'Holidays & Events': {
+    tonePolicy: 'cinematic-grade',
+    shadowCap: 86,
+    saturationCap: 170,
+    clarityCap: 36,
+    defaultMidtones: 4,
+    defaultHighlights: 4
+  },
   'Analog Horror / Found Footage': {
     tonePolicy: 'grit-texture',
     shadowCap: 110,
@@ -332,6 +398,54 @@ const CATEGORY_PROFILES: Record<string, {
     clarityCap: 42,
     defaultMidtones: 0,
     defaultHighlights: 0
+  },
+  'Anime & Cel Shaded': {
+    tonePolicy: 'graphic-impact',
+    shadowCap: 88,
+    saturationCap: 190,
+    clarityCap: 38,
+    defaultMidtones: 5,
+    defaultHighlights: 4
+  },
+  'Gothic & Dark Academia': {
+    tonePolicy: 'cinematic-grade',
+    shadowCap: 92,
+    saturationCap: 118,
+    clarityCap: 36,
+    defaultMidtones: 0,
+    defaultHighlights: 2
+  },
+  'Cyberpunk 2077 Core': {
+    tonePolicy: 'graphic-impact',
+    shadowCap: 96,
+    saturationCap: 188,
+    clarityCap: 42,
+    defaultMidtones: 1,
+    defaultHighlights: 4
+  },
+  'Glitchcore & Webcore': {
+    tonePolicy: 'graphic-impact',
+    shadowCap: 100,
+    saturationCap: 190,
+    clarityCap: 42,
+    defaultMidtones: 0,
+    defaultHighlights: 2
+  },
+  'Music Video (2000s MTV)': {
+    tonePolicy: 'portrait-premium',
+    shadowCap: 62,
+    saturationCap: 145,
+    clarityCap: 34,
+    defaultMidtones: 7,
+    defaultHighlights: 5
+  },
+  'Dreamcore & Liminal Space': {
+    tonePolicy: 'cinematic-grade',
+    shadowCap: 72,
+    saturationCap: 175,
+    clarityCap: 28,
+    defaultMidtones: 8,
+    defaultHighlights: 7
   }
 };
 
@@ -587,6 +701,7 @@ const normalizePresetForProfessionalOutput = (preset: Preset): Preset => {
     ...preset,
     description: buildPresetDescription(preset),
     usageTags: buildPresetUsageTags(preset),
+    textureType: normalizeTextureId(preset.textureType),
     shadowCrush: nameIntentValues.shadowCrush,
     midtones: nameIntentValues.midtones,
     highlights: nameIntentValues.highlights,

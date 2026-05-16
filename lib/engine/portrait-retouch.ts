@@ -23,7 +23,7 @@
  * Each function normalizes its input to a 0–1 intensity using these limits.
  */
 
-import { clampNumber } from './math-utils';
+import { clampNumber, smoothStep } from './math-utils';
 import { createFaceMask } from './portrait-masks';
 import type { PortraitMasks } from './portrait-masks';
 import type { PortraitGuide } from '../editor-config';
@@ -63,11 +63,6 @@ const LIMITS = {
   eyeBrightening: 28,
 } as const;
 
-// Utility: smoothStep for local-contrast healing
-function smoothStep(edge0: number, edge1: number, x: number): number {
-  const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
-  return t * t * (3 - 2 * t);
-}
 
 /**
  * PASS 0.5a: Face Slimming — Ghost-Free Contour Warp

@@ -6,6 +6,7 @@ import { ResolvedUpscaleSettings } from '@/lib/upscale/types';
 type WorkerResolver = {
   resolve: (imageData: ImageData) => void;
   reject: (error: Error) => void;
+  timeoutId: ReturnType<typeof setTimeout>;
 };
 
 type UpscaleWorkerResponse = {
@@ -17,6 +18,7 @@ type UpscaleWorkerResponse = {
 let workerInstance: Worker | null = null;
 let requestId = 0;
 const pendingRequests = new Map<number, WorkerResolver>();
+const WORKER_REQUEST_TIMEOUT_MS = 45_000;
 
 const canUseWorker = () => typeof Worker !== 'undefined';
 
@@ -29,6 +31,7 @@ const getWorker = () => {
     const pending = pendingRequests.get(event.data.id);
     if (!pending) return;
     pendingRequests.delete(event.data.id);
+    clearTimeout(pending.timeoutId);
 
     if (event.data.error || !event.data.imageData) {
       pending.reject(new Error(event.data.error ?? 'Upscale worker failed.'));
@@ -38,7 +41,10 @@ const getWorker = () => {
     pending.resolve(event.data.imageData);
   };
   workerInstance.onerror = () => {
-    pendingRequests.forEach(({ reject }) => reject(new Error('Upscale worker crashed.')));
+    pendingRequests.forEach(({ reject, timeoutId }) => {
+      clearTimeout(timeoutId);
+      reject(new Error('Upscale worker crashed.'));
+    });
     pendingRequests.clear();
     workerInstance?.terminate();
     workerInstance = null;
@@ -55,12 +61,21 @@ export const upscaleImageDataWithWorker = async (imageData: ImageData, settings:
 
   return await new Promise<ImageData>((resolve, reject) => {
     const id = ++requestId;
-    pendingRequests.set(id, { resolve, reject });
+    const timeoutId = setTimeout(() => {
+      pendingRequests.delete(id);
+      reject(new Error('Upscale worker timed out.'));
+    }, WORKER_REQUEST_TIMEOUT_MS);
+
+    pendingRequests.set(id, { resolve, reject, timeoutId });
 
     try {
       worker.postMessage({ id, imageData, settings });
     } catch (error) {
-      pendingRequests.delete(id);
+      const pending = pendingRequests.get(id);
+      if (pending) {
+        clearTimeout(pending.timeoutId);
+        pendingRequests.delete(id);
+      }
       reject(error instanceof Error ? error : new Error('Unable to post upscale job to worker.'));
     }
   }).catch(() => upscaleImageData(imageData, settings));

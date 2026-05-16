@@ -4,7 +4,7 @@
  * Central export point for all engine subsystems.
  */
 
-export { clampNumber, createSeededRandom, buildDeterministicSeed } from './math-utils';
+export { clampNumber, createSeededRandom, buildDeterministicSeed, smoothStep } from './math-utils';
 export { sampleImageProfile, adaptPresetToImage, computeAutoTone } from './image-analysis';
 export type { ImageProfile, AutoToneResult } from './image-analysis';
 export { buildPortraitGuide, scalePortraitGuide } from './portrait-guide';
@@ -20,6 +20,6 @@ export { renderGrain, renderVignette, renderDustAndScratches } from './film-effe
 export {
   applyFaceSlimming, applySkinSmoothing, applySkinPolish, applyBlemishRemoval,
   applyBeautyBoostCanvas, applyGlowAccent, applyExpressionLift, applyJawDefinition,
-  applyFeatureProtection
+  applyEyeBrightening, applyFeatureProtection
 } from './portrait-retouch';
 export type { ScaledPortraitGuide, RetouchParams } from './portrait-retouch';

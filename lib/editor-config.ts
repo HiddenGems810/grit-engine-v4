@@ -3,19 +3,6 @@ import type { Preset } from './presets';
 export const CUSTOM_PRESET_CATEGORY = 'Custom Specifications';
 export const CUSTOM_PRESET_STORAGE_KEY = 'format-system-04-custom-presets';
 
-export const TEXTURE_URLS: Record<string, string> = {
-  '4k_vintage_paper': 'https://images.unsplash.com/photo-1618331835717-801e976710b2?q=80&w=2560&auto=format&fit=crop',
-  '4k_film_dust': 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=2560&auto=format&fit=crop',
-  '4k_grunge_wall': 'https://images.unsplash.com/photo-1509114397022-ed747cca3f65?q=80&w=2560&auto=format&fit=crop',
-  '4k_holographic_foil': 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=2560&auto=format&fit=crop',
-  '4k_crushed_plastic': 'https://images.unsplash.com/photo-1621528628236-fa28331d258b?q=80&w=2560&auto=format&fit=crop',
-  '4k_leather_grain': 'https://images.unsplash.com/photo-1550505186-077af8f47911?q=80&w=2560&auto=format&fit=crop',
-  '4k_brushed_metal': 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=2560&auto=format&fit=crop',
-  '4k_linen_tablecloth': 'https://images.unsplash.com/photo-1517705008128-361805f42e86?q=80&w=2560&auto=format&fit=crop',
-  '4k_stone_surface': 'https://images.unsplash.com/photo-1519643381401-22c77e60520e?q=80&w=2560&auto=format&fit=crop',
-  '4k_glass_refraction': 'https://images.unsplash.com/photo-1516683037151-9a17603a8dc7?q=80&w=2560&auto=format&fit=crop'
-};
-
 export type MenuKey = 'file' | 'edit' | 'help' | null;
 
 export type EngineSnapshot = {
@@ -240,10 +227,7 @@ export const drawSmoothClosedPath = (ctx: CanvasRenderingContext2D, points: Port
   ctx.closePath();
 };
 
-export const smoothStep = (edge0: number, edge1: number, value: number) => {
-  const t = Math.max(0, Math.min(1, (value - edge0) / Math.max(0.0001, edge1 - edge0)));
-  return t * t * (3 - 2 * t);
-};
+export { smoothStep } from './engine/math-utils';
 
 export const scalePointsFromCenter = (
   points: PortraitPoint[],

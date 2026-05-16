@@ -1,0 +1,1 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><filter id="n"><feTurbulence baseFrequency=".45 1.2" numOctaves="2"/></filter><rect width="256" height="256" fill="#f4efe6"/><rect width="256" height="256" filter="url(#n)" opacity=".16"/></svg>

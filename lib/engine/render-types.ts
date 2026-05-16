@@ -35,9 +35,6 @@ export interface RenderInput {
   /** Revision counter for the loaded image (changes when a new image is loaded). */
   imageReady: number;
 
-  /** Pre-loaded texture images, keyed by texture type ID. */
-  textureCache: Record<string, HTMLImageElement>;
-
   /** Reference to the histogram canvas element (may be null). */
   histogramCanvas: HTMLCanvasElement | null;
 }
