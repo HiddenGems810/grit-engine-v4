@@ -19,6 +19,8 @@ export { renderSparkles } from './sparkle-engine';
 export { renderGrain, renderVignette, renderDustAndScratches } from './film-effects';
 export { applyFilmEmulsion, applyFilmEmulsionToImageData } from './film-emulsion-engine';
 export { applyPrintEngine, applyOrderedDitherToImageData, applyErrorDiffusionToImageData, normalizePrintSettings } from './print-engine';
+export { createSyntheticKernelInput, runPixelKernelWithMeta, typescriptPixelKernels } from './pixel-kernels';
+export type { KernelBackend, KernelExecutionMeta, PixelKernel, PixelKernelInput, PixelKernelOutput } from './kernel-types';
 export {
   applyFaceSlimming, applySkinSmoothing, applySkinPolish, applyBlemishRemoval,
   applyBeautyBoostCanvas, applyGlowAccent, applyExpressionLift, applyJawDefinition,
