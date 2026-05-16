@@ -60,9 +60,11 @@ import { TEXTURE_ASSETS } from '@/lib/textures';
 import { buildPortraitMasks, createFaceMask } from '@/lib/engine/portrait-masks';
 import { drawCanvasToPreview } from '@/lib/engine/canvas-utils';
 import { generateTextureTile, applyTextureTile } from '@/lib/engine/texture-engine';
-import { applyMaterialFinish } from '@/lib/materials/material-engine';
+import { applyMaterialFinishWithKernelScheduler } from '@/lib/materials/material-engine';
 import { MATERIAL_PRESETS } from '@/lib/materials/material-registry';
 import type { FilmProfile, OpticalProfile, PaperSurface, PrintMode } from '@/lib/materials/material-types';
+import { createKernelWorkerClient } from '@/lib/engine/kernel-worker-client';
+import { KernelScheduler } from '@/lib/engine/kernel-scheduler';
 import { renderSparkles } from '@/lib/engine/sparkle-engine';
 import { renderGrain, renderVignette, renderDustAndScratches } from '@/lib/engine/film-effects';
 import {
@@ -206,6 +208,9 @@ export default function FormatWorkspace() {
   const skipHistoryRef = useRef(false);
   const pendingHistoryMetaRef = useRef<{ label: string; detail: string } | null>(null);
   const upscaleRequestRef = useRef(0);
+  const renderRequestRef = useRef(0);
+  const renderForExportRef = useRef<(() => Promise<HTMLCanvasElement | null>) | null>(null);
+  const kernelSchedulerRef = useRef<KernelScheduler | null>(null);
   const sliderInteractionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [canvasDisplaySize, setCanvasDisplaySize] = useState({ width: 0, height: 0 });
 
@@ -215,6 +220,35 @@ export default function FormatWorkspace() {
       width: canvasRef.current.clientWidth,
       height: canvasRef.current.clientHeight
     });
+  }, []);
+
+  useEffect(() => {
+    const workerClient = createKernelWorkerClient();
+    const scheduler = new KernelScheduler(workerClient);
+    kernelSchedulerRef.current = scheduler;
+
+    return () => {
+      scheduler.close();
+      kernelSchedulerRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production') return;
+    const benchmarkWindow = window as Window & {
+      __FORMAT_RENDER_BENCHMARKS__?: () => Promise<unknown>;
+    };
+    benchmarkWindow.__FORMAT_RENDER_BENCHMARKS__ = async () => {
+      const { runBrowserRenderBenchmarks } = await import('@/lib/bench/browser-render-benchmarks');
+      return runBrowserRenderBenchmarks([
+        { label: '256px browser preview', width: 256, height: 256 },
+        { label: '512px browser preview', width: 512, height: 512 }
+      ]);
+    };
+
+    return () => {
+      delete benchmarkWindow.__FORMAT_RENDER_BENCHMARKS__;
+    };
   }, []);
 
   const {
@@ -331,7 +365,8 @@ export default function FormatWorkspace() {
   };
 
   const buildExportCanvas = async () => {
-    const renderSurface = renderSurfaceRef.current;
+    const exportRenderSurface = await renderForExportRef.current?.();
+    const renderSurface = exportRenderSurface ?? renderSurfaceRef.current;
     if (!renderSurface) return null;
 
     if (!upscaleEnabled) {
@@ -691,25 +726,26 @@ export default function FormatWorkspace() {
     }, 50);
   };
 
-  const renderCanvas = useCallback(() => {
+  const renderCanvas = useCallback(async (renderMode: 'preview' | 'export' = 'preview'): Promise<HTMLCanvasElement | null> => {
     const previewCanvas = canvasRef.current;
     const img = originalImageRef.current;
-    if (!previewCanvas || !img) return;
+    if (!img || (renderMode === 'preview' && !previewCanvas)) return null;
 
     if (!renderSurfaceRef.current) {
       renderSurfaceRef.current = document.createElement('canvas');
     }
 
-    const canvas = renderSurfaceRef.current;
+    const renderRequestId = ++renderRequestRef.current;
+    const canvas = document.createElement('canvas');
 
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    if (!ctx) return;
+    if (!ctx) return null;
 
     // MANDATORY FOR HYPER-REALISM
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
 
-    const maxWidth = isSliderInteracting ? 1100 : 1600;
+    const maxWidth = renderMode === 'export' ? Math.min(4096, img.width) : isSliderInteracting ? 1100 : 1600;
     const scale = Math.min(1, maxWidth / img.width);
     canvas.width = img.width * scale;
     canvas.height = img.height * scale;
@@ -960,7 +996,7 @@ export default function FormatWorkspace() {
 
     if (materialProfile !== 'none' || printProfile !== 'none' || filmProfile !== 'none' || opticalProfile !== 'none' || paperSurface !== 'none') {
       const materialRandom = createSeededRandom(deterministicSeed ^ 0x4d47544d);
-      applyMaterialFinish(ctx, canvas, {
+      const materialResult = await applyMaterialFinishWithKernelScheduler(ctx, canvas, {
         materialProfile,
         materialStrength: isSliderInteracting ? Math.min(materialStrength, 36) : materialStrength,
         printProfile,
@@ -969,7 +1005,21 @@ export default function FormatWorkspace() {
         opticalProfile,
         faceProtection: materialFaceProtection,
         edgeProtection: materialEdgeProtection
-      }, materialRandom);
+      }, materialRandom, {
+        scheduler: kernelSchedulerRef.current,
+        requestId: renderRequestId,
+        seed: deterministicSeed ^ 0x4d47544d,
+        priority: renderMode === 'export' ? 'export' : 'preview',
+        quality: renderMode === 'export' ? 'export' : isSliderInteracting ? 'fast-preview' : 'full-preview'
+      });
+
+      if (materialResult.stale || (renderMode === 'preview' && renderRequestId !== renderRequestRef.current)) {
+        return null;
+      }
+
+      if (process.env.NODE_ENV !== 'production' && materialResult.warnings.length > 0) {
+        console.debug('Material kernel fallback:', materialResult.warnings.join('; '));
+      }
     }
 
     if (camcorderOSD) {
@@ -1012,9 +1062,33 @@ export default function FormatWorkspace() {
       }
     }
 
-    drawCanvasToPreview(canvas, previewCanvas);
-    setRenderRevision((value) => value + 1);
+    if (renderMode === 'preview' && renderRequestId !== renderRequestRef.current) {
+      return null;
+    }
+
+    const committedCanvas = renderSurfaceRef.current ?? document.createElement('canvas');
+    renderSurfaceRef.current = committedCanvas;
+    committedCanvas.width = canvas.width;
+    committedCanvas.height = canvas.height;
+    const committedCtx = committedCanvas.getContext('2d', { willReadFrequently: true });
+    if (!committedCtx) return null;
+    committedCtx.clearRect(0, 0, committedCanvas.width, committedCanvas.height);
+    committedCtx.drawImage(canvas, 0, 0);
+
+    if (renderMode === 'preview' && previewCanvas) {
+      drawCanvasToPreview(committedCanvas, previewCanvas);
+      setRenderRevision((value) => value + 1);
+    }
+
+    return committedCanvas;
   }, [imageReady, portraitGuide, skinSmoothing, glowUp, faceSlimming, blemishRemoval, expressionLift, beautyBoost, ageShift, eyeBrightening, jawDefinition, skinPolish, teethWhitening, makeupStrength, artifactRemoval, clarity, isSliderInteracting, inkBleed, shadowCrush, midtones, highlights, activeLUT, grain, threshold, saturation, hueShift, halation, chromaOffset, monochrome, halftone, scanlines, vignette, lightLeak, lightLeakStyle, gradientMap, prismBlur, colorKnockout, textureType, textureIntensity, dustAndScratches, sparkles, camcorderOSD, materialProfile, materialStrength, printProfile, paperSurface, filmProfile, opticalProfile, materialFaceProtection, materialEdgeProtection]);
+
+  useEffect(() => {
+    renderForExportRef.current = () => renderCanvas('export');
+    return () => {
+      renderForExportRef.current = null;
+    };
+  }, [renderCanvas]);
 
   useUpscalePreview({
     canvasRef,
@@ -1030,7 +1104,9 @@ export default function FormatWorkspace() {
   });
 
   useEffect(() => {
-    const animationFrameId = requestAnimationFrame(renderCanvas);
+    const animationFrameId = requestAnimationFrame(() => {
+      void renderCanvas('preview');
+    });
     return () => {
       cancelAnimationFrame(animationFrameId);
     };

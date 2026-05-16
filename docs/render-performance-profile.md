@@ -95,3 +95,20 @@ Interpretation: the data proves the pure kernels should be Worker-ready before t
 C++ is allowed only for pure deterministic render kernels. It must not own UI, presets, product logic, metadata, import/export flow, storage, or privacy behavior.
 
 The first C++ candidate, if justified later, should be ordered dither. It has deterministic output, simple memory access, and clear TypeScript differential tests.
+
+## Browser Worker Benchmark Snapshot
+
+After adding the Worker runtime, Chromium profiling through the development app produced:
+
+| Size | Kernel | Main Thread TS | Worker TS | Transfer / Scheduling | Result |
+| --- | --- | ---: | ---: | ---: | --- |
+| 256px browser preview | ordered-dither | 4.90ms | 4.70ms | 12.10ms | Equivalent after Worker warmup |
+| 256px browser preview | error-diffusion | 7.80ms | 7.40ms | 0.70ms | Worker slightly faster |
+| 256px browser preview | film-emulsion | 8.50ms | 6.50ms | 0.40ms | Worker faster |
+| 256px browser preview | material-noise | 3.30ms | 3.80ms | 0.40ms | Equivalent |
+| 512px browser preview | ordered-dither | 12.30ms | 12.50ms | 0.60ms | Equivalent |
+| 512px browser preview | error-diffusion | 12.10ms | 12.70ms | 0.50ms | Equivalent |
+| 512px browser preview | film-emulsion | 31.30ms | 16.30ms | 0.50ms | Worker materially better |
+| 512px browser preview | material-noise | 13.10ms | 8.50ms | 0.70ms | Worker better |
+
+Interpretation: Worker isolation is already valuable for the film emulsion and material noise kernels. C++/WASM is still not justified because the Worker path removes main-thread blocking without introducing native build complexity.

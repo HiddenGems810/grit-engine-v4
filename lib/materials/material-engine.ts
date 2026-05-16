@@ -3,6 +3,7 @@ import type { MaterialFinishSettings, PaperSurface } from './material-types';
 import { applyFilmEmulsion } from '@/lib/engine/film-emulsion-engine';
 import { applyOpticalFinish } from '@/lib/engine/light-effects';
 import { applyPrintEngine } from '@/lib/engine/print-engine';
+import type { KernelScheduler, ScheduledKernelResult } from '@/lib/engine/kernel-scheduler';
 
 type SeededRNG = () => number;
 
@@ -62,6 +63,18 @@ export const createMaterialNoiseTile = (
   return tile;
 };
 
+const createMaterialNoiseTileFromData = (
+  width: number,
+  height: number,
+  data: Uint8ClampedArray
+): HTMLCanvasElement => {
+  const tile = document.createElement('canvas');
+  tile.width = width;
+  tile.height = height;
+  tile.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(data), width, height), 0, 0);
+  return tile;
+};
+
 export const applyMaterialSurface = (
   ctx: CanvasRenderingContext2D,
   width: number,
@@ -117,4 +130,156 @@ export const applyMaterialFinish = (
   applyMaterialSurface(ctx, canvas.width, canvas.height, material.id, safeStrength, rng);
   applyMaterialSurface(ctx, canvas.width, canvas.height, surfaceMaterial, safeStrength * 0.7, rng);
   applyOpticalFinish(ctx, canvas, settings.opticalProfile, safeStrength, rng, settings.faceProtection);
+};
+
+type MaterialKernelOptions = {
+  scheduler?: KernelScheduler | null;
+  requestId: number;
+  seed: number;
+  priority: 'preview' | 'export';
+  quality: 'fast-preview' | 'full-preview' | 'export';
+};
+
+const makeKernelInput = (width: number, height: number, data: Uint8ClampedArray, seed: number) => ({
+  width,
+  height,
+  data,
+  seed
+});
+
+const putKernelOutput = (
+  ctx: CanvasRenderingContext2D,
+  result: ScheduledKernelResult
+) => {
+  ctx.putImageData(new ImageData(new Uint8ClampedArray(result.output.data), result.output.width, result.output.height), 0, 0);
+};
+
+const applyMaterialSurfaceWithKernelScheduler = async (
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  materialId: string,
+  strength: number,
+  rng: SeededRNG,
+  options: MaterialKernelOptions
+) => {
+  const material = getMaterialPreset(materialId);
+  if (!options.scheduler || material.id === 'none' || strength <= 0) {
+    applyMaterialSurface(ctx, width, height, materialId, strength, rng);
+    return { stale: false };
+  }
+
+  const safeStrength = clamp(strength, 0, material.maxSafeStrength);
+  const tileSize = options.quality === 'fast-preview' ? 128 : 256;
+  const input = makeKernelInput(tileSize, tileSize, new Uint8ClampedArray(tileSize * tileSize * 4), options.seed ^ material.id.length);
+  const result = await options.scheduler.run(
+    'material-noise',
+    input,
+    { materialId: material.id, strength: safeStrength },
+    {
+      requestId: options.requestId,
+      priority: options.priority,
+      quality: options.quality,
+      debounceMs: options.quality === 'fast-preview' ? 35 : 0
+    }
+  );
+
+  if (result.stale) return { stale: true };
+  const tile = createMaterialNoiseTileFromData(result.output.width, result.output.height, result.output.data);
+  const pattern = ctx.createPattern(tile, 'repeat');
+  if (!pattern) return { stale: false };
+
+  ctx.save();
+  ctx.globalCompositeOperation = toCanvasBlendMode(material.blendMode);
+  ctx.globalAlpha = clamp(safeStrength / 100, 0, 0.42);
+  ctx.fillStyle = pattern;
+  ctx.fillRect(0, 0, width, height);
+  ctx.restore();
+  return { stale: false };
+};
+
+export const applyMaterialFinishWithKernelScheduler = async (
+  ctx: CanvasRenderingContext2D,
+  canvas: HTMLCanvasElement,
+  settings: MaterialFinishSettings,
+  rng: SeededRNG,
+  options: MaterialKernelOptions
+): Promise<{ stale: boolean; fallbackUsed: boolean; warnings: string[] }> => {
+  if (!options.scheduler) {
+    applyMaterialFinish(ctx, canvas, settings, rng);
+    return { stale: false, fallbackUsed: true, warnings: ['Kernel scheduler unavailable'] };
+  }
+
+  const warnings: string[] = [];
+  let fallbackUsed = false;
+  const material = getMaterialPreset(settings.materialProfile);
+  const safeStrength = clamp(settings.materialStrength, 0, material.maxSafeStrength);
+  const surfaceMaterial = surfaceToMaterialId(settings.paperSurface);
+
+  if (settings.filmProfile !== 'none' && safeStrength > 0) {
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const result = await options.scheduler.run(
+      'film-emulsion',
+      makeKernelInput(canvas.width, canvas.height, imageData.data, options.seed ^ 0xf11e),
+      { profile: settings.filmProfile, strength: safeStrength, portraitSafe: settings.faceProtection },
+      {
+        requestId: options.requestId,
+        priority: options.priority,
+        quality: options.quality,
+        debounceMs: options.quality === 'fast-preview' ? 35 : 0
+      }
+    );
+    if (result.stale) return { stale: true, fallbackUsed, warnings };
+    fallbackUsed ||= result.meta.fallbackUsed;
+    warnings.push(...result.meta.warnings);
+    putKernelOutput(ctx, result);
+  }
+
+  if ((settings.printProfile === 'ordered-dither' || settings.printProfile === 'error-diffusion') && safeStrength > 0) {
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const isOrdered = settings.printProfile === 'ordered-dither';
+    const result = await options.scheduler.run(
+      isOrdered ? 'ordered-dither' : 'error-diffusion',
+      makeKernelInput(canvas.width, canvas.height, imageData.data, options.seed ^ 0xd17e),
+      isOrdered ? { strength: safeStrength, outputBitDepth: 1 } : { strength: safeStrength },
+      {
+        requestId: options.requestId,
+        priority: options.priority,
+        quality: options.quality,
+        debounceMs: options.quality === 'fast-preview' ? 35 : 0
+      }
+    );
+    if (result.stale) return { stale: true, fallbackUsed, warnings };
+    fallbackUsed ||= result.meta.fallbackUsed;
+    warnings.push(...result.meta.warnings);
+    putKernelOutput(ctx, result);
+  } else {
+    applyPrintEngine(ctx, canvas, {
+      mode: settings.printProfile,
+      strength: safeStrength,
+      frequency: settings.printProfile === 'cmyk-halftone' ? 12 : 9,
+      angle: 45,
+      dotShape: settings.printProfile === 'manga-tone' ? 'round' : 'elliptical',
+      dotGain: settings.printProfile === 'xerox' ? 42 : 18,
+      inkSpread: settings.printProfile === 'risograph' ? 34 : 16,
+      paperTooth: settings.paperSurface === 'none' ? 0 : 22,
+      misregistration: settings.printProfile === 'risograph' || settings.printProfile === 'cmyk-halftone' ? 3 : 0,
+      palette: settings.printProfile === 'risograph' ? 'pink-blue' : 'standard',
+      faceProtection: settings.faceProtection,
+      edgeProtection: settings.edgeProtection,
+      preserveMidtones: true,
+      outputBitDepth: settings.printProfile === 'ordered-dither' ? 1 : 4,
+      ditherAlgorithm: settings.printProfile === 'error-diffusion' ? 'floyd-steinberg' : 'bayer8'
+    });
+  }
+
+  const materialSurface = await applyMaterialSurfaceWithKernelScheduler(ctx, canvas.width, canvas.height, material.id, safeStrength, rng, options);
+  if (materialSurface.stale) return { stale: true, fallbackUsed, warnings };
+  const paperSurface = await applyMaterialSurfaceWithKernelScheduler(ctx, canvas.width, canvas.height, surfaceMaterial, safeStrength * 0.7, rng, {
+    ...options,
+    seed: options.seed ^ 0x9a9e
+  });
+  if (paperSurface.stale) return { stale: true, fallbackUsed, warnings };
+  applyOpticalFinish(ctx, canvas, settings.opticalProfile, safeStrength, rng, settings.faceProtection);
+  return { stale: false, fallbackUsed, warnings };
 };

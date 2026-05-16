@@ -3,24 +3,33 @@ import { applyFilmEmulsionToImageData } from './film-emulsion-engine';
 import type { FilmProfile } from '@/lib/materials/material-types';
 import type { KernelBackend, KernelExecutionResult, PixelKernel, PixelKernelInput, PixelKernelOutput } from './kernel-types';
 
-type OrderedDitherKernelSettings = {
+export type PixelKernelId = 'ordered-dither' | 'error-diffusion' | 'film-emulsion' | 'material-noise';
+
+export type OrderedDitherKernelSettings = {
   strength: number;
   outputBitDepth: 1 | 2 | 4 | 8;
 };
 
-type ErrorDiffusionKernelSettings = {
+export type ErrorDiffusionKernelSettings = {
   strength: number;
 };
 
-type FilmEmulsionKernelSettings = {
+export type FilmEmulsionKernelSettings = {
   profile: FilmProfile;
   strength: number;
   portraitSafe: boolean;
 };
 
-type MaterialNoiseKernelSettings = {
+export type MaterialNoiseKernelSettings = {
   materialId: string;
   strength: number;
+};
+
+export type PixelKernelSettingsMap = {
+  'ordered-dither': OrderedDitherKernelSettings;
+  'error-diffusion': ErrorDiffusionKernelSettings;
+  'film-emulsion': FilmEmulsionKernelSettings;
+  'material-noise': MaterialNoiseKernelSettings;
 };
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
@@ -130,6 +139,23 @@ export const typescriptPixelKernels = {
       return { width: input.width, height: input.height, data };
     }
   } satisfies PixelKernel<MaterialNoiseKernelSettings>
+};
+
+export const runTypeScriptKernelById = async <TKernelId extends PixelKernelId>(
+  kernelId: TKernelId,
+  input: PixelKernelInput,
+  settings: PixelKernelSettingsMap[TKernelId]
+): Promise<PixelKernelOutput> => {
+  if (kernelId === 'ordered-dither') {
+    return typescriptPixelKernels.orderedDither.run(input, settings as OrderedDitherKernelSettings);
+  }
+  if (kernelId === 'error-diffusion') {
+    return typescriptPixelKernels.errorDiffusion.run(input, settings as ErrorDiffusionKernelSettings);
+  }
+  if (kernelId === 'film-emulsion') {
+    return typescriptPixelKernels.filmEmulsion.run(input, settings as FilmEmulsionKernelSettings);
+  }
+  return typescriptPixelKernels.materialNoise.run(input, settings as MaterialNoiseKernelSettings);
 };
 
 export const runPixelKernelWithMeta = runTimed;

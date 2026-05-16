@@ -20,6 +20,8 @@ export { renderGrain, renderVignette, renderDustAndScratches } from './film-effe
 export { applyFilmEmulsion, applyFilmEmulsionToImageData } from './film-emulsion-engine';
 export { applyPrintEngine, applyOrderedDitherToImageData, applyErrorDiffusionToImageData, normalizePrintSettings } from './print-engine';
 export { createSyntheticKernelInput, runPixelKernelWithMeta, typescriptPixelKernels } from './pixel-kernels';
+export { createKernelWorkerClient } from './kernel-worker-client';
+export { KernelScheduler } from './kernel-scheduler';
 export type { KernelBackend, KernelExecutionMeta, PixelKernel, PixelKernelInput, PixelKernelOutput } from './kernel-types';
 export {
   applyFaceSlimming, applySkinSmoothing, applySkinPolish, applyBlemishRemoval,

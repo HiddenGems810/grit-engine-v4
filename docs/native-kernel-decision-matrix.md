@@ -6,7 +6,7 @@ C++/WASM is deferred for now.
 
 FORMAT should stay Next.js, React, and TypeScript first. Native code belongs only behind pure deterministic pixel-kernel interfaces after measurements prove a kernel crosses the acceleration threshold.
 
-The local Node/Vitest profile shows larger preview kernels cross UI-blocking thresholds, but that is a Worker decision first, not an immediate C++ decision. C++/WASM still needs a Worker-vs-TypeScript browser benchmark before it earns build complexity.
+The local Node/Vitest profile shows larger preview kernels cross UI-blocking thresholds, and Chromium profiling now confirms Worker isolation materially improves film emulsion and material noise at 512px preview sizes. That still does not justify C++/WASM: the Worker path removes the immediate main-thread bottleneck without native build complexity.
 
 ## Acceleration Threshold
 
