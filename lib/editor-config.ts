@@ -337,6 +337,26 @@ export const PORTRAIT_CONTROL_DEFINITIONS: PortraitControlDefinition[] = [
   { key: 'makeupStrength', label: 'Makeup Pop', accentClass: 'text-[#ff99bb]' }
 ];
 
+export const PORTRAIT_CONTROL_SUPPORT: Record<PortraitControlKey, {
+  supported: boolean;
+  requiresFaceGuide: boolean;
+  renderPasses: string[];
+}> = {
+  skinSmoothing: { supported: true, requiresFaceGuide: true, renderPasses: ['skin-mask blur', 'feature-protection'] },
+  glowUp: { supported: true, requiresFaceGuide: true, renderPasses: ['skin-highlight bloom'] },
+  faceSlimming: { supported: true, requiresFaceGuide: true, renderPasses: ['landmark row-warp'] },
+  blemishRemoval: { supported: true, requiresFaceGuide: true, renderPasses: ['skin-mask local-contrast heal'] },
+  expressionLift: { supported: true, requiresFaceGuide: true, renderPasses: ['cheekbone landmark highlight'] },
+  beautyBoost: { supported: true, requiresFaceGuide: true, renderPasses: ['face-mask soft-light', 'skin-tone pixel pass'] },
+  ageShift: { supported: true, requiresFaceGuide: true, renderPasses: ['face-mask tone shift', 'landmark wrinkle accent'] },
+  eyeBrightening: { supported: true, requiresFaceGuide: true, renderPasses: ['eye-mask brightness', 'eye-mask pixel pass'] },
+  jawDefinition: { supported: true, requiresFaceGuide: true, renderPasses: ['jaw landmark contour'] },
+  skinPolish: { supported: true, requiresFaceGuide: true, renderPasses: ['skin-mask luminosity blur', 'feature-protection'] },
+  teethWhitening: { supported: true, requiresFaceGuide: true, renderPasses: ['mouth-mask enamel pixel pass'] },
+  makeupStrength: { supported: true, requiresFaceGuide: true, renderPasses: ['mouth-mask lip chroma', 'eye-mask makeup chroma'] },
+  artifactRemoval: { supported: true, requiresFaceGuide: true, renderPasses: ['portrait-aware denoise prepass'] }
+};
+
 export const clampPortraitControlValue = (key: PortraitControlKey, value: number) => {
   const limits = PORTRAIT_CONTROL_LIMITS[key];
   const safeValue = Number.isFinite(value) ? value : 0;

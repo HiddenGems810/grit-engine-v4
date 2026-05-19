@@ -253,17 +253,23 @@ export function applyColorPipeline(
 
       // Makeup Strength (Targets lips and blush - reds/pinks)
       if (effectiveMakeupStrength > 0 && portraitStrength > 0.02) {
-         const factor = effectiveMakeupStrength / 22;
-         const lipCandidate = mouthMaskStrength > 0.08 && (h > 0.94 || h < 0.03) && s > 0.25 && l > 50 && l < 180;
-         const eyeMakeupCandidate = eyeMaskStrength > 0.08 && s > 0.12 && l > 18 && l < 150 && chromaOffset === 0;
+         const factor = Math.pow(clampSliderValue(effectiveMakeupStrength) / 22, 0.72);
+         const lipCandidate = mouthMaskStrength > 0.06 && (h > 0.91 || h < 0.08) && s > 0.16 && l > 36 && l < 220;
+         const cheekCandidate = skinMaskStrength > 0.10 && faceInnerMaskStrength > 0.18 && h < 0.12 && s > 0.08 && l > 58 && l < 210;
+         const eyeMakeupCandidate = eyeMaskStrength > 0.08 && s > 0.08 && l > 18 && l < 170 && chromaOffset === 0;
          if (lipCandidate) {
-            const blend = factor * mouthMaskStrength;
-            data[i] = Math.min(255, data[i] + (6 * blend));
-            data[i + 1] = Math.max(0, data[i + 1] - (0.45 * blend));
-            data[i + 2] = Math.max(0, data[i + 2] - (0.35 * blend));
+            const blend = Math.min(0.55, factor * mouthMaskStrength * 0.82);
+            data[i] = Math.min(255, data[i] + 24 * blend);
+            data[i + 1] = Math.max(0, data[i + 1] - 10 * blend);
+            data[i + 2] = Math.max(0, data[i + 2] - 4 * blend);
+         } else if (cheekCandidate) {
+            const cheekBlend = Math.min(0.18, factor * skinMaskStrength * 0.16);
+            data[i] = Math.min(255, data[i] + 14 * cheekBlend);
+            data[i + 1] = Math.max(0, data[i + 1] - 3 * cheekBlend);
+            data[i + 2] = Math.max(0, data[i + 2] + 4 * cheekBlend);
          } else if (eyeMakeupCandidate) {
             const neutral = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-            const blend = Math.min(0.12, factor * eyeMaskStrength * 0.16);
+            const blend = Math.min(0.22, factor * eyeMaskStrength * 0.28);
             data[i] += (data[i] - neutral) * blend;
             data[i + 1] += (data[i + 1] - neutral) * blend;
             data[i + 2] += (data[i + 2] - neutral) * blend;
@@ -287,16 +293,16 @@ export function applyColorPipeline(
         const ageFactor = effectiveAgeShift / 20;
         if (ageFactor < 0) {
           const young = Math.abs(ageFactor);
-          const blend = Math.min(0.06, young * portraitStrength * 0.08);
+          const blend = Math.min(0.16, young * portraitStrength * 0.18);
           const neutral = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-          data[i] += (neutral - data[i]) * blend * 0.35;
-          data[i + 1] += (neutral - data[i + 1]) * blend * 0.35;
-          data[i + 2] += (neutral - data[i + 2]) * blend * 0.35;
+          data[i] += (neutral - data[i]) * blend * 0.46 + young * portraitStrength * 1.3;
+          data[i + 1] += (neutral - data[i + 1]) * blend * 0.46 + young * portraitStrength * 1.1;
+          data[i + 2] += (neutral - data[i + 2]) * blend * 0.46 + young * portraitStrength * 0.82;
         } else {
-          const matureContrast = 1 + ageFactor * 0.025;
-          data[i] = Math.min(255, Math.max(0, data[i] + ((((data[i] - 128) * matureContrast) + 128 - ageFactor * 0.8) - data[i]) * portraitStrength));
-          data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + ((((data[i + 1] - 128) * matureContrast) + 128 - ageFactor * 0.9) - data[i + 1]) * portraitStrength));
-          data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + ((((data[i + 2] - 128) * matureContrast) + 128 - ageFactor * 0.9) - data[i + 2]) * portraitStrength));
+          const matureContrast = 1 + ageFactor * 0.075;
+          data[i] = Math.min(255, Math.max(0, data[i] + ((((data[i] - 128) * matureContrast) + 128 - ageFactor * 2.2) - data[i]) * portraitStrength));
+          data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + ((((data[i + 1] - 128) * matureContrast) + 128 - ageFactor * 2.4) - data[i + 1]) * portraitStrength));
+          data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + ((((data[i + 2] - 128) * matureContrast) + 128 - ageFactor * 2.4) - data[i + 2]) * portraitStrength));
         }
       }
       

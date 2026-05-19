@@ -162,6 +162,39 @@ test('worker disabled mode still renders a material pass and exports', async ({ 
   expect(download.suggestedFilename()).toMatch(/format-system-04.*\.jpeg$/);
 });
 
+test('surface texture options and Y2K star filter render without export failure', async ({ page }) => {
+  await page.goto('/');
+  const imagePath = path.resolve(process.cwd(), 'test-image-to-use.png');
+  await page.locator('label').filter({ hasText: 'Upload Image to edit' }).locator('input[type="file"]').setInputFiles(imagePath);
+  await expect(page.getByRole('button', { name: 'Render Output' })).toBeEnabled({ timeout: 15_000 });
+
+  await page.getByRole('button', { name: /particles & texture/i }).click();
+  for (const textureId of [
+    'paper',
+    'canvas',
+    'linen',
+    'stone',
+    'metal',
+    'grunge',
+    '4k_film_dust',
+    '4k_leather_grain',
+    '4k_glass_refraction',
+    '4k_holographic_foil',
+    '4k_crushed_plastic'
+  ]) {
+    await page.getByLabel('Surface Specification').selectOption(textureId);
+    await page.waitForTimeout(60);
+  }
+
+  await page.getByRole('button', { name: /print & crt engine/i }).click();
+  await page.getByRole('slider', { name: 'Y2K Star Filter' }).fill('55');
+
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Render Output' }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toMatch(/format-system-04.*\.jpeg$/);
+});
+
 test('browser can encode a 4096px export canvas without crashing', async ({ page }) => {
   await page.goto('/');
   const result = await page.evaluate(async () => {

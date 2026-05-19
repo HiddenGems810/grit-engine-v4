@@ -1134,7 +1134,8 @@ export default function FormatWorkspace() {
 
     // --- PASS 6.2: Physical Textures ---
     if (textureType !== 'none' && textureIntensity > 0) {
-      const textureRandom = createSeededRandom(deterministicSeed ^ 0x7f4a7c15);
+      const textureTypeHash = Array.from(textureType).reduce((hash, char) => ((hash << 5) - hash + char.charCodeAt(0)) | 0, 0);
+      const textureRandom = createSeededRandom((imageReady * 2654435761) ^ textureTypeHash ^ 0x7f4a7c15);
       const tile = generateTextureTile(textureType, textureIntensity, textureRandom);
       applyTextureTile(ctx, canvas.width, canvas.height, tile);
     }
@@ -1991,6 +1992,7 @@ export default function FormatWorkspace() {
                          <span className="text-[11px] text-[#aaa] font-medium flex items-center gap-1.5 uppercase tracking-[0.12em]">Surface Specification</span>
                         <div className="relative">
                            <select 
+                             aria-label="Surface Specification"
                              className="w-full bg-[#141414] border border-[#444] text-white text-[12px] p-2 pr-8 rounded-[3px] focus:outline-none focus:border-[#e8a82d] appearance-none cursor-pointer"
                              value={textureType}
                              onChange={(e) => setTextureType(e.target.value as string)}
@@ -2215,7 +2217,7 @@ export default function FormatWorkspace() {
                           <span className="text-[11px] font-medium flex items-center gap-1.5"><Sparkles className="w-3 h-3" /> Y2K Star Filter (Highlights Only)</span>
                           <input type="number" value={sparkles} onChange={(e) => setSparkles(Number(e.target.value))} className="w-12 h-5 bg-[#141414] border border-[#ffcc00]/50 rounded-sm text-[10px] text-center font-mono text-white focus:outline-none focus:border-[#ffcc00]" />
                         </div>
-                        <input type="range" min="0" max="100" value={sparkles} onChange={(e) => setSparkles(parseInt(e.target.value))} />
+                        <input aria-label="Y2K Star Filter" type="range" min="0" max="100" value={sparkles} onChange={(e) => setSparkles(parseInt(e.target.value))} />
                       </div>
                     </div>
                   </motion.div>

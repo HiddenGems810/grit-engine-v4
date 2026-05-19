@@ -13,6 +13,44 @@ interface HighlightCandidate {
   luma: number;
 }
 
+type HighlightSelectionOptions = {
+  thresholdLuma: number;
+  minNeutrality: number;
+  scale: number;
+  step: number;
+};
+
+export function collectHighlightCandidates(
+  data: Uint8ClampedArray,
+  width: number,
+  height: number,
+  options: HighlightSelectionOptions
+): HighlightCandidate[] {
+  const candidates: HighlightCandidate[] = [];
+  const step = Math.max(1, options.step);
+
+  for (let i = 0; i < data.length; i += 4 * step) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    const channelMax = Math.max(r, g, b);
+    const channelMin = Math.min(r, g, b);
+    const neutrality = channelMax === 0 ? 0 : 1 - ((channelMax - channelMin) / channelMax);
+
+    if (luma > options.thresholdLuma && neutrality >= options.minNeutrality) {
+      const pixelIndex = i / 4;
+      candidates.push({
+        x: (pixelIndex % width) / options.scale,
+        y: Math.floor(pixelIndex / width) / options.scale,
+        luma
+      });
+    }
+  }
+
+  return candidates;
+}
+
 /**
  * Render sparkle/star filter effects on the provided canvas context.
  * Scans the canvas for near-white highlights and draws 4-point diffraction stars.
@@ -32,19 +70,13 @@ export function renderSparkles(
   const spData = spCtx.getImageData(0, 0, spCanvas.width, spCanvas.height).data;
 
   ctx.globalCompositeOperation = 'screen';
-  const thresholdLuma = 248;
-  const step = 2;
-
-  // Collect all valid highlight candidates
-  const candidates: HighlightCandidate[] = [];
-  for (let i = 0; i < spData.length; i += 4 * step) {
-    const luma = 0.2126 * spData[i] + 0.7152 * spData[i + 1] + 0.0722 * spData[i + 2];
-    if (luma > thresholdLuma) {
-      const px = ((i / 4) % spCanvas.width) / scaleDown;
-      const py = Math.floor((i / 4) / spCanvas.width) / scaleDown;
-      candidates.push({ x: px, y: py, luma });
-    }
-  }
+  const thresholdLuma = 242 + Math.min(12, Math.max(0, 100 - sparkles) * 0.05);
+  const candidates = collectHighlightCandidates(spData, spCanvas.width, spCanvas.height, {
+    thresholdLuma,
+    minNeutrality: 0.72,
+    scale: scaleDown,
+    step: 2
+  });
 
   // Sort by brightest first
   candidates.sort((a, b) => b.luma - a.luma);
