@@ -58,6 +58,8 @@ Manual QA:
 
 FORMAT presets are adaptive finishing stacks. The Signature family is designed for one-click creator use, with commercial contrast, believable color, and restrained retouching as the default experience. Portrait-safe presets prioritize identity, melanated skin preservation, facial structure, eyes, hair, brows, beards, tattoos, and believable skin texture. Graphic and Experimental presets are intentionally destructive, clearly labeled, and separated from default premium-safe looks. Editing and preset adaptation remain client-side.
 
+Preset intensity blends the selected recipe against the captured pre-preset editor state, so `0` removes the preset, `50` gives a balanced finish, and `100` applies the full look without changing the deterministic seed. The implementation details and render order are documented in `docs/premium-preset-system.md`.
+
 ## Material Finish Philosophy
 
 FORMAT material finishes are procedural/local render passes, not remote stock texture hotlinks. Film, print, paper, dither, and optical finishes are designed to respond to luminance, edges, and preset intent so they feel physically integrated instead of pasted over the image. Portrait-safe material settings keep face protection on by default; product-oriented settings prioritize edge clarity and believable color. Graphic and Experimental material finishes can be destructive, but they are labeled and kept out of the default safe preset experience.

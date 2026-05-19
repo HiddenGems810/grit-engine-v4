@@ -24,10 +24,15 @@ type LeftSidebarProps = {
   previewImageSrc: string | null;
   historyEntries: readonly HistoryEntry[];
   historyIndex: number;
+  activePresetId: string | null;
+  activePresetName: string | null;
+  presetIntensity: number;
   toggleLeftPanel: (key: keyof LeftPanelsState) => void;
   setSearchTerm: (value: string) => void;
   setActiveCategory: (category: string | null) => void;
   applyPreset: (preset: Preset) => void;
+  setPresetIntensity: (value: number) => void;
+  clearActivePreset: () => void;
   requestDeleteCustomPreset: (preset: Preset) => void;
   jumpToHistory: (index: number) => void;
 };
@@ -89,10 +94,15 @@ export function LeftSidebar({
   previewImageSrc,
   historyEntries,
   historyIndex,
+  activePresetId,
+  activePresetName,
+  presetIntensity,
   toggleLeftPanel,
   setSearchTerm,
   setActiveCategory,
   applyPreset,
+  setPresetIntensity,
+  clearActivePreset,
   requestDeleteCustomPreset,
   jumpToHistory
 }: LeftSidebarProps) {
@@ -182,10 +192,44 @@ export function LeftSidebar({
         {leftPanels.presets && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="flex-1 overflow-hidden flex flex-col">
             <div className="flex-1 overflow-y-auto bg-[#202020] p-2 hide-scrollbar">
+              {activePresetId && activePresetName && (
+                <div className="mb-2 rounded-[4px] border border-[#4a3820] bg-[#17130d] p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-[9px] uppercase tracking-[0.18em] text-[#d6a13a]">Active Preset</div>
+                      <div className="mt-1 truncate text-[12px] font-semibold text-[#f1ece2]">{activePresetName}</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={clearActivePreset}
+                      className="rounded-[3px] border border-[#5a4823] px-2 py-1 text-[9px] uppercase tracking-[0.12em] text-[#d7a54f] hover:bg-[#21180d] focus:outline-none focus:ring-1 focus:ring-[#e8a82d]"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                  <label className="mt-3 block">
+                    <span className="mb-1 flex items-center justify-between text-[9px] uppercase tracking-[0.14em] text-[#9c8f78]">
+                      Preset Intensity
+                      <span className="font-mono text-[#e8d4aa]">{presetIntensity}</span>
+                    </span>
+                    <input
+                      aria-label="Preset Intensity"
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="1"
+                      value={presetIntensity}
+                      onChange={(event) => setPresetIntensity(Number(event.target.value))}
+                      className="w-full"
+                    />
+                  </label>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-2">
                 {filteredPresets.map((preset) => {
                   const isCustomPreset = preset.category === CUSTOM_PRESET_CATEGORY;
                   const filterStack = buildPresetFilterStack(preset);
+                  const isActivePreset = preset.id === activePresetId;
 
                   return (
                     <div
@@ -199,7 +243,7 @@ export function LeftSidebar({
                           applyPreset(preset);
                         }
                       }}
-                      className="flex flex-col bg-[#222] hover:bg-[#2a2a2a] border border-[#333] hover:border-[#e8a82d] rounded-[4px] transition-all group text-left overflow-hidden shadow-sm cursor-pointer focus:outline-none focus:border-[#e8a82d]"
+                      className={`flex flex-col bg-[#222] hover:bg-[#2a2a2a] border rounded-[4px] transition-all group text-left overflow-hidden shadow-sm cursor-pointer focus:outline-none focus:border-[#e8a82d] ${isActivePreset ? 'border-[#e8a82d] shadow-[0_0_0_1px_rgba(232,168,45,0.35)]' : 'border-[#333] hover:border-[#e8a82d]'}`}
                       title={preset.description}
                     >
                       <div className="w-full aspect-[4/3] bg-[#111] overflow-hidden relative border-b border-[#333]">
@@ -220,6 +264,11 @@ export function LeftSidebar({
                         {isCustomPreset && (
                           <div className="absolute top-1.5 left-1.5 z-10 rounded-[3px] border border-[#5a4823] bg-[#111111]/92 px-1.5 py-1 text-[8px] uppercase tracking-[0.18em] text-[#d7a54f]">
                             Custom
+                          </div>
+                        )}
+                        {isActivePreset && (
+                          <div className="absolute bottom-1.5 left-1.5 z-10 rounded-[3px] border border-[#e8a82d]/60 bg-[#111111]/92 px-1.5 py-1 text-[8px] uppercase tracking-[0.18em] text-[#e8d4aa]">
+                            Active
                           </div>
                         )}
                         {imageReady > 0 && previewImageSrc ? (

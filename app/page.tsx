@@ -78,6 +78,11 @@ import { applyGradientMap, applyThresholdBitmap, applyHalftone, applyChromaticAb
 import { computeAspectCrop, computeExportQualityInfo, type ExportAspectId } from '@/lib/export-quality';
 import { createRenderFingerprint, type RenderFingerprint } from '@/lib/engine/render-fingerprint';
 import { mergeCustomPresets, parseCustomPresetBundle, serializeCustomPresetBundle } from '@/lib/custom-presets';
+import {
+  buildPresetRecipeSnapshot,
+  getPresetDefaultIntensity,
+  resetPresetRecipeSnapshot
+} from '@/lib/preset-engine';
 
 export default function FormatWorkspace() {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
@@ -148,6 +153,9 @@ export default function FormatWorkspace() {
   const [workspaceNotice, setWorkspaceNotice] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | null>(PRESET_CATEGORIES[0]);
+  const [activePresetId, setActivePresetId] = useState<string | null>(null);
+  const [activePresetName, setActivePresetName] = useState<string | null>(null);
+  const [presetIntensity, setPresetIntensity] = useState(0);
   const [showOriginal, setShowOriginal] = useState(false);
   const [imageReady, setImageReady] = useState(0); // Trigger to force reliable rendering
   const [activeCamera, setActiveCamera] = useState('Standard Matrix');
@@ -210,6 +218,8 @@ export default function FormatWorkspace() {
   const snapshotSyncRef = useRef<EngineSnapshot | null>(null);
   const skipHistoryRef = useRef(false);
   const pendingHistoryMetaRef = useRef<{ label: string; detail: string } | null>(null);
+  const activePresetRef = useRef<Preset | null>(null);
+  const activePresetBaseSnapshotRef = useRef<EngineSnapshot | null>(null);
   const upscaleRequestRef = useRef(0);
   const renderRequestRef = useRef(0);
   const renderForExportRef = useRef<(() => Promise<HTMLCanvasElement | null>) | null>(null);
@@ -318,6 +328,14 @@ export default function FormatWorkspace() {
     const img = originalImageRef.current;
     if (!img) return preset;
     return adaptPresetToImage(preset, img);
+  };
+
+  const clearActivePresetMetadata = () => {
+    activePresetRef.current = null;
+    activePresetBaseSnapshotRef.current = null;
+    setActivePresetId(null);
+    setActivePresetName(null);
+    setPresetIntensity(0);
   };
 
   // createNeutralSnapshot imported from @/lib/editor-config
@@ -586,6 +604,7 @@ export default function FormatWorkspace() {
     if (!snapshot) return;
     setActiveMenu(null);
     setHelpOpen(false);
+    clearActivePresetMetadata();
     setHistoryEntries([...historyManagerRef.current.getEntries()]);
     setHistoryIndex(historyManagerRef.current.getIndex());
     applySnapshot(snapshot);
@@ -596,6 +615,7 @@ export default function FormatWorkspace() {
     if (!snapshot) return;
     setActiveMenu(null);
     setHelpOpen(false);
+    clearActivePresetMetadata();
     setHistoryEntries([...historyManagerRef.current.getEntries()]);
     setHistoryIndex(historyManagerRef.current.getIndex());
     applySnapshot(snapshot);
@@ -606,6 +626,7 @@ export default function FormatWorkspace() {
     if (!snapshot) return;
     setActiveMenu(null);
     setHelpOpen(false);
+    clearActivePresetMetadata();
     setHistoryEntries([...historyManagerRef.current.getEntries()]);
     setHistoryIndex(historyManagerRef.current.getIndex());
     applySnapshot(snapshot);
@@ -616,6 +637,7 @@ export default function FormatWorkspace() {
       label: 'System reset',
       detail: 'SYSTEM 04 neutral stack restored'
     };
+    clearActivePresetMetadata();
     applySnapshot(createNeutralSnapshot());
     resetUpscaleControls();
   };
@@ -1317,11 +1339,45 @@ export default function FormatWorkspace() {
 
   const applyPreset = (p: Preset) => {
     const preset = adaptPresetToCurrentImage(p);
+    const baseSnapshot = createSnapshot();
+    const nextIntensity = getPresetDefaultIntensity(preset);
+    activePresetRef.current = preset;
+    activePresetBaseSnapshotRef.current = baseSnapshot;
+    setActivePresetId(preset.id);
+    setActivePresetName(preset.name);
+    setPresetIntensity(nextIntensity);
     pendingHistoryMetaRef.current = {
       label: 'Specification preset applied',
-      detail: preset.name
+      detail: `${preset.name} at ${nextIntensity}%`
     };
-    applySnapshot(reduceEditorSnapshot(createSnapshot(), { type: 'apply-preset', preset }), { skipHistory: false });
+    applySnapshot(buildPresetRecipeSnapshot(baseSnapshot, preset, nextIntensity), { skipHistory: false });
+  };
+
+  const updatePresetIntensity = (nextIntensity: number) => {
+    const activePreset = activePresetRef.current;
+    const baseSnapshot = activePresetBaseSnapshotRef.current;
+    if (!activePreset || !baseSnapshot) return;
+
+    const safeIntensity = clampSliderValue(nextIntensity);
+    markSliderInteraction();
+    setPresetIntensity(safeIntensity);
+    applySnapshot(buildPresetRecipeSnapshot(baseSnapshot, activePreset, safeIntensity), { skipHistory: true });
+    releaseSliderInteraction(180);
+  };
+
+  const clearActivePreset = () => {
+    const baseSnapshot = activePresetBaseSnapshotRef.current;
+    if (!baseSnapshot) {
+      clearActivePresetMetadata();
+      return;
+    }
+
+    pendingHistoryMetaRef.current = {
+      label: 'Specification preset reset',
+      detail: activePresetRef.current?.name ?? 'Preset effect cleared'
+    };
+    clearActivePresetMetadata();
+    applySnapshot(resetPresetRecipeSnapshot(baseSnapshot), { skipHistory: false });
   };
 
   const applyCameraSimulation = (cameraId: string) => {
@@ -1418,10 +1474,15 @@ export default function FormatWorkspace() {
           previewImageSrc={previewImageSrc}
           historyEntries={historyEntries}
           historyIndex={historyIndex}
+          activePresetId={activePresetId}
+          activePresetName={activePresetName}
+          presetIntensity={presetIntensity}
           toggleLeftPanel={toggleLeftPanel}
           setSearchTerm={setSearchTerm}
           setActiveCategory={setActiveCategory}
           applyPreset={applyPreset}
+          setPresetIntensity={updatePresetIntensity}
+          clearActivePreset={clearActivePreset}
           requestDeleteCustomPreset={requestDeleteCustomPreset}
           jumpToHistory={jumpToHistory}
         />
@@ -2239,6 +2300,10 @@ export default function FormatWorkspace() {
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
           applyPreset={applyPreset}
+          activePresetName={activePresetName}
+          presetIntensity={presetIntensity}
+          setPresetIntensity={updatePresetIntensity}
+          clearActivePreset={clearActivePreset}
           saturation={saturation}
           setSaturation={setSaturation}
           shadowCrush={shadowCrush}

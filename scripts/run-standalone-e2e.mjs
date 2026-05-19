@@ -11,7 +11,33 @@ const child = spawn(process.execPath, [serverPath], {
   stdio: 'inherit'
 });
 
+let shuttingDown = false;
+
+const shutdown = (signal) => {
+  if (shuttingDown) return;
+  shuttingDown = true;
+
+  if (!child.killed) {
+    child.kill(signal);
+  }
+
+  const fallback = setTimeout(() => {
+    if (!child.killed) {
+      child.kill('SIGKILL');
+    }
+    process.exit(0);
+  }, 2500);
+  fallback.unref();
+};
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+
 child.on('exit', (code, signal) => {
+  if (shuttingDown) {
+    process.exit(0);
+  }
+
   if (signal) {
     process.kill(process.pid, signal);
     return;

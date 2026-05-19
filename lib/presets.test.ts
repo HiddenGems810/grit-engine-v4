@@ -40,6 +40,11 @@ describe('premium preset library', () => {
         || typeof preset.skinSafe !== 'boolean'
         || preset.bestFor.length === 0
         || preset.avoidFor.length === 0
+        || preset.defaultIntensity < 0
+        || preset.defaultIntensity > 100
+        || preset.compatibleImageTypes.length === 0
+        || !preset.recipeVersion
+        || preset.exposed !== true
         || !preset.description
         || preset.usageTags.length === 0
         || preset.oneClickScore < 0

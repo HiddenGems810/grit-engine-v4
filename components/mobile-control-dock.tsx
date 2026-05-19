@@ -7,6 +7,10 @@ type MobileControlDockProps = {
   searchTerm: string;
   setSearchTerm: (value: string) => void;
   applyPreset: (preset: Preset) => void;
+  activePresetName: string | null;
+  presetIntensity: number;
+  setPresetIntensity: (value: number) => void;
+  clearActivePreset: () => void;
   saturation: number;
   setSaturation: (value: number) => void;
   shadowCrush: number;
@@ -52,6 +56,10 @@ export function MobileControlDock({
   searchTerm,
   setSearchTerm,
   applyPreset,
+  activePresetName,
+  presetIntensity,
+  setPresetIntensity,
+  clearActivePreset,
   saturation,
   setSaturation,
   shadowCrush,
@@ -71,6 +79,24 @@ export function MobileControlDock({
             Specifications
           </summary>
           <div className="border-t border-[#333] p-3">
+            {activePresetName && (
+              <div className="mb-3 rounded-[4px] border border-[#4a3820] bg-[#17130d] p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <span className="block text-[9px] uppercase tracking-[0.18em] text-[#d6a13a]">Active Preset</span>
+                    <span className="mt-1 block truncate text-[12px] font-semibold text-[#f1ece2]">{activePresetName}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={clearActivePreset}
+                    className="rounded-[3px] border border-[#5a4823] px-2 py-1 text-[9px] uppercase tracking-[0.12em] text-[#d7a54f] focus:outline-none focus:ring-1 focus:ring-[#e8a82d]"
+                  >
+                    Reset
+                  </button>
+                </div>
+                <QuickSlider label="Preset Intensity" min={0} max={100} value={presetIntensity} onChange={setPresetIntensity} />
+              </div>
+            )}
             <input
               type="text"
               placeholder="Search specification presets..."

@@ -16,6 +16,8 @@ export type PresetIntensity = 'subtle' | 'medium' | 'bold' | 'extreme';
 export type PresetSubjectBias = 'portrait' | 'product' | 'food' | 'fashion' | 'night' | 'landscape' | 'graphic' | 'general';
 export type PresetTone = 'clean' | 'warm' | 'cool' | 'soft' | 'dark' | 'film' | 'neon' | 'graphic' | 'mono' | 'experimental';
 
+export const PRESET_RECIPE_VERSION = 'format-preset-recipe-v1';
+
 export interface Preset {
   id: string;
   name: string;
@@ -28,6 +30,10 @@ export interface Preset {
   skinSafe: boolean;
   bestFor: string[];
   avoidFor: string[];
+  defaultIntensity: number;
+  compatibleImageTypes: PresetSubjectBias[];
+  recipeVersion: string;
+  exposed: boolean;
   oneClickScore: number;
   commercialScore: number;
   viralScore: number;
@@ -107,6 +113,39 @@ export const PRESET_CATEGORIES = [
 
 const clampNumber = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
+const defaultIntensityForPreset = (preset: Pick<Preset, 'tier' | 'intensity' | 'family'>) => {
+  if (preset.tier === 'hero') return 72;
+  if (preset.family === 'graphic') return 78;
+  if (preset.family === 'experimental') return 82;
+
+  switch (preset.intensity) {
+    case 'subtle':
+      return 48;
+    case 'medium':
+      return 64;
+    case 'bold':
+      return 78;
+    case 'extreme':
+      return 86;
+    default:
+      return 64;
+  }
+};
+
+const compatibleImageTypesForPreset = (preset: Pick<Preset, 'subjectBias' | 'family'>): PresetSubjectBias[] => {
+  if (preset.subjectBias !== 'general') {
+    return Array.from(new Set([preset.subjectBias, 'general']));
+  }
+
+  if (preset.family === 'portrait') return ['portrait', 'fashion', 'general'];
+  if (preset.family === 'product') return ['product', 'food', 'fashion', 'general'];
+  if (preset.family === 'film') return ['portrait', 'fashion', 'landscape', 'general'];
+  if (preset.family === 'cinematic') return ['portrait', 'night', 'fashion', 'landscape', 'general'];
+  if (preset.family === 'graphic' || preset.family === 'experimental') return ['graphic', 'general'];
+
+  return ['portrait', 'product', 'fashion', 'landscape', 'general'];
+};
+
 type PresetInput =
   Pick<Preset, 'id' | 'name' | 'family' | 'tier' | 'intensity' | 'subjectBias' | 'previewTone' | 'skinSafe' | 'bestFor' | 'avoidFor' | 'oneClickScore' | 'commercialScore' | 'viralScore' | 'description' | 'usageTags'>
   & Partial<Omit<Preset, 'id' | 'name' | 'family' | 'tier' | 'intensity' | 'subjectBias' | 'previewTone' | 'skinSafe' | 'bestFor' | 'avoidFor' | 'oneClickScore' | 'commercialScore' | 'viralScore' | 'description' | 'usageTags'>>;
@@ -164,6 +203,10 @@ const p = (preset: PresetInput): Preset => ({
   ...preset,
   category: preset.category ?? PRESET_FAMILY_LABELS[preset.family],
   textureType: normalizeTextureId(preset.textureType),
+  defaultIntensity: clampNumber(preset.defaultIntensity ?? defaultIntensityForPreset(preset), 0, 100),
+  compatibleImageTypes: preset.compatibleImageTypes ?? compatibleImageTypesForPreset(preset),
+  recipeVersion: preset.recipeVersion ?? PRESET_RECIPE_VERSION,
+  exposed: preset.exposed ?? true,
   oneClickScore: clampNumber(preset.oneClickScore, 0, 100),
   commercialScore: clampNumber(preset.commercialScore, 0, 100),
   viralScore: clampNumber(preset.viralScore, 0, 100),
@@ -454,6 +497,10 @@ const normalizePreset = (preset: Preset): Preset => {
     ...preset,
     category: PRESET_FAMILY_LABELS[preset.family],
     textureType: normalizeTextureId(preset.textureType),
+    defaultIntensity: clampNumber(preset.defaultIntensity ?? defaultIntensityForPreset(preset), 0, 100),
+    compatibleImageTypes: preset.compatibleImageTypes ?? compatibleImageTypesForPreset(preset),
+    recipeVersion: preset.recipeVersion ?? PRESET_RECIPE_VERSION,
+    exposed: preset.exposed ?? true,
     safetyNotes: preset.safetyNotes ?? (preset.skinSafe ? ['Identity-safe: protects skin tone and facial structure.'] : undefined)
   });
 
