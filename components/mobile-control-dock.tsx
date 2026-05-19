@@ -1,5 +1,7 @@
 'use client';
 
+import { AntiAiRepairPanel } from '@/components/anti-ai-repair-panel';
+import type { AntiAiRepairControlKey, AntiAiRepairModeId, AntiAiRepairSettings } from '@/lib/anti-ai-repair';
 import type { Preset } from '@/lib/presets';
 
 type MobileControlDockProps = {
@@ -11,6 +13,11 @@ type MobileControlDockProps = {
   presetIntensity: number;
   setPresetIntensity: (value: number) => void;
   clearActivePreset: () => void;
+  antiAiRepairMode: AntiAiRepairModeId | null;
+  antiAiRepairSettings: AntiAiRepairSettings;
+  applyAntiAiRepairMode: (mode: AntiAiRepairModeId) => void;
+  resetAntiAiRepairMode: () => void;
+  updateAntiAiRepairSetting: (key: AntiAiRepairControlKey, value: number) => void;
   saturation: number;
   setSaturation: (value: number) => void;
   shadowCrush: number;
@@ -60,6 +67,11 @@ export function MobileControlDock({
   presetIntensity,
   setPresetIntensity,
   clearActivePreset,
+  antiAiRepairMode,
+  antiAiRepairSettings,
+  applyAntiAiRepairMode,
+  resetAntiAiRepairMode,
+  updateAntiAiRepairSetting,
   saturation,
   setSaturation,
   shadowCrush,
@@ -74,6 +86,22 @@ export function MobileControlDock({
   return (
     <div className="md:hidden border-t border-[#333] bg-[#171717] px-3 py-2">
       <div className="grid grid-cols-2 gap-2">
+        <details className="rounded-[4px] border border-[#333] bg-[#202020] open:col-span-2">
+          <summary className="cursor-pointer list-none px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#f1ece2] focus:outline-none focus:ring-1 focus:ring-[#e8a82d]">
+            Anti-AI
+          </summary>
+          <div className="border-t border-[#333] p-3">
+            <AntiAiRepairPanel
+              compact
+              activeMode={antiAiRepairMode}
+              settings={antiAiRepairSettings}
+              applyMode={applyAntiAiRepairMode}
+              resetMode={resetAntiAiRepairMode}
+              updateSetting={updateAntiAiRepairSetting}
+            />
+          </div>
+        </details>
+
         <details className="rounded-[4px] border border-[#333] bg-[#202020] open:col-span-2">
           <summary className="cursor-pointer list-none px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#f1ece2] focus:outline-none focus:ring-1 focus:ring-[#e8a82d]">
             Specifications

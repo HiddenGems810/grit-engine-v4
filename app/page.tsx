@@ -18,6 +18,7 @@ import { ExportControls } from '@/components/export-controls';
 import { LeftSidebar } from '@/components/left-sidebar';
 import { MobileControlDock } from '@/components/mobile-control-dock';
 import { TopMenu } from '@/components/top-menu';
+import { AntiAiRepairPanel } from '@/components/anti-ai-repair-panel';
 import { reduceEditorSnapshot } from '@/lib/editor-state';
 import {
   CUSTOM_PRESET_CATEGORY,
@@ -83,6 +84,15 @@ import {
   getPresetDefaultIntensity,
   resetPresetRecipeSnapshot
 } from '@/lib/preset-engine';
+import {
+  DEFAULT_ANTI_AI_REPAIR_SETTINGS,
+  buildAntiAiRepairSnapshot,
+  clampAntiAiRepairSetting,
+  getAntiAiRepairProfile,
+  type AntiAiRepairControlKey,
+  type AntiAiRepairModeId,
+  type AntiAiRepairSettings
+} from '@/lib/anti-ai-repair';
 
 export default function FormatWorkspace() {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
@@ -156,6 +166,8 @@ export default function FormatWorkspace() {
   const [activePresetId, setActivePresetId] = useState<string | null>(null);
   const [activePresetName, setActivePresetName] = useState<string | null>(null);
   const [presetIntensity, setPresetIntensity] = useState(0);
+  const [antiAiRepairMode, setAntiAiRepairMode] = useState<AntiAiRepairModeId | null>(null);
+  const [antiAiRepairSettings, setAntiAiRepairSettings] = useState<AntiAiRepairSettings>(DEFAULT_ANTI_AI_REPAIR_SETTINGS);
   const [showOriginal, setShowOriginal] = useState(false);
   const [imageReady, setImageReady] = useState(0); // Trigger to force reliable rendering
   const [activeCamera, setActiveCamera] = useState('Standard Matrix');
@@ -220,6 +232,7 @@ export default function FormatWorkspace() {
   const pendingHistoryMetaRef = useRef<{ label: string; detail: string } | null>(null);
   const activePresetRef = useRef<Preset | null>(null);
   const activePresetBaseSnapshotRef = useRef<EngineSnapshot | null>(null);
+  const antiAiRepairBaseSnapshotRef = useRef<EngineSnapshot | null>(null);
   const upscaleRequestRef = useRef(0);
   const renderRequestRef = useRef(0);
   const renderForExportRef = useRef<(() => Promise<HTMLCanvasElement | null>) | null>(null);
@@ -336,6 +349,11 @@ export default function FormatWorkspace() {
     setActivePresetId(null);
     setActivePresetName(null);
     setPresetIntensity(0);
+  };
+
+  const clearAntiAiRepairMetadata = () => {
+    antiAiRepairBaseSnapshotRef.current = null;
+    setAntiAiRepairMode(null);
   };
 
   // createNeutralSnapshot imported from @/lib/editor-config
@@ -605,6 +623,7 @@ export default function FormatWorkspace() {
     setActiveMenu(null);
     setHelpOpen(false);
     clearActivePresetMetadata();
+    clearAntiAiRepairMetadata();
     setHistoryEntries([...historyManagerRef.current.getEntries()]);
     setHistoryIndex(historyManagerRef.current.getIndex());
     applySnapshot(snapshot);
@@ -616,6 +635,7 @@ export default function FormatWorkspace() {
     setActiveMenu(null);
     setHelpOpen(false);
     clearActivePresetMetadata();
+    clearAntiAiRepairMetadata();
     setHistoryEntries([...historyManagerRef.current.getEntries()]);
     setHistoryIndex(historyManagerRef.current.getIndex());
     applySnapshot(snapshot);
@@ -627,6 +647,7 @@ export default function FormatWorkspace() {
     setActiveMenu(null);
     setHelpOpen(false);
     clearActivePresetMetadata();
+    clearAntiAiRepairMetadata();
     setHistoryEntries([...historyManagerRef.current.getEntries()]);
     setHistoryIndex(historyManagerRef.current.getIndex());
     applySnapshot(snapshot);
@@ -638,6 +659,7 @@ export default function FormatWorkspace() {
       detail: 'SYSTEM 04 neutral stack restored'
     };
     clearActivePresetMetadata();
+    clearAntiAiRepairMetadata();
     applySnapshot(createNeutralSnapshot());
     resetUpscaleControls();
   };
@@ -676,66 +698,50 @@ export default function FormatWorkspace() {
     setArtifactRemoval(clampPortraitControlValue('artifactRemoval', Math.max(artifactRemoval, 8)));
   };
 
-  const applyAntiAiSlopRepair = () => {
+  const applyAntiAiRepairMode = (mode: AntiAiRepairModeId) => {
+    const profile = getAntiAiRepairProfile(mode);
+    const nextSettings = profile.defaultSettings;
+    const baseSnapshot = createSnapshot();
+    antiAiRepairBaseSnapshotRef.current = baseSnapshot;
+    clearActivePresetMetadata();
+    setAntiAiRepairMode(mode);
+    setAntiAiRepairSettings(nextSettings);
     pendingHistoryMetaRef.current = {
-      label: 'Anti-AI repair applied',
-      detail: 'Texture recovery, fake sharpness reduction, and identity-safe skin protection'
+      label: `${profile.name} applied`,
+      detail: profile.description
     };
-    setShadowCrush(38);
-    setMidtones(10);
-    setHighlights(8);
-    setSaturation(102);
-    setHueShift(0);
-    setInkBleed(8);
-    setClarity(10);
-    setArtifactRemoval(clampPortraitControlValue('artifactRemoval', 26));
-    setSkinSmoothing(clampPortraitControlValue('skinSmoothing', 8));
-    setSkinPolish(clampPortraitControlValue('skinPolish', 18));
-    setBeautyBoost(clampPortraitControlValue('beautyBoost', 16));
-    setEyeBrightening(clampPortraitControlValue('eyeBrightening', 8));
-    setFaceSlimming(0);
-    setAgeShift(0);
-    setGrain(18);
-    setHalation(7);
-    setMaterialProfile('matte-photo-paper');
-    setMaterialStrength(28);
-    setPrintProfile('none');
-    setPaperSurface('matte-photo-paper');
-    setFilmProfile('fine-35mm');
-    setOpticalProfile('glass-diffusion');
-    setMaterialFaceProtection(true);
-    setMaterialEdgeProtection(true);
-    setWorkspaceNotice('Anti-AI Slop Repair applied with face identity protection.');
+    applySnapshot(buildAntiAiRepairSnapshot(baseSnapshot, mode, nextSettings), { skipHistory: false });
+    setWorkspaceNotice(`${profile.name} applied with local preview/export rendering.`);
   };
 
-  const applyPhotographedStack = () => {
-    pendingHistoryMetaRef.current = {
-      label: 'Photographed stack applied',
-      detail: 'Subtle grain, halation, lens softness, and physical finish'
+  const updateAntiAiRepairSetting = (key: AntiAiRepairControlKey, value: number) => {
+    const nextSettings = {
+      ...antiAiRepairSettings,
+      [key]: clampAntiAiRepairSetting(value)
     };
-    setShadowCrush(42);
-    setMidtones(8);
-    setHighlights(10);
-    setSaturation(106);
-    setHueShift(0);
-    setInkBleed(7);
-    setClarity(14);
-    setArtifactRemoval(clampPortraitControlValue('artifactRemoval', 10));
-    setSkinSmoothing(clampPortraitControlValue('skinSmoothing', 6));
-    setSkinPolish(clampPortraitControlValue('skinPolish', 14));
-    setBeautyBoost(clampPortraitControlValue('beautyBoost', 12));
-    setGrain(22);
-    setHalation(10);
-    setVignette(8);
-    setMaterialProfile('matte-photo-paper');
-    setMaterialStrength(22);
-    setPrintProfile('none');
-    setPaperSurface('matte-photo-paper');
-    setFilmProfile('fine-35mm');
-    setOpticalProfile('pro-mist');
-    setMaterialFaceProtection(true);
-    setMaterialEdgeProtection(true);
-    setWorkspaceNotice('Make It Look Photographed stack applied.');
+    setAntiAiRepairSettings(nextSettings);
+
+    if (!antiAiRepairMode || !antiAiRepairBaseSnapshotRef.current) return;
+
+    markSliderInteraction();
+    applySnapshot(buildAntiAiRepairSnapshot(antiAiRepairBaseSnapshotRef.current, antiAiRepairMode, nextSettings), { skipHistory: true });
+    releaseSliderInteraction(180);
+  };
+
+  const resetAntiAiRepairMode = () => {
+    const baseSnapshot = antiAiRepairBaseSnapshotRef.current;
+    if (!baseSnapshot) {
+      clearAntiAiRepairMetadata();
+      return;
+    }
+
+    const activeProfile = antiAiRepairMode ? getAntiAiRepairProfile(antiAiRepairMode) : null;
+    pendingHistoryMetaRef.current = {
+      label: 'Anti-AI repair reset',
+      detail: activeProfile?.name ?? 'Repair mode cleared'
+    };
+    clearAntiAiRepairMetadata();
+    applySnapshot(baseSnapshot, { skipHistory: false });
   };
 
   const saveCustomPreset = () => {
@@ -1341,6 +1347,7 @@ export default function FormatWorkspace() {
     const preset = adaptPresetToCurrentImage(p);
     const baseSnapshot = createSnapshot();
     const nextIntensity = getPresetDefaultIntensity(preset);
+    clearAntiAiRepairMetadata();
     activePresetRef.current = preset;
     activePresetBaseSnapshotRef.current = baseSnapshot;
     setActivePresetId(preset.id);
@@ -1536,6 +1543,14 @@ export default function FormatWorkspace() {
                releaseSliderInteraction(80);
              }
            }}>
+
+          <AntiAiRepairPanel
+            activeMode={antiAiRepairMode}
+            settings={antiAiRepairSettings}
+            applyMode={applyAntiAiRepairMode}
+            resetMode={resetAntiAiRepairMode}
+            updateSetting={updateAntiAiRepairSetting}
+          />
           
           {/* Real-Time Histogram */}
           <div className="border-b border-[#333] pb-2 bg-[#181818]">
@@ -1830,23 +1845,6 @@ export default function FormatWorkspace() {
                             </label>
                           </>
                         )}
-                      </div>
-
-                      <div className="grid grid-cols-1 gap-2">
-                        <button
-                          type="button"
-                          onClick={applyAntiAiSlopRepair}
-                          className="w-full rounded-[3px] border border-[#5a4823] bg-[#1a1711] px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-[#f3e6c4] transition-colors hover:border-[#e8a82d] hover:bg-[#252016] hover:text-[#e8a82d] focus:outline-none focus:ring-1 focus:ring-[#e8a82d]"
-                        >
-                          Anti-AI Slop Repair
-                        </button>
-                        <button
-                          type="button"
-                          onClick={applyPhotographedStack}
-                          className="w-full rounded-[3px] border border-[#444] bg-[#151515] px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-[#d7d1c5] transition-colors hover:border-[#e8a82d] hover:bg-[#222] hover:text-white focus:outline-none focus:ring-1 focus:ring-[#e8a82d]"
-                        >
-                          Make It Look Photographed
-                        </button>
                       </div>
 
                       {portraitGuide && (
@@ -2304,6 +2302,11 @@ export default function FormatWorkspace() {
           presetIntensity={presetIntensity}
           setPresetIntensity={updatePresetIntensity}
           clearActivePreset={clearActivePreset}
+          antiAiRepairMode={antiAiRepairMode}
+          antiAiRepairSettings={antiAiRepairSettings}
+          applyAntiAiRepairMode={applyAntiAiRepairMode}
+          resetAntiAiRepairMode={resetAntiAiRepairMode}
+          updateAntiAiRepairSetting={updateAntiAiRepairSetting}
           saturation={saturation}
           setSaturation={setSaturation}
           shadowCrush={shadowCrush}

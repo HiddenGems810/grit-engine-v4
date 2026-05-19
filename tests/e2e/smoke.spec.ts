@@ -86,6 +86,30 @@ test('premium preset intensity applies through the export path', async ({ page }
   await expect(intensitySlider).toBeHidden();
 });
 
+test('anti-ai slop repair mode tunes and exports', async ({ page }) => {
+  await page.goto('/');
+
+  const imagePath = path.resolve(process.cwd(), 'test-image-to-use.png');
+  await page.locator('label').filter({ hasText: 'Upload Image to edit' }).locator('input[type="file"]').setInputFiles(imagePath);
+  await expect(page.getByRole('button', { name: 'Render Output' })).toBeEnabled({ timeout: 15_000 });
+
+  await page.getByRole('button', { name: 'Anti-AI Slop Repair' }).first().click();
+  await expect(page.getByText('Active: Anti-AI Slop Repair').first()).toBeVisible();
+
+  const plasticSkinSlider = page.getByRole('slider', { name: 'Plastic Skin' }).first();
+  await plasticSkinSlider.fill('88');
+  await expect(plasticSkinSlider).toHaveValue('88');
+
+  const fakeSharpnessSlider = page.getByRole('slider', { name: 'Fake Sharpness' }).first();
+  await fakeSharpnessSlider.fill('72');
+  await expect(fakeSharpnessSlider).toHaveValue('72');
+
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Render Output' }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toMatch(/format-system-04.*\.jpeg$/);
+});
+
 test('release QA screenshots cover desktop tablet and mobile shells', async ({ page }, testInfo) => {
   for (const viewport of [
     { name: 'desktop', width: 1440, height: 1000 },
