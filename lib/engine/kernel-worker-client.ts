@@ -45,6 +45,12 @@ const defaultNow = () => (typeof performance !== 'undefined' ? performance.now()
 
 const createDefaultWorker = (): Worker | null => {
   if (typeof Worker === 'undefined') return null;
+  if (typeof window !== 'undefined') {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('disableWorkers') === '1' || window.localStorage.getItem('format-disable-workers') === '1') {
+      return null;
+    }
+  }
   return new Worker(new URL('./kernel-worker.ts', import.meta.url), { type: 'module' });
 };
 

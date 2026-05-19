@@ -13,6 +13,8 @@ type TopMenuProps = {
   imageSrc: string | null;
   exportImage: (format: 'png' | 'jpeg') => void;
   openSavePresetDialog: () => void;
+  exportCustomPresets: () => void;
+  importPresetInputRef: RefObject<HTMLInputElement | null>;
   handleRemoveImage: () => void;
   handleUndo: () => void;
   handleRedo: () => void;
@@ -39,6 +41,8 @@ export function TopMenu({
   imageSrc,
   exportImage,
   openSavePresetDialog,
+  exportCustomPresets,
+  importPresetInputRef,
   handleRemoveImage,
   handleUndo,
   handleRedo,
@@ -81,6 +85,8 @@ export function TopMenu({
                 <button type="button" role="menuitem" onClick={() => exportImage('png')} disabled={!imageSrc} className="w-full text-left px-3 py-2 text-[11px] text-[#d7d1c5] hover:bg-[#1d1d1d] rounded-[3px] disabled:opacity-40 focus:outline-none focus:ring-1 focus:ring-[#e8a82d]">Render PNG Output</button>
                 <button type="button" role="menuitem" onClick={() => exportImage('jpeg')} disabled={!imageSrc} className="w-full text-left px-3 py-2 text-[11px] text-[#d7d1c5] hover:bg-[#1d1d1d] rounded-[3px] disabled:opacity-40 focus:outline-none focus:ring-1 focus:ring-[#e8a82d]">Render JPG Output</button>
                 <button type="button" role="menuitem" onClick={openSavePresetDialog} className="w-full text-left px-3 py-2 text-[11px] text-[#d7d1c5] hover:bg-[#1d1d1d] rounded-[3px] focus:outline-none focus:ring-1 focus:ring-[#e8a82d]">Save Specification Preset</button>
+                <button type="button" role="menuitem" onClick={() => importPresetInputRef.current?.click()} className="w-full text-left px-3 py-2 text-[11px] text-[#d7d1c5] hover:bg-[#1d1d1d] rounded-[3px] focus:outline-none focus:ring-1 focus:ring-[#e8a82d]">Import Preset Bundle</button>
+                <button type="button" role="menuitem" onClick={exportCustomPresets} className="w-full text-left px-3 py-2 text-[11px] text-[#d7d1c5] hover:bg-[#1d1d1d] rounded-[3px] focus:outline-none focus:ring-1 focus:ring-[#e8a82d]">Export Preset Bundle</button>
                 <button type="button" role="menuitem" onClick={handleRemoveImage} disabled={!imageSrc} className="w-full text-left px-3 py-2 text-[11px] text-[#d7d1c5] hover:bg-[#1d1d1d] rounded-[3px] disabled:opacity-40 focus:outline-none focus:ring-1 focus:ring-[#e8a82d]">Clear Working Image</button>
               </div>
             )}

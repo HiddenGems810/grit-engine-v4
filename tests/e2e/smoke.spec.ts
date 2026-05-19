@@ -1,4 +1,6 @@
 import { expect, test } from '@playwright/test';
+import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 
 test('initial workspace shell renders core controls before image import', async ({ page }) => {
@@ -96,4 +98,85 @@ test('user can save and delete a local custom preset', async ({ page }) => {
   await page.locator(`button[aria-label="Delete ${presetName}"]`).dispatchEvent('click');
   await page.getByRole('button', { name: 'Delete Preset' }).click();
   await expect(page.getByText(presetName)).toHaveCount(0);
+});
+
+test('custom preset bundles can be exported and imported with schema validation', async ({ page }) => {
+  await page.goto('/');
+  const presetName = `Bundle QA ${Date.now()}`;
+
+  await page.getByRole('button', { name: 'Save Specification Preset' }).click();
+  await page.getByPlaceholder('Example: Editorial Brass Portrait').fill(presetName);
+  await page.getByRole('button', { name: 'Save Preset' }).click();
+  await expect(page.getByText(presetName).first()).toBeVisible();
+
+  await page.getByRole('button', { name: /^file$/i }).click();
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('menuitem', { name: 'Export Preset Bundle' }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toContain('format-custom-presets');
+
+  await page.evaluate(() => localStorage.removeItem('format-custom-presets'));
+  await page.reload();
+  await expect(page.getByText(presetName)).toHaveCount(0);
+
+  const importedBundlePath = path.join(os.tmpdir(), `format-import-${Date.now()}.json`);
+  await fs.writeFile(importedBundlePath, JSON.stringify({
+    app: 'FORMAT',
+    schemaVersion: 2,
+    exportedAt: new Date().toISOString(),
+    presets: [{
+      id: `custom-${Date.now()}`,
+      name: presetName,
+      category: 'Custom Presets',
+      shadowCrush: 40,
+      midtones: 8,
+      highlights: 8,
+      saturation: 104,
+      hueShift: 0,
+      inkBleed: 8,
+      halation: 4,
+      grain: 12,
+      clarity: 10,
+      skinSmoothing: 4,
+      skinPolish: 10
+    }]
+  }));
+
+  await page.locator('input[accept="application/json,.json"]').setInputFiles(importedBundlePath);
+  await expect(page.getByText(presetName).first()).toBeVisible();
+});
+
+test('worker disabled mode still renders a material pass and exports', async ({ page }) => {
+  await page.goto('/?disableWorkers=1');
+  const imagePath = path.resolve(process.cwd(), 'test-image-to-use.png');
+  await page.locator('label').filter({ hasText: 'Upload Image to edit' }).locator('input[type="file"]').setInputFiles(imagePath);
+  await expect(page.getByRole('button', { name: 'Render Output' })).toBeEnabled({ timeout: 15_000 });
+
+  await page.getByRole('button', { name: /material finish/i }).click();
+  await page.getByLabel('Material Profile').selectOption('cold-press-paper');
+  await page.getByRole('spinbutton', { name: 'Material Strength' }).fill('24');
+
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Render Output' }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toMatch(/format-system-04.*\.jpeg$/);
+});
+
+test('browser can encode a 4096px export canvas without crashing', async ({ page }) => {
+  await page.goto('/');
+  const result = await page.evaluate(async () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 4096;
+    canvas.height = 4096;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return false;
+    ctx.fillStyle = '#181818';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#e8a82d';
+    ctx.fillRect(256, 256, 1024, 1024);
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.92));
+    return Boolean(blob && blob.size > 0);
+  });
+
+  expect(result).toBe(true);
 });

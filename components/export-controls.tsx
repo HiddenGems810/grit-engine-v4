@@ -7,6 +7,8 @@ import {
   UPSCALE_TUNING_PRESETS
 } from '@/lib/upscale/presets';
 import type { UpscaleContentProfile, UpscaleModePreset, UpscaleTuningPreset } from '@/lib/upscale/types';
+import { CREATOR_EXPORT_ASPECTS, type ExportAspectId, type ExportQualityInfo } from '@/lib/export-quality';
+import type { RenderFingerprint } from '@/lib/engine/render-fingerprint';
 
 type ExportControlsProps = {
   imageSrc: string | null;
@@ -34,6 +36,10 @@ type ExportControlsProps = {
   resetSpecificationStack: () => void;
   exportImage: (format: 'png' | 'jpeg') => void;
   isProcessing: boolean;
+  exportQualityInfo: ExportQualityInfo;
+  exportAspect: ExportAspectId;
+  setExportAspect: (value: ExportAspectId) => void;
+  renderFingerprint: RenderFingerprint | null;
 };
 
 export function ExportControls({
@@ -61,8 +67,16 @@ export function ExportControls({
   upscaleFallbackNotice,
   resetSpecificationStack,
   exportImage,
-  isProcessing
+  isProcessing,
+  exportQualityInfo,
+  exportAspect,
+  setExportAspect,
+  renderFingerprint
 }: ExportControlsProps) {
+  const formatDimensions = (dimensions: { width: number; height: number }) => (
+    dimensions.width > 0 && dimensions.height > 0 ? `${dimensions.width}x${dimensions.height}` : '--'
+  );
+
   return (
     <footer className="hidden lg:flex min-h-[48px] bg-[#222] border-t border-[#111] flex-wrap items-center justify-between gap-3 px-4 py-2 shrink-0 shadow-[0_-5px_15px_rgba(0,0,0,0.5)] z-20">
       <div className="text-[11px] text-[#aaa] font-mono tracking-tight flex items-center gap-3">
@@ -74,7 +88,35 @@ export function ExportControls({
         {upscaleFallbackNotice && '• Upscale fallback active'}
       </div>
 
-      <div className="flex items-center gap-6">
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="rounded-[4px] border border-[#3a3527] bg-[#181818] px-3 py-2 text-[10px] text-[#a9a196] min-w-[250px]" aria-label="Export Quality">
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <span className="uppercase tracking-[0.16em] text-[#d6a13a]">Export Quality</span>
+            <span className={exportQualityInfo.memoryState === 'safe' ? 'text-[#9fd18b]' : 'text-[#e0b15a]'}>
+              {exportQualityInfo.memoryState.toUpperCase()}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
+            <span>Source</span><span className="text-[#e2ddd3]">{formatDimensions(exportQualityInfo.sourceDimensions)}</span>
+            <span>Preview</span><span className="text-[#e2ddd3]">{formatDimensions(exportQualityInfo.previewDimensions)}</span>
+            <span>Base Export</span><span className="text-[#e2ddd3]">{formatDimensions(exportQualityInfo.baseExportDimensions)}</span>
+            <span>Upscaled</span><span className="text-[#e2ddd3]">{formatDimensions(exportQualityInfo.upscaledExportDimensions)}</span>
+          </div>
+          {exportQualityInfo.fallbackReason && <div className="mt-1 text-[#d6a13a]">{exportQualityInfo.fallbackReason}</div>}
+          {renderFingerprint && (
+            <div className="mt-1 truncate text-[#767066]" title={`Settings ${renderFingerprint.settingsHash} / Output ${renderFingerprint.outputHash ?? 'pending'}`}>
+              fp:{renderFingerprint.settingsHash}{renderFingerprint.outputHash ? `/${renderFingerprint.outputHash}` : ''}
+            </div>
+          )}
+        </div>
+
+        <label className="flex items-center gap-2 text-[11px] text-[#aaa]">
+          <span className="uppercase tracking-[0.12em]">Creator Export</span>
+          <select value={exportAspect} onChange={(event) => setExportAspect(event.target.value as ExportAspectId)} disabled={!imageSrc} className="h-7 rounded-[3px] border border-[#444] bg-[#101010] px-2 text-[11px] text-[#f2ede3] focus:border-[#e8a82d] focus:outline-none disabled:opacity-40">
+            {CREATOR_EXPORT_ASPECTS.map((aspect) => <option key={aspect.id} value={aspect.id}>{aspect.label}</option>)}
+          </select>
+        </label>
+
         <div className="hidden lg:flex items-center gap-3 rounded-[4px] border border-[#3a3527] bg-[#181818] px-3 py-2">
           <label className="flex items-center gap-2 text-[11px] uppercase tracking-[0.14em] text-[#d7d1c5]">
             <input type="checkbox" checked={upscaleEnabled} onChange={(event) => setUpscaleEnabled(event.target.checked)} disabled={!imageSrc} className="w-3.5 h-3.5 bg-[#141414] border-[#444] disabled:opacity-40" />

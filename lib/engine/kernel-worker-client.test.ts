@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createSyntheticKernelInput } from './pixel-kernels';
+import { createSyntheticKernelInput, runTypeScriptKernelById } from './pixel-kernels';
 import { createKernelWorkerClient } from './kernel-worker-client';
 
 class TestImageData {
@@ -55,6 +55,32 @@ class CrashWorker extends EchoWorker {
   }
 }
 
+class HangingWorker extends EchoWorker {
+  postMessage() {
+    // Intentionally never responds so the client timeout exercises fallback cleanup.
+  }
+}
+
+class TypeScriptKernelWorker extends EchoWorker {
+  postMessage(message: WorkerMessage, transfer: Transferable[]) {
+    this.transfers.push(transfer);
+    queueMicrotask(async () => {
+      const output = await runTypeScriptKernelById(
+        message.kernelId as 'ordered-dither',
+        message.input,
+        { strength: 80, outputBitDepth: 1 }
+      );
+      this.onmessage?.({
+        data: {
+          type: 'complete',
+          requestId: message.requestId,
+          output
+        }
+      } as MessageEvent);
+    });
+  }
+}
+
 describe('kernel worker client', () => {
   it('uses transferable buffers and returns worker output metadata', async () => {
     const worker = new EchoWorker();
@@ -105,5 +131,43 @@ describe('kernel worker client', () => {
     expect(result.meta.backend).toBe('typescript');
     expect(result.meta.fallbackUsed).toBe(true);
     expect(result.meta.warnings.join(' ')).toContain('worker crashed');
+  });
+
+  it('falls back to TypeScript when a Worker request times out', async () => {
+    const client = createKernelWorkerClient({ createWorker: () => new HangingWorker() as unknown as Worker });
+    const result = await client.runKernel({
+      requestId: 4,
+      kernelId: 'ordered-dither',
+      input: createSyntheticKernelInput(4, 4, 13),
+      settings: { strength: 80, outputBitDepth: 1 },
+      priority: 'export',
+      timeoutMs: 1
+    });
+
+    expect(result.output.width).toBe(4);
+    expect(result.output.height).toBe(4);
+    expect(result.meta.backend).toBe('typescript');
+    expect(result.meta.fallbackUsed).toBe(true);
+    expect(result.meta.warnings.join(' ')).toContain('timed out');
+  });
+
+  it('matches TypeScript fallback output for deterministic ordered dither', async () => {
+    const input = createSyntheticKernelInput(8, 8, 14);
+    const fallbackInput = {
+      ...input,
+      data: new Uint8ClampedArray(input.data)
+    };
+    const expected = await runTypeScriptKernelById('ordered-dither', fallbackInput, { strength: 80, outputBitDepth: 1 });
+    const client = createKernelWorkerClient({ createWorker: () => new TypeScriptKernelWorker() as unknown as Worker });
+    const result = await client.runKernel({
+      requestId: 5,
+      kernelId: 'ordered-dither',
+      input,
+      settings: { strength: 80, outputBitDepth: 1 },
+      priority: 'preview'
+    });
+
+    expect(result.meta.backend).toBe('worker');
+    expect(Array.from(result.output.data)).toEqual(Array.from(expected.data));
   });
 });

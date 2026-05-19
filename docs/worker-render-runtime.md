@@ -27,6 +27,7 @@ The app still keeps React, presets, UI state, import/export, privacy, and render
 - Fast preview jobs are lightly debounced to avoid queue growth while sliders move.
 - Worker errors, Worker absence, and Worker timeouts fall back to TypeScript.
 - Worker output is committed only if the render request is still current.
+- Worker fallback can be forced for QA with `?disableWorkers=1` or `localStorage.setItem('format-disable-workers', '1')`.
 
 ## Buffer Ownership
 
@@ -54,6 +55,8 @@ Measured in Chromium through the development app at `http://localhost:3001/`:
 | 512px | material noise | 13.10ms | 8.50ms | 0.70ms | Worker better |
 
 Interpretation: Worker isolation is justified for film emulsion and material noise at realistic preview sizes. Ordered dither and error diffusion are close at 512px, but Worker execution still protects UI responsiveness when the image is larger or chained inside the material stack.
+
+The public beta benchmark hook now profiles 1024px preview, 1600px preview, 4096px export, and a chained material stack case. See `docs/render-performance-profile.md` for the latest Chromium/WebKit/Firefox measurements.
 
 ## Halftone Rasterizer Plan
 

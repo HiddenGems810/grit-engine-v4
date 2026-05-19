@@ -24,6 +24,8 @@ type CanvasStageProps = {
   canvasDisplaySize: { width: number; height: number };
   selectedFaceIndex: number;
   setSelectedFaceIndex: (index: number) => void;
+  inspectorMode: 'off' | 'split' | 'loupe' | 'clipping' | 'texture';
+  setInspectorMode: (mode: 'off' | 'split' | 'loupe' | 'clipping' | 'texture') => void;
 };
 
 export function CanvasStage({
@@ -44,8 +46,18 @@ export function CanvasStage({
   sourceImageSize,
   canvasDisplaySize,
   selectedFaceIndex,
-  setSelectedFaceIndex
+  setSelectedFaceIndex,
+  inspectorMode,
+  setInspectorMode
 }: CanvasStageProps) {
+  const inspectorOptions = [
+    { id: 'off', label: 'Off' },
+    { id: 'split', label: 'Split' },
+    { id: 'loupe', label: 'Loupe' },
+    { id: 'clipping', label: 'Clip' },
+    { id: 'texture', label: 'Detail' }
+  ] as const;
+
   return (
     <main className={`min-w-0 flex-1 flex bg-[#181818] relative ${zoomLevel === 'FIT' ? 'items-center justify-center overflow-hidden' : 'items-start justify-start overflow-auto'} ${isFocusMode ? 'p-3' : 'p-4 md:p-8'}`}>
       {isFocusMode && imageSrc && (
@@ -97,6 +109,45 @@ export function CanvasStage({
               />
             )}
           </AnimatePresence>
+          <div className="absolute left-3 top-3 z-30 flex flex-wrap items-center gap-1 rounded-[4px] border border-[#3a3527] bg-[#111111]/92 px-2 py-1.5 shadow-[0_16px_36px_rgba(0,0,0,0.35)] backdrop-blur-sm">
+            <span className="mr-1 text-[9px] uppercase tracking-[0.18em] text-[#d6a13a]">Inspector</span>
+            {inspectorOptions.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => setInspectorMode(option.id)}
+                className={`h-6 rounded-sm border px-2 text-[10px] uppercase tracking-[0.12em] focus:outline-none focus:ring-1 focus:ring-[#e8a82d] ${inspectorMode === option.id ? 'border-[#e8a82d] bg-[#e8a82d] text-black' : 'border-[#444] bg-[#151515] text-[#aaa] hover:text-white'}`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+
+          {inspectorMode === 'split' && (
+            <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
+              <img src={imageSrc} alt="" className={`shadow-[0_0_80px_rgba(0,0,0,0.8)] ${zoomLevel === 'FIT' ? 'max-w-full max-h-[85vh] object-contain' : ''}`} style={{ clipPath: 'inset(0 50% 0 0)' }} />
+              <div className="absolute inset-y-8 left-1/2 w-px bg-[#e8a82d]" />
+              <div className="absolute bottom-4 left-4 rounded-[3px] border border-[#3a3527] bg-black/70 px-2 py-1 text-[9px] uppercase tracking-[0.16em] text-[#d6a13a]">Original / Finished Split</div>
+            </div>
+          )}
+
+          {inspectorMode === 'loupe' && (
+            <div className="pointer-events-none absolute right-4 top-16 z-20 h-28 w-28 rounded-full border border-[#e8a82d] bg-black/35 shadow-[0_18px_40px_rgba(0,0,0,0.5)]">
+              <div className="flex h-full w-full items-center justify-center rounded-full text-center text-[9px] uppercase tracking-[0.16em] text-[#f3efe6]">Zoom Loupe<br />Texture Check</div>
+            </div>
+          )}
+
+          {inspectorMode === 'clipping' && (
+            <div className="pointer-events-none absolute inset-0 z-20 border-2 border-red-500/70 mix-blend-screen">
+              <div className="absolute right-4 bottom-4 rounded-[3px] border border-red-500/50 bg-black/70 px-2 py-1 text-[9px] uppercase tracking-[0.16em] text-red-300">Clipping Overlay</div>
+            </div>
+          )}
+
+          {inspectorMode === 'texture' && (
+            <div className="pointer-events-none absolute inset-0 z-20 bg-[radial-gradient(circle_at_center,transparent_0,transparent_54%,rgba(232,168,45,0.16)_55%,transparent_56%)]">
+              <div className="absolute right-4 bottom-4 rounded-[3px] border border-[#3a3527] bg-black/70 px-2 py-1 text-[9px] uppercase tracking-[0.16em] text-[#d6a13a]">Texture / Detail Inspector</div>
+            </div>
+          )}
 
           {showFaceTargets && portraitGuides.length > 0 && sourceImageSize.width > 0 && sourceImageSize.height > 0 && canvasDisplaySize.width > 0 && canvasDisplaySize.height > 0 && (
             <div className="absolute inset-0 z-20 pointer-events-none flex items-center justify-center">

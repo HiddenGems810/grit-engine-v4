@@ -39,14 +39,13 @@ It records:
 - WASM candidacy
 - backend recommendation
 
-Default sizes:
+Default browser sizes:
 
-- 512px preview
 - 1024px preview
 - 1600px preview
-- 2048px export
+- 4096px export
 
-4096px export should be profiled manually on capable hardware only because it can create avoidable local memory pressure.
+The browser benchmark hook is exposed only in development or when the app is opened with `?bench=1`.
 
 ## Initial Diagnosis
 
@@ -112,3 +111,47 @@ After adding the Worker runtime, Chromium profiling through the development app 
 | 512px browser preview | material-noise | 13.10ms | 8.50ms | 0.70ms | Worker better |
 
 Interpretation: Worker isolation is already valuable for the film emulsion and material noise kernels. C++/WASM is still not justified because the Worker path removes main-thread blocking without introducing native build complexity.
+
+## Public Beta Browser Benchmark Snapshot
+
+Command profile:
+
+- Built production app with `npm run build`.
+- Prepared standalone assets with `npm run prepare:e2e`.
+- Ran the benchmark hook at `http://127.0.0.1:3101/?bench=1` in Chromium, WebKit, and Firefox.
+
+Representative timings:
+
+| Browser | Size | Kernel | Main Thread TS | Worker TS | Transfer / Scheduling | Memory |
+| --- | --- | --- | ---: | ---: | ---: | --- |
+| Chromium | 1024px preview | film-emulsion | 125.20ms | 59.00ms | 1.70ms | low |
+| Chromium | 1600px preview | material-noise | 63.70ms | 58.90ms | 3.30ms | low |
+| Chromium | 4096px export | film-emulsion | 2025.80ms | 2095.10ms | 25.70ms | medium |
+| WebKit | 1600px preview | film-emulsion | 316.00ms | 316.00ms | 3.00ms | low |
+| WebKit | 4096px export | material-noise | 664.00ms | 652.00ms | 14.00ms | medium |
+| Firefox | 1600px preview | error-diffusion | 126.00ms | 68.00ms | 7.00ms | low |
+| Firefox | 1600px preview | material-noise | 102.00ms | 51.00ms | 3.00ms | low |
+| Firefox | 4096px export | film-emulsion | 1497.00ms | 1244.00ms | 15.00ms | medium |
+| Firefox | 4096px export | material-noise | 665.00ms | 327.00ms | 14.00ms | medium |
+
+Chained material stack timings:
+
+| Browser | Size | Main Thread TS | Worker Final Kernel | Transfer / Scheduling | Memory |
+| --- | --- | ---: | ---: | ---: | --- |
+| Chromium | 1024px preview | 229.80ms | 55.10ms | 202.70ms | low |
+| Chromium | 1600px preview | 689.30ms | 130.30ms | 518.10ms | low |
+| Chromium | 4096px export | 4228.30ms | 738.80ms | 3096.50ms | medium |
+| WebKit | 1024px preview | 208.00ms | 35.00ms | 168.00ms | low |
+| WebKit | 1600px preview | 501.00ms | 86.00ms | 420.00ms | low |
+| WebKit | 4096px export | 3819.00ms | 552.00ms | 2772.00ms | medium |
+| Firefox | 1024px preview | 152.00ms | 21.00ms | 117.00ms | low |
+| Firefox | 1600px preview | 376.00ms | 48.00ms | 299.00ms | low |
+| Firefox | 4096px export | 1888.00ms | 320.00ms | 1904.00ms | medium |
+
+Interpretation:
+
+- Worker execution is still the right public-beta default because it protects editor responsiveness even when raw elapsed time is similar.
+- Chained stack transfer/scheduling cost is intentionally visible in the table; even when wall-clock totals are similar, the heavy work is no longer monopolizing the editor thread.
+- Chromium and WebKit export-sized film/material kernels remain future WASM candidates, but only after a single-kernel proof beats Worker TypeScript with the same fallback behavior.
+- Firefox shows the strongest Worker runtime gains for material noise and film emulsion.
+- 4096px export is safe in the smoke path but remains medium memory risk.

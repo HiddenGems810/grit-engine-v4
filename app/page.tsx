@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback, type ChangeEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Sliders, Box, RefreshCw, 
@@ -75,6 +75,9 @@ import {
 import { applyColorPipeline } from '@/lib/engine/color-pipeline';
 import { applyFilmHalation, applyLightLeaks, applyPrismEdgeBlur } from '@/lib/engine/light-effects';
 import { applyGradientMap, applyThresholdBitmap, applyHalftone, applyChromaticAberration, applyScanlines } from '@/lib/engine/retro-effects';
+import { computeAspectCrop, computeExportQualityInfo, type ExportAspectId } from '@/lib/export-quality';
+import { createRenderFingerprint, type RenderFingerprint } from '@/lib/engine/render-fingerprint';
+import { mergeCustomPresets, parseCustomPresetBundle, serializeCustomPresetBundle } from '@/lib/custom-presets';
 
 export default function FormatWorkspace() {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
@@ -177,8 +180,7 @@ export default function FormatWorkspace() {
     try {
       const storedPresets = window.localStorage.getItem(CUSTOM_PRESET_STORAGE_KEY);
       if (!storedPresets) return [];
-      const parsedPresets = JSON.parse(storedPresets);
-      return Array.isArray(parsedPresets) ? parsedPresets as Preset[] : [];
+      return parseCustomPresetBundle(storedPresets).presets;
     } catch (error) {
       console.warn('Unable to load local custom presets.', error);
       return [];
@@ -203,6 +205,7 @@ export default function FormatWorkspace() {
   const histRef = useRef<HTMLCanvasElement>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const importPresetInputRef = useRef<HTMLInputElement>(null);
   const historyManagerRef = useRef(new HistoryManager());
   const snapshotSyncRef = useRef<EngineSnapshot | null>(null);
   const skipHistoryRef = useRef(false);
@@ -213,6 +216,9 @@ export default function FormatWorkspace() {
   const kernelSchedulerRef = useRef<KernelScheduler | null>(null);
   const sliderInteractionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [canvasDisplaySize, setCanvasDisplaySize] = useState({ width: 0, height: 0 });
+  const [exportAspect, setExportAspect] = useState<ExportAspectId>('original');
+  const [renderFingerprint, setRenderFingerprint] = useState<RenderFingerprint | null>(null);
+  const [inspectorMode, setInspectorMode] = useState<'off' | 'split' | 'loupe' | 'clipping' | 'texture'>('off');
 
   const syncCanvasDisplaySize = useCallback(() => {
     if (!canvasRef.current) return;
@@ -234,15 +240,16 @@ export default function FormatWorkspace() {
   }, []);
 
   useEffect(() => {
-    if (process.env.NODE_ENV === 'production') return;
+    if (process.env.NODE_ENV === 'production' && !window.location.search.includes('bench=1')) return;
     const benchmarkWindow = window as Window & {
       __FORMAT_RENDER_BENCHMARKS__?: () => Promise<unknown>;
     };
     benchmarkWindow.__FORMAT_RENDER_BENCHMARKS__ = async () => {
       const { runBrowserRenderBenchmarks } = await import('@/lib/bench/browser-render-benchmarks');
       return runBrowserRenderBenchmarks([
-        { label: '256px browser preview', width: 256, height: 256 },
-        { label: '512px browser preview', width: 512, height: 512 }
+        { label: '1024px preview', width: 1024, height: 1024 },
+        { label: '1600px preview', width: 1600, height: 1600 },
+        { label: '4096px export', width: 4096, height: 4096 }
       ]);
     };
 
@@ -364,18 +371,59 @@ export default function FormatWorkspace() {
     setUpscaleTuningPreset('custom');
   };
 
+  const exportQualityInfo = useMemo(() => {
+    const currentRenderDimensions = renderFingerprint?.renderDimensions ?? { width: 0, height: 0 };
+    const baseDimensions = currentRenderDimensions.width > 0 && currentRenderDimensions.height > 0
+      ? computeAspectCrop(currentRenderDimensions.width, currentRenderDimensions.height, exportAspect)
+      : { width: sourceImageSize.width, height: sourceImageSize.height };
+
+    return computeExportQualityInfo({
+      sourceDimensions: sourceImageSize,
+      previewDimensions: currentRenderDimensions,
+      baseExportDimensions: {
+        width: baseDimensions.width,
+        height: baseDimensions.height
+      },
+      upscaleEnabled,
+      upscaleScaleFactor
+    });
+  }, [exportAspect, renderFingerprint, sourceImageSize, upscaleEnabled, upscaleScaleFactor]);
+
   const buildExportCanvas = async () => {
     const exportRenderSurface = await renderForExportRef.current?.();
     const renderSurface = exportRenderSurface ?? renderSurfaceRef.current;
     if (!renderSurface) return null;
 
+    const crop = computeAspectCrop(renderSurface.width, renderSurface.height, exportAspect);
+    const baseCanvas = exportAspect === 'original'
+      ? renderSurface
+      : (() => {
+          const cropped = document.createElement('canvas');
+          cropped.width = crop.width;
+          cropped.height = crop.height;
+          const croppedCtx = cropped.getContext('2d', { willReadFrequently: true });
+          if (!croppedCtx) return renderSurface;
+          croppedCtx.drawImage(
+            renderSurface,
+            crop.sx,
+            crop.sy,
+            crop.sw,
+            crop.sh,
+            0,
+            0,
+            crop.width,
+            crop.height
+          );
+          return cropped;
+        })();
+
     if (!upscaleEnabled) {
-      return renderSurface;
+      return baseCanvas;
     }
 
     const memoryCheck = validateUpscaleMemoryBudget({
-      width: renderSurface.width,
-      height: renderSurface.height,
+      width: baseCanvas.width,
+      height: baseCanvas.height,
       scaleFactor: upscaleSettings.scaleFactor,
       limitBytes: EXPORT_UPSCALE_MEMORY_LIMIT_BYTES
     });
@@ -383,17 +431,17 @@ export default function FormatWorkspace() {
     if (!memoryCheck.ok) {
       setUpscaleFallbackNotice(true);
       setWorkspaceNotice(`${memoryCheck.reason} Exported the stable base render instead.`);
-      return renderSurface;
+      return baseCanvas;
     }
 
     try {
       const { upscaleCanvas } = await import('@/lib/upscale/engine');
       setUpscaleFallbackNotice(false);
-      return await upscaleCanvas(renderSurface, upscaleSettings);
+      return await upscaleCanvas(baseCanvas, upscaleSettings);
     } catch (error) {
       console.warn('Export upscale failed, using base render.', error);
       setUpscaleFallbackNotice(true);
-      return renderSurface;
+      return baseCanvas;
     }
   };
 
@@ -606,6 +654,68 @@ export default function FormatWorkspace() {
     setArtifactRemoval(clampPortraitControlValue('artifactRemoval', Math.max(artifactRemoval, 8)));
   };
 
+  const applyAntiAiSlopRepair = () => {
+    pendingHistoryMetaRef.current = {
+      label: 'Anti-AI repair applied',
+      detail: 'Texture recovery, fake sharpness reduction, and identity-safe skin protection'
+    };
+    setShadowCrush(38);
+    setMidtones(10);
+    setHighlights(8);
+    setSaturation(102);
+    setHueShift(0);
+    setInkBleed(8);
+    setClarity(10);
+    setArtifactRemoval(clampPortraitControlValue('artifactRemoval', 26));
+    setSkinSmoothing(clampPortraitControlValue('skinSmoothing', 8));
+    setSkinPolish(clampPortraitControlValue('skinPolish', 18));
+    setBeautyBoost(clampPortraitControlValue('beautyBoost', 16));
+    setEyeBrightening(clampPortraitControlValue('eyeBrightening', 8));
+    setFaceSlimming(0);
+    setAgeShift(0);
+    setGrain(18);
+    setHalation(7);
+    setMaterialProfile('matte-photo-paper');
+    setMaterialStrength(28);
+    setPrintProfile('none');
+    setPaperSurface('matte-photo-paper');
+    setFilmProfile('fine-35mm');
+    setOpticalProfile('glass-diffusion');
+    setMaterialFaceProtection(true);
+    setMaterialEdgeProtection(true);
+    setWorkspaceNotice('Anti-AI Slop Repair applied with face identity protection.');
+  };
+
+  const applyPhotographedStack = () => {
+    pendingHistoryMetaRef.current = {
+      label: 'Photographed stack applied',
+      detail: 'Subtle grain, halation, lens softness, and physical finish'
+    };
+    setShadowCrush(42);
+    setMidtones(8);
+    setHighlights(10);
+    setSaturation(106);
+    setHueShift(0);
+    setInkBleed(7);
+    setClarity(14);
+    setArtifactRemoval(clampPortraitControlValue('artifactRemoval', 10));
+    setSkinSmoothing(clampPortraitControlValue('skinSmoothing', 6));
+    setSkinPolish(clampPortraitControlValue('skinPolish', 14));
+    setBeautyBoost(clampPortraitControlValue('beautyBoost', 12));
+    setGrain(22);
+    setHalation(10);
+    setVignette(8);
+    setMaterialProfile('matte-photo-paper');
+    setMaterialStrength(22);
+    setPrintProfile('none');
+    setPaperSurface('matte-photo-paper');
+    setFilmProfile('fine-35mm');
+    setOpticalProfile('pro-mist');
+    setMaterialFaceProtection(true);
+    setMaterialEdgeProtection(true);
+    setWorkspaceNotice('Make It Look Photographed stack applied.');
+  };
+
   const saveCustomPreset = () => {
     const trimmedName = presetName.trim();
     if (!trimmedName) return;
@@ -618,7 +728,7 @@ export default function FormatWorkspace() {
     ];
 
     setCustomPresets(nextCustomPresets);
-    localStorage.setItem(CUSTOM_PRESET_STORAGE_KEY, JSON.stringify(nextCustomPresets));
+    localStorage.setItem(CUSTOM_PRESET_STORAGE_KEY, serializeCustomPresetBundle(nextCustomPresets));
     setActiveCategory(CUSTOM_PRESET_CATEGORY);
     closeSavePresetDialog();
   };
@@ -644,7 +754,47 @@ export default function FormatWorkspace() {
       return;
     }
 
-    localStorage.setItem(CUSTOM_PRESET_STORAGE_KEY, JSON.stringify(nextCustomPresets));
+    localStorage.setItem(CUSTOM_PRESET_STORAGE_KEY, serializeCustomPresetBundle(nextCustomPresets));
+  };
+
+  const exportCustomPresets = () => {
+    setActiveMenu(null);
+    if (customPresets.length === 0) {
+      setWorkspaceNotice('No custom preset bundle to export yet.');
+      return;
+    }
+
+    const blob = new Blob([serializeCustomPresetBundle(customPresets)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `format-custom-presets-v${Date.now()}.json`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const handlePresetBundleImport = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.currentTarget.value = '';
+    setActiveMenu(null);
+    if (!file) return;
+
+    try {
+      const parsed = parseCustomPresetBundle(await file.text());
+      const nextCustomPresets = mergeCustomPresets(customPresets, parsed.presets);
+      setCustomPresets(nextCustomPresets);
+      localStorage.setItem(CUSTOM_PRESET_STORAGE_KEY, serializeCustomPresetBundle(nextCustomPresets));
+      setActiveCategory(CUSTOM_PRESET_CATEGORY);
+      const warningText = parsed.warning ? ` ${parsed.warning}` : '';
+      setWorkspaceNotice(
+        `Imported ${parsed.presets.length} preset${parsed.presets.length === 1 ? '' : 's'}.${warningText}`
+      );
+    } catch (error) {
+      console.warn('Preset bundle import failed.', error);
+      setWorkspaceNotice(error instanceof Error ? error.message : 'Preset bundle import failed.');
+    }
   };
 
   const { exportImage, handleImageUpload, handleRemoveImage } = useImageWorkspace({
@@ -1080,8 +1230,29 @@ export default function FormatWorkspace() {
       setRenderRevision((value) => value + 1);
     }
 
+    try {
+      const outputData = committedCtx.getImageData(0, 0, committedCanvas.width, committedCanvas.height).data;
+      setRenderFingerprint(createRenderFingerprint({
+        sourceDimensions: sourceImageSize,
+        renderDimensions: { width: committedCanvas.width, height: committedCanvas.height },
+        snapshot: createSnapshot(),
+        deterministicSeed,
+        outputData
+      }));
+    } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.debug('Render fingerprint output hash unavailable.', error);
+      }
+      setRenderFingerprint(createRenderFingerprint({
+        sourceDimensions: sourceImageSize,
+        renderDimensions: { width: committedCanvas.width, height: committedCanvas.height },
+        snapshot: createSnapshot(),
+        deterministicSeed
+      }));
+    }
+
     return committedCanvas;
-  }, [imageReady, portraitGuide, skinSmoothing, glowUp, faceSlimming, blemishRemoval, expressionLift, beautyBoost, ageShift, eyeBrightening, jawDefinition, skinPolish, teethWhitening, makeupStrength, artifactRemoval, clarity, isSliderInteracting, inkBleed, shadowCrush, midtones, highlights, activeLUT, grain, threshold, saturation, hueShift, halation, chromaOffset, monochrome, halftone, scanlines, vignette, lightLeak, lightLeakStyle, gradientMap, prismBlur, colorKnockout, textureType, textureIntensity, dustAndScratches, sparkles, camcorderOSD, materialProfile, materialStrength, printProfile, paperSurface, filmProfile, opticalProfile, materialFaceProtection, materialEdgeProtection]);
+  }, [imageReady, portraitGuide, skinSmoothing, glowUp, faceSlimming, blemishRemoval, expressionLift, beautyBoost, ageShift, eyeBrightening, jawDefinition, skinPolish, teethWhitening, makeupStrength, artifactRemoval, clarity, isSliderInteracting, inkBleed, shadowCrush, midtones, highlights, activeLUT, grain, threshold, saturation, hueShift, halation, chromaOffset, monochrome, halftone, scanlines, vignette, lightLeak, lightLeakStyle, gradientMap, prismBlur, colorKnockout, textureType, textureIntensity, dustAndScratches, sparkles, camcorderOSD, materialProfile, materialStrength, printProfile, paperSurface, filmProfile, opticalProfile, materialFaceProtection, materialEdgeProtection, sourceImageSize, createSnapshot]);
 
   useEffect(() => {
     renderForExportRef.current = () => renderCanvas('export');
@@ -1213,6 +1384,8 @@ export default function FormatWorkspace() {
         imageSrc={imageSrc}
         exportImage={exportImage}
         openSavePresetDialog={openSavePresetDialog}
+        exportCustomPresets={exportCustomPresets}
+        importPresetInputRef={importPresetInputRef}
         handleRemoveImage={handleRemoveImage}
         handleUndo={handleUndo}
         handleRedo={handleRedo}
@@ -1270,6 +1443,8 @@ export default function FormatWorkspace() {
           canvasDisplaySize={canvasDisplaySize}
           selectedFaceIndex={selectedFaceIndex}
           setSelectedFaceIndex={setSelectedFaceIndex}
+          inspectorMode={inspectorMode}
+          setInspectorMode={setInspectorMode}
         />
 
          {/* RIGHT SIDEBAR: Controls */}
@@ -1595,6 +1770,23 @@ export default function FormatWorkspace() {
                         )}
                       </div>
 
+                      <div className="grid grid-cols-1 gap-2">
+                        <button
+                          type="button"
+                          onClick={applyAntiAiSlopRepair}
+                          className="w-full rounded-[3px] border border-[#5a4823] bg-[#1a1711] px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-[#f3e6c4] transition-colors hover:border-[#e8a82d] hover:bg-[#252016] hover:text-[#e8a82d] focus:outline-none focus:ring-1 focus:ring-[#e8a82d]"
+                        >
+                          Anti-AI Slop Repair
+                        </button>
+                        <button
+                          type="button"
+                          onClick={applyPhotographedStack}
+                          className="w-full rounded-[3px] border border-[#444] bg-[#151515] px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-[#d7d1c5] transition-colors hover:border-[#e8a82d] hover:bg-[#222] hover:text-white focus:outline-none focus:ring-1 focus:ring-[#e8a82d]"
+                        >
+                          Make It Look Photographed
+                        </button>
+                      </div>
+
                       {portraitGuide && (
                         <>
                           <button 
@@ -1880,7 +2072,7 @@ export default function FormatWorkspace() {
 
                       <div className="flex flex-col gap-1.5">
                         <span className="text-[11px] text-[#aaa] font-medium uppercase tracking-[0.12em]">Material Profile</span>
-                        <select value={materialProfile} onChange={(event) => setMaterialProfile(event.target.value)} className="w-full bg-[#141414] border border-[#444] text-white text-[12px] p-2 rounded-[3px] focus:outline-none focus:border-[#e8a82d]">
+                        <select aria-label="Material Profile" value={materialProfile} onChange={(event) => setMaterialProfile(event.target.value)} className="w-full bg-[#141414] border border-[#444] text-white text-[12px] p-2 rounded-[3px] focus:outline-none focus:border-[#e8a82d]">
                           {MATERIAL_PRESETS.map((material) => <option key={material.id} value={material.id}>{material.name}</option>)}
                         </select>
                       </div>
@@ -2084,10 +2276,15 @@ export default function FormatWorkspace() {
           resetSpecificationStack={resetSpecificationStack}
           exportImage={exportImage}
           isProcessing={isProcessing}
+          exportQualityInfo={exportQualityInfo}
+          exportAspect={exportAspect}
+          setExportAspect={setExportAspect}
+          renderFingerprint={renderFingerprint}
         />
       )}
 
       <input ref={fileInputRef} type="file" className="hidden" accept="image/jpeg,image/png,image/webp" onChange={handleImageUpload} onInput={handleImageUpload} />
+      <input ref={importPresetInputRef} type="file" className="hidden" accept="application/json,.json" onChange={handlePresetBundleImport} />
 
       <AnimatePresence>
         {helpOpen && (
