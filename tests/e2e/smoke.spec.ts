@@ -269,6 +269,28 @@ test('surface texture options and Y2K star filter render without export failure'
   expect(download.suggestedFilename()).toMatch(/format-system-04.*\.jpeg$/);
 });
 
+test('disposable flash film effect applies and exports as jpeg with workers disabled', async ({ page }) => {
+  await page.goto('/?disableWorkers=1');
+  const imagePath = path.resolve(process.cwd(), 'test-image-to-use.png');
+  await page.locator('label').filter({ hasText: 'Upload Image to edit' }).locator('input[type="file"]').setInputFiles(imagePath);
+  await expect(page.getByRole('button', { name: 'Render Output' })).toBeEnabled({ timeout: 15_000 });
+
+  const effectsLab = page.getByLabel('Effects Lab');
+  await expect(effectsLab.getByText('Premium Effects Lab')).toBeVisible();
+  await effectsLab.getByRole('button', { name: /FORMAT Instant Flash/i }).click();
+  await expect(effectsLab.getByText('FORMAT Instant Flash').first()).toBeVisible();
+
+  await effectsLab.getByRole('spinbutton', { name: 'Flash Strength' }).fill('84');
+  await effectsLab.getByRole('spinbutton', { name: 'Warm Light Leak' }).fill('52');
+  await effectsLab.getByRole('spinbutton', { name: 'Dust & Scratches' }).fill('44');
+  await effectsLab.getByLabel('Date Stamp').check();
+
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Render Output' }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toMatch(/format-system-04.*\.jpeg$/);
+});
+
 test('browser can encode a 4096px export canvas without crashing', async ({ page, browserName }) => {
   test.skip(
     browserName === 'webkit',

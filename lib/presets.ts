@@ -1,5 +1,7 @@
 import { normalizeTextureId } from '@/lib/textures';
 import type { FilmProfile, OpticalProfile, PaperSurface, PrintMode } from '@/lib/materials/material-types';
+import type { FormatEffectFamilySelection } from '@/lib/effects/effect-types';
+import { getEffectPreset } from '@/lib/effects/effect-registry';
 
 export type PresetFamily =
   | 'signature'
@@ -48,6 +50,21 @@ export interface Preset {
   opticalProfile?: OpticalProfile;
   materialFaceProtection?: boolean;
   materialEdgeProtection?: boolean;
+  effectFamily?: FormatEffectFamilySelection;
+  effectPreset?: string;
+  effectIntensity?: number;
+  disposableFlashStrength?: number;
+  disposableFlashFalloff?: number;
+  disposableWarmLightLeak?: number;
+  disposableRedEdgeBurn?: number;
+  disposableCyanShadowCast?: number;
+  disposableFilmGrain?: number;
+  disposableDustAndScratches?: number;
+  disposablePlasticLensSoftness?: number;
+  disposableChromaticFringing?: number;
+  disposableVignette?: number;
+  disposableDateStamp?: boolean;
+  disposablePrintFrame?: boolean;
   inkBleed: number;
   shadowCrush: number;
   midtones?: number;
@@ -195,7 +212,22 @@ const basePreset = {
   printProfile: 'none' as PrintMode,
   paperSurface: 'none' as PaperSurface,
   filmProfile: 'none' as FilmProfile,
-  opticalProfile: 'none' as OpticalProfile
+  opticalProfile: 'none' as OpticalProfile,
+  effectFamily: 'none' as FormatEffectFamilySelection,
+  effectPreset: 'none',
+  effectIntensity: 0,
+  disposableFlashStrength: 0,
+  disposableFlashFalloff: 0,
+  disposableWarmLightLeak: 0,
+  disposableRedEdgeBurn: 0,
+  disposableCyanShadowCast: 0,
+  disposableFilmGrain: 0,
+  disposableDustAndScratches: 0,
+  disposablePlasticLensSoftness: 0,
+  disposableChromaticFringing: 0,
+  disposableVignette: 0,
+  disposableDateStamp: false,
+  disposablePrintFrame: false
 };
 
 const p = (preset: PresetInput): Preset => ({
@@ -381,6 +413,30 @@ const experimental = (id: string, name: string, overrides: Partial<PresetInput>)
   ...overrides
 });
 
+const disposableEffectRecipe = (effectPresetId: string): Partial<PresetInput> => {
+  const effectPreset = getEffectPreset(effectPresetId);
+  if (!effectPreset) return {};
+  const values = effectPreset.settings;
+
+  return {
+    effectFamily: effectPreset.family,
+    effectPreset: effectPreset.id,
+    effectIntensity: 100,
+    disposableFlashStrength: values.flashStrength,
+    disposableFlashFalloff: values.flashFalloff,
+    disposableWarmLightLeak: values.warmLightLeak,
+    disposableRedEdgeBurn: values.redEdgeBurn,
+    disposableCyanShadowCast: values.cyanShadowCast,
+    disposableFilmGrain: values.filmGrain,
+    disposableDustAndScratches: values.dustAndScratches,
+    disposablePlasticLensSoftness: values.plasticLensSoftness,
+    disposableChromaticFringing: values.chromaticFringing,
+    disposableVignette: values.vignette,
+    disposableDateStamp: values.dateStamp,
+    disposablePrintFrame: values.printFrame
+  };
+};
+
 const RAW_PRESETS: Preset[] = [
   signature('sig-format-clean', 'FORMAT Clean', { shadowCrush: 20, midtones: 12, highlights: 8, saturation: 104, clarity: 12, skinSmoothing: 4, skinPolish: 8, blemishRemoval: 6, activeLUT: 'clean-luxe', oneClickScore: 96, commercialScore: 94, viralScore: 88, description: 'The default finished look: clean contrast, believable skin, and polished creator color.' }),
   signature('sig-creator-glow', 'Creator Glow', { shadowCrush: 18, midtones: 14, highlights: 10, saturation: 108, halation: 8, glowUp: 12, skinSmoothing: 8, beautyBoost: 16, skinPolish: 14, eyeBrightening: 8, previewTone: 'soft', viralScore: 94, materialProfile: 'fine-35mm-grain', materialStrength: 14, filmProfile: 'clean-analog', opticalProfile: 'lens-bloom' }),
@@ -408,7 +464,13 @@ const RAW_PRESETS: Preset[] = [
 
   film('film-portra-warmth', 'Portra Warmth', { shadowCrush: 30, midtones: 8, highlights: 7, saturation: 106, hueShift: 7, grain: 16, halation: 10, activeLUT: 'portra-soft', oneClickScore: 88, materialProfile: 'fine-35mm-grain', materialStrength: 24, filmProfile: 'fine-35mm', opticalProfile: 'pro-mist' }),
   film('film-fuji-green-life', 'Fuji Green Life', { shadowCrush: 28, midtones: 7, highlights: 8, saturation: 108, hueShift: -8, grain: 14, halation: 8, activeLUT: 'lark', previewTone: 'cool' }),
-  film('film-disposable-flash', 'Disposable Flash', { shadowCrush: 44, midtones: 7, highlights: 12, saturation: 116, grain: 28, halation: 16, lightLeak: 14, chromaOffset: 4, intensity: 'bold', materialProfile: 'pushed-35mm-grain', materialStrength: 34, filmProfile: 'disposable-flash', opticalProfile: 'lens-bloom' }),
+  film('film-disposable-flash', 'Disposable Flash', { shadowCrush: 44, midtones: 7, highlights: 12, saturation: 116, grain: 28, halation: 16, lightLeak: 14, chromaOffset: 4, intensity: 'bold', materialProfile: 'pushed-35mm-grain', materialStrength: 34, filmProfile: 'disposable-flash', opticalProfile: 'lens-bloom', ...disposableEffectRecipe('dff-format-instant-flash') }),
+  film('film-format-instant-flash', 'FORMAT Instant Flash', { shadowCrush: 34, midtones: 9, highlights: 14, saturation: 110, hueShift: -4, grain: 24, halation: 18, lightLeak: 16, chromaOffset: 4, intensity: 'bold', subjectBias: 'night', previewTone: 'film', oneClickScore: 88, viralScore: 90, bestFor: ['nightlife portraits', 'party photos', 'creator flash edits'], materialProfile: 'pushed-35mm-grain', materialStrength: 32, filmProfile: 'disposable-flash', opticalProfile: 'lens-bloom', ...disposableEffectRecipe('dff-format-instant-flash') }),
+  film('film-nightlife-memory-flash', 'Nightlife Memory Flash', { skinSafe: false, shadowCrush: 42, midtones: 8, highlights: 15, saturation: 112, hueShift: -6, grain: 34, halation: 20, lightLeak: 20, chromaOffset: 5, dustAndScratches: 18, intensity: 'bold', subjectBias: 'night', viralScore: 92, bestFor: ['club photos', 'night-out sets', 'candid flash'], materialProfile: 'pushed-35mm-grain', materialStrength: 42, filmProfile: 'disposable-flash', opticalProfile: 'film-burn', ...disposableEffectRecipe('dff-nightlife-memory') }),
+  film('film-red-leak-party-frame', 'Red Leak Party Frame', { skinSafe: false, shadowCrush: 38, midtones: 7, highlights: 13, saturation: 118, hueShift: 6, grain: 30, halation: 16, lightLeak: 42, chromaOffset: 5, dustAndScratches: 20, intensity: 'bold', previewTone: 'warm', subjectBias: 'night', bestFor: ['party flyers', 'warm nightlife edits', 'flash film sets'], materialProfile: 'pushed-35mm-grain', materialStrength: 36, filmProfile: 'expired-film', opticalProfile: 'film-burn', ...disposableEffectRecipe('dff-red-leak-party') }),
+  film('film-cyan-shadow-cheap-flash', 'Cyan Shadow Cheap Flash', { skinSafe: false, shadowCrush: 36, midtones: 8, highlights: 13, saturation: 106, hueShift: -12, grain: 28, halation: 14, lightLeak: 10, chromaOffset: 6, intensity: 'bold', previewTone: 'cool', subjectBias: 'night', bestFor: ['street flash', 'cool party photos', 'night portraits'], materialProfile: 'pushed-35mm-grain', materialStrength: 34, filmProfile: 'disposable-flash', opticalProfile: 'lens-bloom', ...disposableEffectRecipe('dff-cyan-shadow-party') }),
+  film('film-instant-border-date-flash', 'Instant Border Date Flash', { shadowCrush: 28, midtones: 10, highlights: 12, saturation: 102, hueShift: 3, grain: 20, halation: 14, lightLeak: 14, chromaOffset: 3, intensity: 'bold', subjectBias: 'general', previewTone: 'soft', oneClickScore: 86, bestFor: ['memory edits', 'social recaps', 'instant print looks'], materialProfile: 'matte-photo-paper', materialStrength: 24, paperSurface: 'matte-photo-paper', filmProfile: 'disposable-flash', opticalProfile: 'glass-diffusion', ...disposableEffectRecipe('dff-print-border-date') }),
+  film('film-soft-plastic-lens-flash', 'Soft Plastic Lens Flash', { shadowCrush: 20, midtones: 12, highlights: 10, saturation: 100, hueShift: 2, grain: 16, halation: 12, lightLeak: 8, chromaOffset: 2, previewTone: 'soft', bestFor: ['portrait flash', 'soft party photos', 'warm lifestyle memories'], materialProfile: 'fine-35mm-grain', materialStrength: 20, filmProfile: 'disposable-flash', opticalProfile: 'glass-diffusion', ...disposableEffectRecipe('dff-soft-plastic-lens') }),
   film('film-expired-soft', 'Expired Film Soft', { shadowCrush: 24, midtones: 12, highlights: 8, saturation: 88, hueShift: 10, grain: 26, halation: 12, dustAndScratches: 10, previewTone: 'soft' }),
   film('film-super8-warmth', 'Super 8 Warmth', { shadowCrush: 42, midtones: 6, highlights: 7, saturation: 104, hueShift: 12, grain: 34, halation: 18, vignette: 24, dustAndScratches: 18, skinSafe: false }),
   film('film-silver-gelatin', 'Silver Gelatin', { shadowCrush: 46, midtones: 2, highlights: 8, saturation: 0, monochrome: true, grain: 26, halation: 6, clarity: 16, previewTone: 'mono' }),

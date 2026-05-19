@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { PRESET_CATEGORIES, PRESETS, type PresetFamily, type PresetIntensity, type PresetSubjectBias, type PresetTier, type PresetTone } from '@/lib/presets';
 import { isKnownTextureId, normalizeTextureId } from '@/lib/textures';
 import { MATERIAL_PRESET_MAP } from '@/lib/materials/material-registry';
+import { getEffectFamily, getEffectPreset } from '@/lib/effects/effect-registry';
 
 const families: PresetFamily[] = ['signature', 'portrait', 'film', 'social', 'cinematic', 'product', 'graphic', 'experimental'];
 const tiers: PresetTier[] = ['hero', 'standard', 'pro', 'experimental'];
@@ -140,5 +141,22 @@ describe('premium preset library', () => {
     expect(invalidMaterials).toEqual([]);
     expect(unsafeHeroMaterials).toEqual([]);
     expect(destructiveGraphicWithoutLabel).toEqual([]);
+  });
+
+  it('exposes disposable flash presets as real FORMAT-native effect recipes', () => {
+    const flashPresets = PRESETS.filter((preset) => preset.effectFamily === 'disposable-flash-film');
+    const invalid = flashPresets
+      .filter((preset) => (
+        !getEffectFamily(preset.effectFamily)?.enabled
+        || !getEffectPreset(preset.effectPreset)?.enabled
+        || (preset.effectIntensity ?? 0) <= 0
+        || (preset.disposableFlashStrength ?? 0) <= 0
+        || (preset.disposableFilmGrain ?? 0) <= 0
+        || (preset.disposableCyanShadowCast ?? 0) <= 0
+      ))
+      .map((preset) => preset.id);
+
+    expect(flashPresets.length).toBeGreaterThanOrEqual(6);
+    expect(invalid).toEqual([]);
   });
 });

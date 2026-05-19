@@ -68,9 +68,11 @@ function buildPresetBadges(preset: Preset) {
   const usesMaterial = Boolean(preset.materialProfile && preset.materialProfile !== 'none');
   const usesPrint = Boolean(preset.printProfile && preset.printProfile !== 'none');
   const usesFilm = Boolean(preset.filmProfile && preset.filmProfile !== 'none');
+  const usesEffect = Boolean(preset.effectFamily && preset.effectFamily !== 'none');
   const badges = [
     preset.tier === 'hero' ? 'HERO' : null,
     preset.skinSafe ? 'SKIN SAFE' : null,
+    usesEffect ? 'EFFECT' : null,
     usesPrint ? 'PRINT' : null,
     usesFilm ? 'FILM' : null,
     usesMaterial ? 'MATERIAL' : null,

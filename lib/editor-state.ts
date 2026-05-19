@@ -5,6 +5,29 @@ import {
   type EngineSnapshot
 } from '@/lib/editor-config';
 import { normalizeTextureId } from '@/lib/textures';
+import type { FormatEffectFamilySelection } from '@/lib/effects/effect-types';
+
+const clampPercent = (value: number | undefined) => Math.min(100, Math.max(0, Number.isFinite(value) ? value ?? 0 : 0));
+
+const normalizeEffectFamily = (value: EngineSnapshot['effectFamily'] | undefined): FormatEffectFamilySelection => {
+  if (
+    value === 'disposable-flash-film'
+    || value === 'instant-print-frame'
+    || value === 'risograph-grain'
+    || value === 'halftone-grunge'
+    || value === 'broken-copier-xerox'
+    || value === 'reeded-ribbed-glass'
+    || value === 'lens-prism'
+    || value === 'crt-vhs-camcorder'
+    || value === 'aged-grainy-photo'
+    || value === 'glitch-acid-distortion'
+    || value === 'chrome-liquid-metal'
+    || value === 'debossed-letterpress'
+  ) {
+    return value;
+  }
+  return 'none';
+};
 
 export type EditorStateAction =
   | { type: 'apply-snapshot'; snapshot: EngineSnapshot }
@@ -34,7 +57,22 @@ export const normalizeEditorSnapshot = (snapshot: EngineSnapshot): EngineSnapsho
   filmProfile: snapshot.filmProfile ?? 'none',
   opticalProfile: snapshot.opticalProfile ?? 'none',
   materialFaceProtection: snapshot.materialFaceProtection ?? true,
-  materialEdgeProtection: snapshot.materialEdgeProtection ?? true
+  materialEdgeProtection: snapshot.materialEdgeProtection ?? true,
+  effectFamily: normalizeEffectFamily(snapshot.effectFamily),
+  effectPreset: snapshot.effectPreset ?? 'none',
+  effectIntensity: clampPercent(snapshot.effectIntensity),
+  disposableFlashStrength: clampPercent(snapshot.disposableFlashStrength),
+  disposableFlashFalloff: clampPercent(snapshot.disposableFlashFalloff),
+  disposableWarmLightLeak: clampPercent(snapshot.disposableWarmLightLeak),
+  disposableRedEdgeBurn: clampPercent(snapshot.disposableRedEdgeBurn),
+  disposableCyanShadowCast: clampPercent(snapshot.disposableCyanShadowCast),
+  disposableFilmGrain: clampPercent(snapshot.disposableFilmGrain),
+  disposableDustAndScratches: clampPercent(snapshot.disposableDustAndScratches),
+  disposablePlasticLensSoftness: clampPercent(snapshot.disposablePlasticLensSoftness),
+  disposableChromaticFringing: clampPercent(snapshot.disposableChromaticFringing),
+  disposableVignette: clampPercent(snapshot.disposableVignette),
+  disposableDateStamp: Boolean(snapshot.disposableDateStamp),
+  disposablePrintFrame: Boolean(snapshot.disposablePrintFrame)
 });
 
 export const buildSnapshotFromPreset = (baseSnapshot: EngineSnapshot, preset: Preset): EngineSnapshot => normalizeEditorSnapshot({
@@ -85,6 +123,21 @@ export const buildSnapshotFromPreset = (baseSnapshot: EngineSnapshot, preset: Pr
   opticalProfile: preset.opticalProfile || 'none',
   materialFaceProtection: preset.skinSafe || preset.subjectBias === 'portrait',
   materialEdgeProtection: preset.family === 'product' || preset.subjectBias === 'product',
+  effectFamily: preset.effectFamily || 'none',
+  effectPreset: preset.effectPreset || 'none',
+  effectIntensity: preset.effectIntensity || 0,
+  disposableFlashStrength: preset.disposableFlashStrength || 0,
+  disposableFlashFalloff: preset.disposableFlashFalloff || 0,
+  disposableWarmLightLeak: preset.disposableWarmLightLeak || 0,
+  disposableRedEdgeBurn: preset.disposableRedEdgeBurn || 0,
+  disposableCyanShadowCast: preset.disposableCyanShadowCast || 0,
+  disposableFilmGrain: preset.disposableFilmGrain || 0,
+  disposableDustAndScratches: preset.disposableDustAndScratches || 0,
+  disposablePlasticLensSoftness: preset.disposablePlasticLensSoftness || 0,
+  disposableChromaticFringing: preset.disposableChromaticFringing || 0,
+  disposableVignette: preset.disposableVignette || 0,
+  disposableDateStamp: preset.disposableDateStamp || false,
+  disposablePrintFrame: preset.disposablePrintFrame || false,
   artifactRemoval: preset.artifactRemoval || 0,
   activeCamera: 'Custom Preset'
 });

@@ -1,5 +1,6 @@
 import type { Preset } from './presets';
 import type { FilmProfile, OpticalProfile, PaperSurface, PrintMode } from './materials/material-types';
+import type { FormatEffectFamilySelection } from './effects/effect-types';
 
 export const CUSTOM_PRESET_CATEGORY = 'Custom Specifications';
 export const CUSTOM_PRESET_STORAGE_KEY = 'format-system-04-custom-presets';
@@ -54,6 +55,21 @@ export type EngineSnapshot = {
   opticalProfile: OpticalProfile;
   materialFaceProtection: boolean;
   materialEdgeProtection: boolean;
+  effectFamily: FormatEffectFamilySelection;
+  effectPreset: string;
+  effectIntensity: number;
+  disposableFlashStrength: number;
+  disposableFlashFalloff: number;
+  disposableWarmLightLeak: number;
+  disposableRedEdgeBurn: number;
+  disposableCyanShadowCast: number;
+  disposableFilmGrain: number;
+  disposableDustAndScratches: number;
+  disposablePlasticLensSoftness: number;
+  disposableChromaticFringing: number;
+  disposableVignette: number;
+  disposableDateStamp: boolean;
+  disposablePrintFrame: boolean;
   activeCamera: string;
 };
 
@@ -217,6 +233,21 @@ export const PARAM_LABELS: Record<keyof EngineSnapshot, string> = {
   opticalProfile: 'Optical Finish',
   materialFaceProtection: 'Material Face Protection',
   materialEdgeProtection: 'Material Edge Protection',
+  effectFamily: 'Effect Family',
+  effectPreset: 'Effect Preset',
+  effectIntensity: 'Effect Intensity',
+  disposableFlashStrength: 'Flash Strength',
+  disposableFlashFalloff: 'Flash Falloff',
+  disposableWarmLightLeak: 'Warm Light Leak',
+  disposableRedEdgeBurn: 'Red Edge Burn',
+  disposableCyanShadowCast: 'Cyan Shadow Cast',
+  disposableFilmGrain: 'Disposable Film Grain',
+  disposableDustAndScratches: 'Disposable Dust & Scratches',
+  disposablePlasticLensSoftness: 'Plastic Lens Softness',
+  disposableChromaticFringing: 'Chromatic Fringing',
+  disposableVignette: 'Disposable Vignette',
+  disposableDateStamp: 'Disposable Date Stamp',
+  disposablePrintFrame: 'Disposable Print Frame',
   activeCamera: 'Capture Profile'
 };
 
@@ -313,6 +344,21 @@ export const createNeutralSnapshot = (): EngineSnapshot => ({
   opticalProfile: 'none',
   materialFaceProtection: true,
   materialEdgeProtection: true,
+  effectFamily: 'none',
+  effectPreset: 'none',
+  effectIntensity: 0,
+  disposableFlashStrength: 0,
+  disposableFlashFalloff: 0,
+  disposableWarmLightLeak: 0,
+  disposableRedEdgeBurn: 0,
+  disposableCyanShadowCast: 0,
+  disposableFilmGrain: 0,
+  disposableDustAndScratches: 0,
+  disposablePlasticLensSoftness: 0,
+  disposableChromaticFringing: 0,
+  disposableVignette: 0,
+  disposableDateStamp: false,
+  disposablePrintFrame: false,
   activeCamera: 'Standard Matrix'
 });
 
@@ -447,5 +493,20 @@ export const buildPresetFromSnapshot = (snapshot: EngineSnapshot, name: string):
   opticalProfile: snapshot.opticalProfile,
   materialFaceProtection: snapshot.materialFaceProtection,
   materialEdgeProtection: snapshot.materialEdgeProtection,
+  effectFamily: snapshot.effectFamily,
+  effectPreset: snapshot.effectPreset,
+  effectIntensity: snapshot.effectIntensity,
+  disposableFlashStrength: snapshot.disposableFlashStrength,
+  disposableFlashFalloff: snapshot.disposableFlashFalloff,
+  disposableWarmLightLeak: snapshot.disposableWarmLightLeak,
+  disposableRedEdgeBurn: snapshot.disposableRedEdgeBurn,
+  disposableCyanShadowCast: snapshot.disposableCyanShadowCast,
+  disposableFilmGrain: snapshot.disposableFilmGrain,
+  disposableDustAndScratches: snapshot.disposableDustAndScratches,
+  disposablePlasticLensSoftness: snapshot.disposablePlasticLensSoftness,
+  disposableChromaticFringing: snapshot.disposableChromaticFringing,
+  disposableVignette: snapshot.disposableVignette,
+  disposableDateStamp: snapshot.disposableDateStamp,
+  disposablePrintFrame: snapshot.disposablePrintFrame,
   artifactRemoval: snapshot.artifactRemoval
 });

@@ -22,13 +22,17 @@ type SwitchEngineKey =
   | 'printProfile'
   | 'paperSurface'
   | 'filmProfile'
-  | 'opticalProfile';
+  | 'opticalProfile'
+  | 'effectFamily'
+  | 'effectPreset';
 
 type BooleanEngineKey =
   | 'monochrome'
   | 'camcorderOSD'
   | 'materialFaceProtection'
-  | 'materialEdgeProtection';
+  | 'materialEdgeProtection'
+  | 'disposableDateStamp'
+  | 'disposablePrintFrame';
 
 const NUMERIC_KEYS: NumericEngineKey[] = [
   'saturation',
@@ -63,7 +67,18 @@ const NUMERIC_KEYS: NumericEngineKey[] = [
   'makeupStrength',
   'artifactRemoval',
   'textureIntensity',
-  'materialStrength'
+  'materialStrength',
+  'effectIntensity',
+  'disposableFlashStrength',
+  'disposableFlashFalloff',
+  'disposableWarmLightLeak',
+  'disposableRedEdgeBurn',
+  'disposableCyanShadowCast',
+  'disposableFilmGrain',
+  'disposableDustAndScratches',
+  'disposablePlasticLensSoftness',
+  'disposableChromaticFringing',
+  'disposableVignette'
 ];
 
 const SWITCH_KEYS: SwitchEngineKey[] = [
@@ -76,14 +91,18 @@ const SWITCH_KEYS: SwitchEngineKey[] = [
   'printProfile',
   'paperSurface',
   'filmProfile',
-  'opticalProfile'
+  'opticalProfile',
+  'effectFamily',
+  'effectPreset'
 ];
 
 const BOOLEAN_KEYS: BooleanEngineKey[] = [
   'monochrome',
   'camcorderOSD',
   'materialFaceProtection',
-  'materialEdgeProtection'
+  'materialEdgeProtection',
+  'disposableDateStamp',
+  'disposablePrintFrame'
 ];
 
 const isPresetEffectKey = (key: keyof EngineSnapshot) => key !== 'activeCamera';
@@ -105,12 +124,14 @@ const getBlendBaseValue = (
 ) => {
   if (key === 'textureIntensity' && base.textureType === 'none' && target.textureType !== 'none') return 0;
   if (key === 'materialStrength' && base.materialProfile === 'none' && target.materialProfile !== 'none') return 0;
+  if (key === 'effectIntensity' && base.effectFamily === 'none' && target.effectFamily !== 'none') return 0;
   return base[key];
 };
 
 const getSwitchThreshold = (key: keyof EngineSnapshot) => {
   if (key === 'gradientMap' || key === 'colorKnockout') return 40;
   if (key === 'textureType' || key === 'materialProfile' || key === 'paperSurface' || key === 'filmProfile' || key === 'opticalProfile') return 8;
+  if (key === 'effectFamily' || key === 'effectPreset') return 8;
   if (key === 'printProfile') return 8;
   return 15;
 };
@@ -171,7 +192,7 @@ export const buildPresetRecipeSnapshot = (
   }
 
   for (const key of BOOLEAN_KEYS) {
-    const switchAt = key === 'monochrome' || key === 'camcorderOSD' ? 70 : 1;
+    const switchAt = key === 'monochrome' || key === 'camcorderOSD' ? 70 : key.startsWith('disposable') ? 45 : 1;
     setEngineField(next, key, safeIntensity >= switchAt ? target[key] : base[key]);
   }
 

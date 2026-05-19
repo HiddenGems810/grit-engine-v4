@@ -12,6 +12,7 @@ import { PRESETS } from '@/lib/presets';
 
 const signaturePreset = PRESETS.find((preset) => preset.id === 'sig-creator-glow')!;
 const filmPreset = PRESETS.find((preset) => preset.id === 'film-disposable-flash')!;
+const disposableFlashPreset = PRESETS.find((preset) => preset.id === 'film-format-instant-flash')!;
 const graphicPreset = PRESETS.find((preset) => preset.id === 'gfx-magazine-halftone')!;
 
 describe('premium preset recipe engine', () => {
@@ -85,5 +86,20 @@ describe('premium preset recipe engine', () => {
       buildPresetRecipeSnapshot(createNeutralSnapshot(), filmPreset, intensity);
       expect(getPresetSeedKey(filmPreset)).toBe(key);
     }
+  });
+
+  it('blends FORMAT-native disposable flash settings through the preset engine', () => {
+    const base = createNeutralSnapshot();
+    const disabled = buildPresetRecipeSnapshot(base, disposableFlashPreset, 0);
+    const balanced = buildPresetRecipeSnapshot(base, disposableFlashPreset, 50);
+    const full = buildPresetRecipeSnapshot(base, disposableFlashPreset, 100);
+
+    expect(disabled).toEqual(base);
+    expect(balanced.effectFamily).toBe('disposable-flash-film');
+    expect(balanced.effectPreset).toBe(disposableFlashPreset.effectPreset);
+    expect(balanced.disposableFlashStrength).toBeGreaterThan(base.disposableFlashStrength);
+    expect(balanced.disposableFlashStrength).toBeLessThan(full.disposableFlashStrength);
+    expect(balanced.disposableCyanShadowCast).toBeLessThan(full.disposableCyanShadowCast);
+    expect(full.disposableFilmGrain).toBeGreaterThan(0);
   });
 });
