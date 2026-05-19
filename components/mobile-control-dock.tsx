@@ -1,6 +1,7 @@
 'use client';
 
 import { AntiAiRepairPanel } from '@/components/anti-ai-repair-panel';
+import { ControlSlider } from '@/components/control-slider';
 import type { AntiAiRepairControlKey, AntiAiRepairModeId, AntiAiRepairSettings } from '@/lib/anti-ai-repair';
 import type { Preset } from '@/lib/presets';
 
@@ -40,21 +41,16 @@ type QuickSliderProps = {
 
 function QuickSlider({ label, min, max, value, onChange }: QuickSliderProps) {
   return (
-    <label className="flex flex-col gap-1.5">
-      <span className="flex items-center justify-between text-[10px] uppercase tracking-[0.14em] text-[#aaa49a]">
-        {label}
-        <span className="font-mono text-[#e8d4aa]">{value}</span>
-      </span>
-      <input
-        aria-label={`Mobile ${label}`}
-        type="range"
-        min={min}
-        max={max}
-        value={value}
-        onChange={(event) => onChange(Number(event.target.value))}
-        className="w-full"
-      />
-    </label>
+    <ControlSlider
+      label={label}
+      ariaLabel={`Mobile ${label}`}
+      min={min}
+      max={max}
+      value={value}
+      onChange={onChange}
+      accentClass="text-[#aaa49a]"
+      inputClassName="bg-[#101010] border border-[#444]"
+    />
   );
 }
 

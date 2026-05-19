@@ -110,6 +110,27 @@ test('anti-ai slop repair mode tunes and exports', async ({ page }) => {
   expect(download.suggestedFilename()).toMatch(/format-system-04.*\.jpeg$/);
 });
 
+test('precise number inputs drive shared slider controls', async ({ page }) => {
+  await page.goto('/');
+
+  const saturationInput = page.getByRole('spinbutton', { name: 'Saturation Pipeline' }).first();
+  await saturationInput.fill('137');
+  await expect(page.getByRole('slider', { name: 'Saturation Pipeline' }).first()).toHaveValue('137');
+
+  const hueInput = page.getByRole('spinbutton', { name: 'Color Phase (Hue)' }).first();
+  await hueInput.fill('-37');
+  await expect(page.getByRole('slider', { name: 'Color Phase (Hue)' }).first()).toHaveValue('-37');
+
+  const plasticSkinInput = page.getByRole('spinbutton', { name: 'Plastic Skin' }).first();
+  await plasticSkinInput.fill('84');
+  await expect(page.getByRole('slider', { name: 'Plastic Skin' }).first()).toHaveValue('84');
+
+  await page.getByRole('button', { name: /print & crt engine/i }).click();
+  const starInput = page.getByRole('spinbutton', { name: 'Y2K Star Filter' }).first();
+  await starInput.fill('67');
+  await expect(page.getByRole('slider', { name: 'Y2K Star Filter' }).first()).toHaveValue('67');
+});
+
 test('release QA screenshots cover desktop tablet and mobile shells', async ({ page }, testInfo) => {
   for (const viewport of [
     { name: 'desktop', width: 1440, height: 1000 },

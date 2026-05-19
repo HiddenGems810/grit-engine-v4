@@ -5,6 +5,7 @@ import { ChevronDown, ChevronRight, Clock, Search, Star, Trash2 } from 'lucide-r
 import type { Preset } from '@/lib/presets';
 import { CATEGORY_SHORT_LABELS, CUSTOM_PRESET_CATEGORY, type HistoryEntry } from '@/lib/editor-config';
 import { HistoryPanel } from '@/components/history-panel';
+import { ControlSlider } from '@/components/control-slider';
 
 type LeftPanelsState = {
   specifications: boolean;
@@ -207,22 +208,17 @@ export function LeftSidebar({
                       Reset
                     </button>
                   </div>
-                  <label className="mt-3 block">
-                    <span className="mb-1 flex items-center justify-between text-[9px] uppercase tracking-[0.14em] text-[#9c8f78]">
-                      Preset Intensity
-                      <span className="font-mono text-[#e8d4aa]">{presetIntensity}</span>
-                    </span>
-                    <input
-                      aria-label="Preset Intensity"
-                      type="range"
-                      min="0"
-                      max="100"
-                      step="1"
+                  <div className="mt-3">
+                    <ControlSlider
+                      label="Preset Intensity"
+                      min={0}
+                      max={100}
                       value={presetIntensity}
-                      onChange={(event) => setPresetIntensity(Number(event.target.value))}
-                      className="w-full"
+                      onChange={setPresetIntensity}
+                      accentClass="text-[#9c8f78]"
+                      inputClassName="bg-[#101010] border border-[#444]"
                     />
-                  </label>
+                  </div>
                 </div>
               )}
               <div className="grid grid-cols-2 gap-2">

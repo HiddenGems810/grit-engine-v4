@@ -6,6 +6,7 @@ import {
   UPSCALE_MODE_PRESETS,
   UPSCALE_TUNING_PRESETS
 } from '@/lib/upscale/presets';
+import { ControlSlider } from '@/components/control-slider';
 import type { UpscaleContentProfile, UpscaleModePreset, UpscaleTuningPreset } from '@/lib/upscale/types';
 import { CREATOR_EXPORT_ASPECTS, type ExportAspectId, type ExportQualityInfo } from '@/lib/export-quality';
 import type { RenderFingerprint } from '@/lib/engine/render-fingerprint';
@@ -152,10 +153,21 @@ export function ExportControls({
             ['Edge Protection', upscaleEdgeProtection, setUpscaleEdgeProtection],
             ['Anti-Halo', upscaleAntiHalo, setUpscaleAntiHalo]
           ].map(([label, value, setter]) => (
-            <label key={label as string} className="flex items-center gap-2 text-[11px] text-[#aaa]">
-              <span className="uppercase tracking-[0.12em]">{label as string}</span>
-              <input type="range" min="0" max="100" value={value as number} onChange={(event) => { markUpscalePresetCustom(); (setter as (next: number) => void)(Number(event.target.value)); }} disabled={!imageSrc || !upscaleEnabled} className="w-20 disabled:opacity-40" />
-            </label>
+            <div key={label as string} className="w-32">
+              <ControlSlider
+                label={label as string}
+                min={0}
+                max={100}
+                value={value as number}
+                onChange={(next) => {
+                  markUpscalePresetCustom();
+                  (setter as (nextValue: number) => void)(next);
+                }}
+                disabled={!imageSrc || !upscaleEnabled}
+                accentClass="text-[#aaa]"
+                inputClassName="bg-[#101010] border border-[#444]"
+              />
+            </div>
           ))}
         </div>
 

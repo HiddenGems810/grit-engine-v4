@@ -1,6 +1,7 @@
 'use client';
 
 import { Camera, RefreshCw, ShieldCheck } from 'lucide-react';
+import { ControlSlider } from '@/components/control-slider';
 import {
   ANTI_AI_REPAIR_CONTROL_DEFINITIONS,
   ANTI_AI_REPAIR_PROFILES,
@@ -78,22 +79,17 @@ export function AntiAiRepairPanel({
 
         <div className={`mt-3 grid gap-3 ${compact ? '' : 'grid-cols-1'}`}>
           {visibleControls.map((control) => (
-            <label key={control.key} className="block" title={control.description}>
-              <span className="mb-1 flex items-center justify-between text-[10px] uppercase tracking-[0.14em] text-[#aaa49a]">
-                {control.label}
-                <span className="font-mono text-[#e8d4aa]">{settings[control.key]}</span>
-              </span>
-              <input
-                aria-label={control.label}
-                type="range"
-                min="0"
-                max="100"
-                step="1"
-                value={settings[control.key]}
-                onChange={(event) => updateSetting(control.key, Number(event.target.value))}
-                className="w-full"
-              />
-            </label>
+            <ControlSlider
+              key={control.key}
+              label={control.label}
+              min={0}
+              max={100}
+              value={settings[control.key]}
+              onChange={(value) => updateSetting(control.key, value)}
+              accentClass="text-[#aaa49a]"
+              inputClassName="bg-[#101010] border border-[#444]"
+              description={compact ? undefined : control.description}
+            />
           ))}
         </div>
 

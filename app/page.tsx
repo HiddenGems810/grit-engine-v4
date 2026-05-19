@@ -1658,21 +1658,12 @@ export default function FormatWorkspace() {
 
                       {/* Saturation */}
                       <div className={`flex flex-col gap-1.5 transition-opacity ${monochrome ? 'opacity-30 pointer-events-none' : ''}`}>
-                        <div className="flex justify-between items-center">
-                          <span className="text-[11px] text-[#aaa] font-medium">Saturation Pipeline</span>
-                          <input type="number" value={saturation} onChange={(e) => setSaturation(Number(e.target.value))} className="w-12 h-5 bg-[#141414] border border-[#444] rounded-sm text-[10px] text-center font-mono text-white focus:outline-none focus:border-[#e8a82d]" />
-                        </div>
-                        <input type="range" min="0" max="300" value={saturation} onChange={(e) => setSaturation(parseInt(e.target.value))} />
+                        <ControlSlider label="Saturation Pipeline" min={0} max={300} value={saturation} onChange={setSaturation} accentClass="text-[#aaa]" />
                       </div>
 
                       {/* Hue Shift */}
                       <div className={`flex flex-col gap-1.5 transition-opacity ${monochrome ? 'opacity-30 pointer-events-none' : ''}`}>
-                        <div className="flex justify-between items-center">
-                          <span className="text-[11px] text-[#aaa] font-medium">Color Phase (Hue)</span>
-                          <input type="number" value={hueShift} onChange={(e) => setHueShift(Number(e.target.value))} className="w-12 h-5 bg-[#141414] border border-[#444] rounded-sm text-[10px] text-center font-mono text-white focus:outline-none focus:border-[#e8a82d]" />
-                        </div>
-                        {/* Custom multi-color track for hue */}
-                        <input type="range" min="-180" max="180" value={hueShift} onChange={(e) => setHueShift(parseInt(e.target.value))} />
+                        <ControlSlider label="Color Phase (Hue)" min={-180} max={180} value={hueShift} onChange={setHueShift} accentClass="text-[#aaa]" />
                       </div>
 
                       {/* Gradient Mapping */}
@@ -1715,27 +1706,15 @@ export default function FormatWorkspace() {
 
                       {/* Shadow Crush -> Replaced with Levels */}
                       <div className="flex flex-col gap-1.5 pt-2 border-t border-[#333]/50">
-                        <div className="flex justify-between items-center text-[#fff]">
-                          <span className="text-[11px] font-medium flex items-center gap-1.5"><Sliders className="w-3 h-3 text-[#aaa]" /> Levels (Black Point)</span>
-                          <input type="number" value={shadowCrush} onChange={(e) => setShadowCrush(Number(e.target.value))} className="w-12 h-5 bg-[#141414] border border-[#444] rounded-sm text-[10px] text-center font-mono text-white focus:outline-none focus:border-[#e8a82d]" />
-                        </div>
-                        <input type="range" min="0" max="150" value={shadowCrush} onChange={(e) => setShadowCrush(parseInt(e.target.value))} />
+                        <ControlSlider label="Levels (Black Point)" min={0} max={150} value={shadowCrush} onChange={setShadowCrush} icon={<Sliders className="w-3 h-3 text-[#aaa]" />} accentClass="text-[#fff]" />
                       </div>
                       
                       <div className="flex flex-col gap-1.5 pt-1">
-                        <div className="flex justify-between items-center text-[#fff]">
-                          <span className="text-[11px] text-[#aaa] font-medium pl-4">Curves (Midtones / Gamma)</span>
-                          <input type="number" value={midtones} onChange={(e) => setMidtones(Number(e.target.value))} className="w-12 h-5 bg-[#141414] border border-[#444] rounded-sm text-[10px] text-center font-mono text-white focus:outline-none focus:border-[#e8a82d]" />
-                        </div>
-                        <input type="range" min="-100" max="100" value={midtones} onChange={(e) => setMidtones(parseInt(e.target.value))} />
+                        <ControlSlider label="Curves (Midtones / Gamma)" min={-100} max={100} value={midtones} onChange={setMidtones} accentClass="text-[#aaa] pl-4" />
                       </div>
 
                       <div className="flex flex-col gap-1.5 pt-1">
-                        <div className="flex justify-between items-center text-[#fff]">
-                          <span className="text-[11px] text-[#aaa] font-medium pl-4">Levels (White Point)</span>
-                          <input type="number" value={highlights} onChange={(e) => setHighlights(Number(e.target.value))} className="w-12 h-5 bg-[#141414] border border-[#444] rounded-sm text-[10px] text-center font-mono text-white focus:outline-none focus:border-[#e8a82d]" />
-                        </div>
-                        <input type="range" min="0" max="200" value={highlights} onChange={(e) => setHighlights(parseInt(e.target.value))} />
+                        <ControlSlider label="Levels (White Point)" min={0} max={200} value={highlights} onChange={setHighlights} accentClass="text-[#aaa] pl-4" />
                       </div>
 
                       {/* Instagram LUTs */}
@@ -1953,29 +1932,17 @@ export default function FormatWorkspace() {
 
                       {/* Ink Bleed */}
                       <div className="flex flex-col gap-1.5">
-                        <div className="flex justify-between items-center">
-                          <span className="text-[11px] text-[#aaa] font-medium">Lens Blur Radius</span>
-                          <input type="number" value={inkBleed} onChange={(e) => setInkBleed(Number(e.target.value))} className="w-12 h-5 bg-[#141414] border border-[#444] rounded-sm text-[10px] text-center font-mono text-white focus:outline-none focus:border-[#e8a82d]" />
-                        </div>
-                        <input type="range" min="0" max="100" value={inkBleed} onChange={(e) => setInkBleed(parseInt(e.target.value))} />
+                        <ControlSlider label="Lens Blur Radius" min={0} max={100} value={inkBleed} onChange={setInkBleed} accentClass="text-[#aaa]" />
                       </div>
 
                       {/* Halation */}
                       <div className={`flex flex-col gap-1.5 transition-opacity ${monochrome ? 'opacity-30 pointer-events-none' : ''}`}>
-                        <div className="flex justify-between items-center">
-                          <span className="text-[11px] text-[#aaa] font-medium">Film Halation (Glow)</span>
-                          <input type="number" value={halation} onChange={(e) => setHalation(Number(e.target.value))} className="w-12 h-5 bg-[#141414] border border-[#444] rounded-sm text-[10px] text-center font-mono text-white focus:outline-none focus:border-[#e8a82d]" />
-                        </div>
-                        <input type="range" min="0" max="100" value={halation} onChange={(e) => setHalation(parseInt(e.target.value))} />
+                        <ControlSlider label="Film Halation (Glow)" min={0} max={100} value={halation} onChange={setHalation} accentClass="text-[#aaa]" />
                       </div>
 
                       {/* Light Leaks */}
                       <div className={`flex flex-col gap-1.5 pt-2 border-t border-[#333]/50`}>
-                        <div className="flex justify-between items-center text-[#ff6600]">
-                          <span className="text-[11px] font-medium flex items-center gap-1.5"><Flame className="w-3 h-3" /> Film Light Leaks</span>
-                          <input type="number" value={lightLeak} onChange={(e) => setLightLeak(Number(e.target.value))} className="w-12 h-5 bg-[#141414] border border-[#ff6600]/50 rounded-sm text-[10px] text-center font-mono text-white focus:outline-none focus:border-[#ff6600]" />
-                        </div>
-                        <input type="range" min="0" max="100" value={lightLeak} onChange={(e) => setLightLeak(parseInt(e.target.value))} />
+                        <ControlSlider label="Film Light Leaks" min={0} max={100} value={lightLeak} onChange={setLightLeak} icon={<Flame className="w-3 h-3" />} accentClass="text-[#ff6600]" inputClassName="bg-[#141414] border border-[#ff6600]/50" />
                         <div className="relative mt-2">
                           <select 
                             className="w-full bg-[#141414] border border-[#444] text-white text-[12px] p-2 pr-8 rounded-[3px] focus:outline-none focus:border-[#e8a82d] appearance-none cursor-pointer"
@@ -1994,29 +1961,17 @@ export default function FormatWorkspace() {
 
                       {/* Prism Blur */}
                       <div className={`flex flex-col gap-1.5 pt-2 border-t border-[#333]/50`}>
-                        <div className="flex justify-between items-center text-[#99ccff]">
-                          <span className="text-[11px] font-medium flex items-center gap-1.5"><Eye className="w-3 h-3" /> Dreamcore Edge Blur</span>
-                          <input type="number" value={prismBlur} onChange={(e) => setPrismBlur(Number(e.target.value))} className="w-12 h-5 bg-[#141414] border border-[#99ccff]/50 rounded-sm text-[10px] text-center font-mono text-white focus:outline-none focus:border-[#99ccff]" />
-                        </div>
-                        <input type="range" min="0" max="100" value={prismBlur} onChange={(e) => setPrismBlur(parseInt(e.target.value))} />
+                        <ControlSlider label="Dreamcore Edge Blur" min={0} max={100} value={prismBlur} onChange={setPrismBlur} icon={<Eye className="w-3 h-3" />} accentClass="text-[#99ccff]" inputClassName="bg-[#141414] border border-[#99ccff]/50" />
                       </div>
 
                       {/* Lens Vignette */}
                       <div className="flex flex-col gap-1.5 pt-2 border-t border-[#333]/50">
-                        <div className="flex justify-between items-center text-[#aaa]">
-                          <span className="text-[11px] font-medium">Lens Vignette (Corners)</span>
-                          <input type="number" value={vignette} onChange={(e) => setVignette(Number(e.target.value))} className="w-12 h-5 bg-[#141414] border border-[#444] rounded-sm text-[10px] text-center font-mono text-white focus:outline-none focus:border-[#e8a82d]" />
-                        </div>
-                        <input type="range" min="0" max="100" value={vignette} onChange={(e) => setVignette(parseInt(e.target.value))} />
+                        <ControlSlider label="Lens Vignette (Corners)" min={0} max={100} value={vignette} onChange={setVignette} accentClass="text-[#aaa]" />
                       </div>
 
                       {/* Chromatic Aberration */}
                       <div className={`flex flex-col gap-1.5 transition-opacity ${monochrome ? 'opacity-30 pointer-events-none' : ''}`}>
-                        <div className="flex justify-between items-center">
-                          <span className="text-[11px] text-cyan-400 font-medium">Chromatic Shift <span className="text-red-400">(Glitch)</span></span>
-                          <input type="number" value={chromaOffset} onChange={(e) => setChromaOffset(Number(e.target.value))} className="w-12 h-5 bg-[#141414] border border-[#444] rounded-sm text-[10px] text-center font-mono text-white focus:outline-none focus:border-[#e8a82d]" />
-                        </div>
-                        <input type="range" min="0" max="100" value={chromaOffset} onChange={(e) => setChromaOffset(parseInt(e.target.value))} />
+                        <ControlSlider label="Chromatic Shift (Glitch)" min={0} max={100} value={chromaOffset} onChange={setChromaOffset} accentClass="text-cyan-400" />
                       </div>
                     </div>
                   </motion.div>
@@ -2067,29 +2022,17 @@ export default function FormatWorkspace() {
 
                       {/* Texture Intensity */}
                       <div className={`flex flex-col gap-1.5 transition-opacity ${textureType === 'none' ? 'opacity-30 pointer-events-none' : ''}`}>
-                        <div className="flex justify-between items-center">
-                          <span className="text-[11px] text-[#aaa] font-medium">Texture Intensity</span>
-                          <input type="number" value={textureIntensity} onChange={(e) => setTextureIntensity(Number(e.target.value))} className="w-12 h-5 bg-[#141414] border border-[#444] rounded-sm text-[10px] text-center font-mono text-white focus:outline-none focus:border-[#e8a82d]" />
-                        </div>
-                        <input type="range" min="0" max="100" value={textureIntensity} onChange={(e) => setTextureIntensity(parseInt(e.target.value))} />
+                        <ControlSlider label="Texture Intensity" min={0} max={100} value={textureIntensity} onChange={setTextureIntensity} accentClass="text-[#aaa]" />
                       </div>
 
                       {/* Grain */}
                       <div className="flex flex-col gap-1.5">
-                        <div className="flex justify-between items-center">
-                          <span className="text-[11px] text-[#aaa] font-medium">Film Grain Overlay</span>
-                          <input type="number" value={grain} onChange={(e) => setGrain(Number(e.target.value))} className="w-12 h-5 bg-[#141414] border border-[#444] rounded-sm text-[10px] text-center font-mono text-white focus:outline-none focus:border-[#e8a82d]" />
-                        </div>
-                        <input type="range" min="0" max="100" value={grain} onChange={(e) => setGrain(parseInt(e.target.value))} />
+                        <ControlSlider label="Film Grain Overlay" min={0} max={100} value={grain} onChange={setGrain} accentClass="text-[#aaa]" />
                       </div>
 
                       {/* Threshold */}
                       <div className="flex flex-col gap-1.5">
-                        <div className="flex justify-between items-center text-red-500">
-                          <span className="text-[11px] font-bold">Lithograph Bitmap</span>
-                          <input type="number" value={threshold} onChange={(e) => setThreshold(Number(e.target.value))} className="w-12 h-5 bg-[#141414] border border-red-900 rounded-sm text-[10px] text-center font-mono text-white focus:outline-none focus:border-red-500" />
-                        </div>
-                        <input type="range" min="0" max="255" value={threshold} onChange={(e) => setThreshold(parseInt(e.target.value))} />
+                        <ControlSlider label="Lithograph Bitmap" min={0} max={255} value={threshold} onChange={setThreshold} accentClass="text-red-500 font-bold" inputClassName="bg-[#141414] border border-red-900" />
                       </div>
                     </div>
                   </motion.div>
@@ -2254,29 +2197,17 @@ export default function FormatWorkspace() {
                     <div className="p-4 pt-1 flex flex-col gap-4">
                       {/* Halftone */}
                       <div className="flex flex-col gap-1.5 border-l-2 border-[#e8a82d] pl-2 -ml-2">
-                        <div className="flex justify-between items-center text-white">
-                          <span className="text-[11px] font-medium">Printer Halftone Dots</span>
-                          <input type="number" value={halftone} onChange={(e) => setHalftone(Number(e.target.value))} className="w-12 h-5 bg-[#141414] border border-[#e8a82d]/50 rounded-sm text-[10px] text-center font-mono text-white focus:outline-none focus:border-[#e8a82d]" />
-                        </div>
-                        <input type="range" min="0" max="25" value={halftone} onChange={(e) => setHalftone(parseInt(e.target.value))} />
+                        <ControlSlider label="Printer Halftone Dots" min={0} max={25} value={halftone} onChange={setHalftone} accentClass="text-white" inputClassName="bg-[#141414] border border-[#e8a82d]/50" />
                       </div>
 
                       {/* Scanlines */}
                       <div className="flex flex-col gap-1.5">
-                        <div className="flex justify-between items-center text-[#aaa]">
-                          <span className="text-[11px] font-medium">CRT VHS Scanlines</span>
-                          <input type="number" value={scanlines} onChange={(e) => setScanlines(Number(e.target.value))} className="w-12 h-5 bg-[#141414] border border-[#444] rounded-sm text-[10px] text-center font-mono text-white focus:outline-none focus:border-[#e8a82d]" />
-                        </div>
-                        <input type="range" min="0" max="100" step="5" value={scanlines} onChange={(e) => setScanlines(parseInt(e.target.value))} />
+                        <ControlSlider label="CRT VHS Scanlines" min={0} max={100} step={5} value={scanlines} onChange={setScanlines} accentClass="text-[#aaa]" />
                       </div>
 
                       {/* Sparkles / Star Filter */}
                       <div className="flex flex-col gap-1.5 pt-2 border-t border-[#333]/50">
-                        <div className="flex justify-between items-center text-[#ffcc00]">
-                          <span className="text-[11px] font-medium flex items-center gap-1.5"><Sparkles className="w-3 h-3" /> Y2K Star Filter (Highlights Only)</span>
-                          <input type="number" value={sparkles} onChange={(e) => setSparkles(Number(e.target.value))} className="w-12 h-5 bg-[#141414] border border-[#ffcc00]/50 rounded-sm text-[10px] text-center font-mono text-white focus:outline-none focus:border-[#ffcc00]" />
-                        </div>
-                        <input aria-label="Y2K Star Filter" type="range" min="0" max="100" value={sparkles} onChange={(e) => setSparkles(parseInt(e.target.value))} />
+                        <ControlSlider label="Y2K Star Filter (Highlights Only)" ariaLabel="Y2K Star Filter" min={0} max={100} value={sparkles} onChange={setSparkles} icon={<Sparkles className="w-3 h-3" />} accentClass="text-[#ffcc00]" inputClassName="bg-[#141414] border border-[#ffcc00]/50" />
                       </div>
                     </div>
                   </motion.div>
