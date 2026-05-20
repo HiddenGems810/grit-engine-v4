@@ -10,6 +10,8 @@ type CanvasStageProps = {
   imageSrc: string | null;
   zoomLevel: 'FIT' | '1:1';
   setZoomLevel: (value: 'FIT' | '1:1') => void;
+  zoomPercent: number;
+  setZoomPercent: (value: number | ((current: number) => number)) => void;
   isFocusMode: boolean;
   setIsFocusMode: (value: boolean) => void;
   canvasStageRef: RefObject<HTMLDivElement | null>;
@@ -17,12 +19,18 @@ type CanvasStageProps = {
   handleImageUpload: (event: ChangeEvent<HTMLInputElement> | FormEvent<HTMLInputElement>) => void;
   workspaceNotice: string | null;
   capabilityNotices: string[];
+  batchImages: Array<{ id: string; name: string; src: string; width: number; height: number }>;
+  activeBatchImageId: string | null;
+  activateBatchImage: (item: { id: string; name: string; src: string; width: number; height: number }) => void;
+  exportBatchImages: (format: 'png' | 'jpeg') => void;
+  isBatchExporting: boolean;
   showOriginal: boolean;
   compareLocked: boolean;
   showFaceTargets: boolean;
   portraitGuides: PortraitGuide[];
   sourceImageSize: { width: number; height: number };
   canvasDisplaySize: { width: number; height: number };
+  canvasRasterSize: { width: number; height: number };
   selectedFaceIndex: number;
   setSelectedFaceIndex: (index: number) => void;
   inspectorMode: 'off' | 'split' | 'loupe' | 'clipping' | 'texture';
@@ -33,6 +41,8 @@ export function CanvasStage({
   imageSrc,
   zoomLevel,
   setZoomLevel,
+  zoomPercent,
+  setZoomPercent,
   isFocusMode,
   setIsFocusMode,
   canvasStageRef,
@@ -40,12 +50,18 @@ export function CanvasStage({
   handleImageUpload,
   workspaceNotice,
   capabilityNotices,
+  batchImages,
+  activeBatchImageId,
+  activateBatchImage,
+  exportBatchImages,
+  isBatchExporting,
   showOriginal,
   compareLocked,
   showFaceTargets,
   portraitGuides,
   sourceImageSize,
   canvasDisplaySize,
+  canvasRasterSize,
   selectedFaceIndex,
   setSelectedFaceIndex,
   inspectorMode,
@@ -58,6 +74,18 @@ export function CanvasStage({
     { id: 'clipping', label: 'Clip' },
     { id: 'texture', label: 'Detail' }
   ] as const;
+  const clampZoom = (value: number) => Math.min(300, Math.max(25, Math.round(value / 5) * 5));
+  const rasterWidth = canvasRasterSize.width || sourceImageSize.width || 1;
+  const rasterHeight = canvasRasterSize.height || sourceImageSize.height || 1;
+  const zoomScale = zoomPercent / 100;
+  const zoomedCanvasStyle = zoomLevel === 'FIT' ? undefined : {
+    width: `${Math.max(1, Math.round(rasterWidth * zoomScale))}px`,
+    height: `${Math.max(1, Math.round(rasterHeight * zoomScale))}px`
+  };
+  const setExplicitZoom = (nextZoom: number) => {
+    setZoomLevel('1:1');
+    setZoomPercent(clampZoom(nextZoom));
+  };
   const accessCta = resolveFormatLaunchCta({
     paymentUrl: process.env.NEXT_PUBLIC_FORMAT_PAYMENT_URL,
     betaUrl: process.env.NEXT_PUBLIC_FORMAT_BETA_URL,
@@ -70,7 +98,9 @@ export function CanvasStage({
         <div className="absolute top-3 right-3 z-20 flex items-center gap-2 rounded-[4px] border border-[#3a3527] bg-[#111111]/92 px-2 py-2 shadow-[0_16px_36px_rgba(0,0,0,0.4)] backdrop-blur-sm">
           <span className="text-[10px] uppercase tracking-[0.18em] text-[#d6a13a]">Canvas Focus</span>
           <button type="button" onClick={() => setZoomLevel('FIT')} className={`px-2 h-6 text-[10px] rounded-sm border transition-colors focus:outline-none focus:ring-1 focus:ring-[#e8a82d] ${zoomLevel === 'FIT' ? 'bg-[#e8a82d] border-[#e8a82d] text-black' : 'border-[#444] text-[#aaa] hover:bg-[#1f1f1f]'}`}>FIT</button>
-          <button type="button" onClick={() => setZoomLevel('1:1')} className={`px-2 h-6 text-[10px] rounded-sm border transition-colors focus:outline-none focus:ring-1 focus:ring-[#e8a82d] ${zoomLevel === '1:1' ? 'bg-[#e8a82d] border-[#e8a82d] text-black' : 'border-[#444] text-[#aaa] hover:bg-[#1f1f1f]'}`}>1:1</button>
+          <button type="button" onClick={() => setExplicitZoom(zoomPercent - 25)} className="px-2 h-6 text-[10px] rounded-sm border border-[#444] text-[#aaa] transition-colors hover:bg-[#1f1f1f] focus:outline-none focus:ring-1 focus:ring-[#e8a82d]">-</button>
+          <button type="button" onClick={() => setExplicitZoom(100)} className={`px-2 h-6 min-w-[48px] text-[10px] rounded-sm border transition-colors focus:outline-none focus:ring-1 focus:ring-[#e8a82d] ${zoomLevel === '1:1' ? 'bg-[#e8a82d] border-[#e8a82d] text-black' : 'border-[#444] text-[#aaa] hover:bg-[#1f1f1f]'}`}>{zoomLevel === 'FIT' ? '100%' : `${zoomPercent}%`}</button>
+          <button type="button" onClick={() => setExplicitZoom(zoomPercent + 25)} className="px-2 h-6 text-[10px] rounded-sm border border-[#444] text-[#aaa] transition-colors hover:bg-[#1f1f1f] focus:outline-none focus:ring-1 focus:ring-[#e8a82d]">+</button>
           <button type="button" aria-label="Exit canvas focus mode" onClick={() => setIsFocusMode(false)} className="h-6 w-6 rounded-sm border border-[#444] text-[#aaa] hover:bg-[#1f1f1f] flex items-center justify-center focus:outline-none focus:ring-1 focus:ring-[#e8a82d]"><Minimize className="w-3.5 h-3.5" /></button>
         </div>
       )}
@@ -79,6 +109,12 @@ export function CanvasStage({
         <div className="grid w-full max-w-6xl grid-cols-1 gap-5 m-auto xl:grid-cols-[1.1fr_0.9fr]">
           <section className="flex min-h-[420px] flex-col justify-between rounded-[8px] border border-[#3a3527] bg-[#151515] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.36)] md:p-8">
             <div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/Logos/8x/wordmark-with-submark.png"
+                alt="FORMAT image finishing without the slop"
+                className="mb-7 h-auto w-full max-w-[520px] object-contain"
+              />
               <div className="mb-4 inline-flex rounded-[3px] border border-[#4b3a1f] bg-[#1b1710] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#e8a82d]">
                 Local-first creator finishing engine
               </div>
@@ -108,7 +144,7 @@ export function CanvasStage({
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <label className="inline-flex cursor-pointer items-center justify-center rounded-[3px] border border-[#e8a82d] bg-[#e8a82d] px-5 py-3 text-[12px] font-bold uppercase tracking-[0.16em] text-black transition-colors hover:bg-[#ffba33] focus-within:ring-1 focus-within:ring-[#ffd277]">
                 Start Editing
-                <input type="file" className="hidden" accept="image/jpeg,image/png,image/webp" onChange={handleImageUpload} onInput={handleImageUpload} />
+                <input type="file" className="hidden" accept="image/jpeg,image/png,image/webp" multiple onChange={handleImageUpload} onInput={handleImageUpload} />
               </label>
               {accessCta ? (
                 <a
@@ -137,7 +173,7 @@ export function CanvasStage({
               <p className="font-semibold text-[#ccc] mb-1">Upload Image to edit</p>
               <p className="text-[11px]">Supports JPG, PNG, WebP up to 8K resolution</p>
             </div>
-            <input type="file" className="hidden" accept="image/jpeg,image/png,image/webp" onChange={handleImageUpload} onInput={handleImageUpload} />
+            <input type="file" className="hidden" accept="image/jpeg,image/png,image/webp" multiple onChange={handleImageUpload} onInput={handleImageUpload} />
           </label>
           <div id="pricing" className="rounded-[6px] border border-[#2f2f2f] bg-[#111]/70 p-4">
             <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#e8a82d]">Paid beta access</div>
@@ -162,7 +198,7 @@ export function CanvasStage({
         </div>
       ) : (
         <div ref={canvasStageRef} className={`relative ${zoomLevel === '1:1' ? 'shrink-0' : 'w-full h-full flex items-center justify-center'}`}>
-          <canvas ref={canvasRef} className={`bg-[#111] shadow-[0_0_80px_rgba(0,0,0,0.8)] transition-all duration-300 ${zoomLevel === 'FIT' ? 'max-w-full max-h-[85vh] object-contain' : ''}`} />
+          <canvas ref={canvasRef} style={zoomedCanvasStyle} className={`bg-[#111] shadow-[0_0_80px_rgba(0,0,0,0.8)] transition-[width,height] duration-150 ${zoomLevel === 'FIT' ? 'max-w-full max-h-[85vh] object-contain' : ''}`} />
           <AnimatePresence>
             {(showOriginal || compareLocked) && (
               <motion.img
@@ -172,6 +208,7 @@ export function CanvasStage({
                 transition={{ duration: 0.15 }}
                 src={imageSrc}
                 alt=""
+                style={zoomedCanvasStyle}
                 className={`absolute pointer-events-none z-10 shadow-[0_0_80px_rgba(0,0,0,0.8)] ${zoomLevel === 'FIT' ? 'max-w-full max-h-[85vh] object-contain' : ''}`}
               />
             )}
@@ -192,7 +229,8 @@ export function CanvasStage({
 
           {inspectorMode === 'split' && (
             <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
-              <img src={imageSrc} alt="" className={`shadow-[0_0_80px_rgba(0,0,0,0.8)] ${zoomLevel === 'FIT' ? 'max-w-full max-h-[85vh] object-contain' : ''}`} style={{ clipPath: 'inset(0 50% 0 0)' }} />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={imageSrc} alt="" className={`shadow-[0_0_80px_rgba(0,0,0,0.8)] ${zoomLevel === 'FIT' ? 'max-w-full max-h-[85vh] object-contain' : ''}`} style={{ ...zoomedCanvasStyle, clipPath: 'inset(0 50% 0 0)' }} />
               <div className="absolute inset-y-8 left-1/2 w-px bg-[#e8a82d]" />
               <div className="absolute bottom-4 left-4 rounded-[3px] border border-[#3a3527] bg-black/70 px-2 py-1 text-[9px] uppercase tracking-[0.16em] text-[#d6a13a]">Original / Finished Split</div>
             </div>
@@ -244,6 +282,39 @@ export function CanvasStage({
               </div>
             </div>
           )}
+        </div>
+      )}
+      {batchImages.length > 1 && (
+        <div className="absolute inset-x-4 bottom-4 z-30 rounded-[6px] border border-[#3a3527] bg-[#111111]/94 p-2 shadow-[0_18px_50px_rgba(0,0,0,0.45)] backdrop-blur-sm md:inset-x-8">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#d6a13a]">Batch Strip</div>
+              <div className="text-[10px] text-[#9f978b]">Select an image below. Export all applies the current FORMAT stack to every import.</div>
+            </div>
+            <div className="flex gap-2">
+              <button type="button" disabled={isBatchExporting} onClick={() => exportBatchImages('jpeg')} className="rounded-[3px] border border-[#e8a82d]/60 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#e8a82d] hover:bg-[#e8a82d] hover:text-black disabled:opacity-50">
+                {isBatchExporting ? 'Rendering...' : 'Export All JPG'}
+              </button>
+              <button type="button" disabled={isBatchExporting} onClick={() => exportBatchImages('png')} className="rounded-[3px] border border-[#444] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#ddd] hover:border-[#e8a82d] hover:text-[#e8a82d] disabled:opacity-50">
+                Export All PNG
+              </button>
+            </div>
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {batchImages.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => activateBatchImage(item)}
+                className={`w-28 shrink-0 rounded-[4px] border bg-[#181818] p-1 text-left transition-colors focus:outline-none focus:ring-1 focus:ring-[#e8a82d] ${activeBatchImageId === item.id ? 'border-[#e8a82d]' : 'border-[#333] hover:border-[#777]'}`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={item.src} alt="" className="h-14 w-full rounded-[2px] object-cover" />
+                <div className="mt-1 truncate text-[9px] text-[#d8d1c6]">{item.name}</div>
+                <div className="text-[8px] text-[#7e766c]">{item.width}x{item.height}</div>
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </main>

@@ -108,6 +108,7 @@ export interface Preset {
   expressionLift?: number;
   beautyBoost?: number;
   ageShift?: number;
+  eyeDetail?: number;
   eyeBrightening?: number;
   jawDefinition?: number;
   skinPolish?: number;
@@ -211,6 +212,7 @@ const basePreset = {
   expressionLift: 0,
   beautyBoost: 0,
   ageShift: 0,
+  eyeDetail: 0,
   eyeBrightening: 0,
   jawDefinition: 0,
   skinPolish: 0,

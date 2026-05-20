@@ -45,6 +45,7 @@ export type EngineSnapshot = {
   expressionLift: number;
   beautyBoost: number;
   ageShift: number;
+  eyeDetail: number;
   eyeBrightening: number;
   jawDefinition: number;
   skinPolish: number;
@@ -121,31 +122,31 @@ export type PortraitModelState = 'idle' | 'loading' | 'ready' | 'analyzing' | 'u
 export type PortraitPreset = {
   id: string;
   name: string;
-  values: Partial<Pick<EngineSnapshot, 'beautyBoost' | 'blemishRemoval' | 'faceSlimming' | 'expressionLift' | 'ageShift' | 'eyeBrightening' | 'jawDefinition' | 'skinPolish' | 'skinSmoothing' | 'glowUp' | 'teethWhitening' | 'makeupStrength' | 'clarity' | 'artifactRemoval'>>;
+  values: Partial<Pick<EngineSnapshot, 'beautyBoost' | 'blemishRemoval' | 'faceSlimming' | 'expressionLift' | 'ageShift' | 'eyeDetail' | 'eyeBrightening' | 'jawDefinition' | 'skinPolish' | 'skinSmoothing' | 'glowUp' | 'teethWhitening' | 'makeupStrength' | 'clarity' | 'artifactRemoval'>>;
 };
 
-export type PortraitControlKey = 'skinSmoothing' | 'glowUp' | 'faceSlimming' | 'blemishRemoval' | 'expressionLift' | 'beautyBoost' | 'ageShift' | 'eyeBrightening' | 'jawDefinition' | 'skinPolish' | 'teethWhitening' | 'makeupStrength' | 'artifactRemoval';
+export type PortraitControlKey = 'skinSmoothing' | 'glowUp' | 'faceSlimming' | 'blemishRemoval' | 'expressionLift' | 'beautyBoost' | 'ageShift' | 'eyeDetail' | 'eyeBrightening' | 'jawDefinition' | 'skinPolish' | 'teethWhitening' | 'makeupStrength' | 'artifactRemoval';
 
 export const PORTRAIT_PRESETS: PortraitPreset[] = [
   {
     id: 'editorial-model-clean',
     name: 'Editorial Model Clean',
-    values: { beautyBoost: 26, blemishRemoval: 22, faceSlimming: 3, expressionLift: 6, ageShift: -2, eyeBrightening: 10, jawDefinition: 10, skinPolish: 20, skinSmoothing: 12, glowUp: 5, teethWhitening: 6, makeupStrength: 4, clarity: 10, artifactRemoval: 6 }
+    values: { beautyBoost: 26, blemishRemoval: 22, faceSlimming: 3, expressionLift: 6, ageShift: -2, eyeDetail: 8, eyeBrightening: 10, jawDefinition: 10, skinPolish: 20, skinSmoothing: 12, glowUp: 5, teethWhitening: 6, makeupStrength: 4, clarity: 10, artifactRemoval: 6 }
   },
   {
     id: 'luxury-beauty-reel',
     name: 'Luxury Beauty Reel',
-    values: { beautyBoost: 38, blemishRemoval: 28, faceSlimming: 4, expressionLift: 10, ageShift: -4, eyeBrightening: 14, jawDefinition: 12, skinPolish: 28, skinSmoothing: 16, glowUp: 8, teethWhitening: 10, makeupStrength: 10, clarity: 12, artifactRemoval: 8 }
+    values: { beautyBoost: 38, blemishRemoval: 28, faceSlimming: 4, expressionLift: 10, ageShift: -4, eyeDetail: 10, eyeBrightening: 14, jawDefinition: 12, skinPolish: 28, skinSmoothing: 16, glowUp: 8, teethWhitening: 10, makeupStrength: 10, clarity: 12, artifactRemoval: 8 }
   },
   {
     id: 'mens-groomed-camera',
     name: "Men's Groomed Camera",
-    values: { beautyBoost: 10, blemishRemoval: 16, faceSlimming: 0, expressionLift: 4, ageShift: 0, eyeBrightening: 6, jawDefinition: 18, skinPolish: 10, skinSmoothing: 6, glowUp: 0, teethWhitening: 4, makeupStrength: 0, clarity: 16, artifactRemoval: 8 }
+    values: { beautyBoost: 10, blemishRemoval: 16, faceSlimming: 0, expressionLift: 4, ageShift: 0, eyeDetail: 8, eyeBrightening: 6, jawDefinition: 18, skinPolish: 10, skinSmoothing: 6, glowUp: 0, teethWhitening: 4, makeupStrength: 0, clarity: 16, artifactRemoval: 8 }
   },
   {
     id: 'gym-selfie-sculpt',
     name: 'Gym Selfie Sculpt',
-    values: { beautyBoost: 8, blemishRemoval: 14, faceSlimming: 4, expressionLift: 3, ageShift: 0, eyeBrightening: 4, jawDefinition: 20, skinPolish: 8, skinSmoothing: 4, glowUp: 0, teethWhitening: 2, makeupStrength: 0, clarity: 18, artifactRemoval: 10 }
+    values: { beautyBoost: 8, blemishRemoval: 14, faceSlimming: 4, expressionLift: 3, ageShift: 0, eyeDetail: 6, eyeBrightening: 4, jawDefinition: 20, skinPolish: 8, skinSmoothing: 4, glowUp: 0, teethWhitening: 2, makeupStrength: 0, clarity: 18, artifactRemoval: 10 }
   }
 ];
 
@@ -157,6 +158,7 @@ export const PORTRAIT_CONTROL_LIMITS: Record<PortraitControlKey, { min: number; 
   expressionLift: { min: 0, max: 24 },
   beautyBoost: { min: 0, max: 46 },
   ageShift: { min: -20, max: 20 },
+  eyeDetail: { min: 0, max: 30 },
   eyeBrightening: { min: 0, max: 28 },
   jawDefinition: { min: 0, max: 26 },
   skinPolish: { min: 0, max: 52 },
@@ -229,6 +231,7 @@ export const PARAM_LABELS: Record<keyof EngineSnapshot, string> = {
   expressionLift: 'Expression Lift',
   beautyBoost: 'Beauty Boost',
   ageShift: 'Age Shift',
+  eyeDetail: 'Eye Detail',
   eyeBrightening: 'Eye Brightening',
   jawDefinition: 'Jaw Definition',
   skinPolish: 'Skin Polish',
@@ -346,6 +349,7 @@ export const createNeutralSnapshot = (): EngineSnapshot => ({
   expressionLift: 0,
   beautyBoost: 0,
   ageShift: 0,
+  eyeDetail: 0,
   eyeBrightening: 0,
   jawDefinition: 0,
   skinPolish: 0,
@@ -402,6 +406,7 @@ export const PORTRAIT_CONTROL_DEFINITIONS: PortraitControlDefinition[] = [
   { key: 'faceSlimming', label: 'Face Slimming', accentClass: 'text-[#cfc6b7]' },
   { key: 'expressionLift', label: 'Expression Lift', accentClass: 'text-[#cfc6b7]' },
   { key: 'ageShift', label: 'Age Shift', accentClass: 'text-[#cfc6b7]' },
+  { key: 'eyeDetail', label: 'Eye Detail', accentClass: 'text-[#9ed2ff]' },
   { key: 'eyeBrightening', label: 'Eye Brightening', accentClass: 'text-[#cfc6b7]' },
   { key: 'jawDefinition', label: 'Jaw Definition', accentClass: 'text-[#cfc6b7]' },
   { key: 'teethWhitening', label: 'Teeth Whitening', accentClass: 'text-white' },
@@ -420,6 +425,7 @@ export const PORTRAIT_CONTROL_SUPPORT: Record<PortraitControlKey, {
   expressionLift: { supported: true, requiresFaceGuide: true, renderPasses: ['cheekbone landmark highlight'] },
   beautyBoost: { supported: true, requiresFaceGuide: true, renderPasses: ['face-mask soft-light', 'skin-tone pixel pass'] },
   ageShift: { supported: true, requiresFaceGuide: true, renderPasses: ['face-mask tone shift', 'landmark wrinkle accent'] },
+  eyeDetail: { supported: true, requiresFaceGuide: true, renderPasses: ['eye-mask color detail', 'eye-mask microcontrast'] },
   eyeBrightening: { supported: true, requiresFaceGuide: true, renderPasses: ['eye-mask brightness', 'eye-mask pixel pass'] },
   jawDefinition: { supported: true, requiresFaceGuide: true, renderPasses: ['jaw landmark contour'] },
   skinPolish: { supported: true, requiresFaceGuide: true, renderPasses: ['skin-mask luminosity blur', 'feature-protection'] },
@@ -440,6 +446,7 @@ export const buildPortraitPresetValues = (preset: PortraitPreset) => ({
   faceSlimming: clampPortraitControlValue('faceSlimming', preset.values.faceSlimming ?? 0),
   expressionLift: clampPortraitControlValue('expressionLift', preset.values.expressionLift ?? 0),
   ageShift: clampPortraitControlValue('ageShift', preset.values.ageShift ?? 0),
+  eyeDetail: clampPortraitControlValue('eyeDetail', preset.values.eyeDetail ?? 0),
   eyeBrightening: clampPortraitControlValue('eyeBrightening', preset.values.eyeBrightening ?? 0),
   jawDefinition: clampPortraitControlValue('jawDefinition', preset.values.jawDefinition ?? 0),
   skinPolish: clampPortraitControlValue('skinPolish', preset.values.skinPolish ?? 0),
@@ -502,6 +509,7 @@ export const buildPresetFromSnapshot = (snapshot: EngineSnapshot, name: string):
   expressionLift: snapshot.expressionLift,
   beautyBoost: snapshot.beautyBoost,
   ageShift: snapshot.ageShift,
+  eyeDetail: snapshot.eyeDetail,
   eyeBrightening: snapshot.eyeBrightening,
   jawDefinition: snapshot.jawDefinition,
   skinPolish: snapshot.skinPolish,

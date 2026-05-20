@@ -17,6 +17,11 @@ export const metadata: Metadata = {
   creator: 'TAGDesigns',
   publisher: 'TAGDesigns',
   category: 'creative software',
+  icons: {
+    icon: '/Logos/8x/icon.png',
+    shortcut: '/Logos/8x/icon.png',
+    apple: '/Logos/8x/icon.png'
+  },
   robots: {
     index: true,
     follow: true

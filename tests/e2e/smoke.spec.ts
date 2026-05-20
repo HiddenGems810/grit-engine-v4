@@ -6,7 +6,7 @@ import path from 'node:path';
 test('initial workspace shell renders core controls before image import', async ({ page }) => {
   await page.goto('/');
 
-  await expect(page.getByText('FORMAT by TAGDesigns')).toBeVisible();
+  await expect(page.getByAltText('FORMAT by TAGDesigns')).toBeVisible();
   await expect(page.getByRole('button', { name: /^Specifications/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /tone & color/i })).toBeVisible();
   await expect(page.getByRole('heading', { name: /Anti-AI-slop finishing for release-ready creator visuals/i })).toBeVisible();
@@ -148,7 +148,7 @@ test('release QA screenshots cover desktop tablet and mobile shells', async ({ p
   ]) {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     await page.goto('/');
-    await expect(page.getByText('FORMAT by TAGDesigns')).toBeVisible();
+    await expect(page.getByAltText('FORMAT by TAGDesigns')).toBeVisible();
     await testInfo.attach(`format-${viewport.name}`, {
       body: await page.screenshot({ fullPage: true }),
       contentType: 'image/png'
@@ -328,6 +328,17 @@ test('disposable flash film effect applies and exports as jpeg with workers disa
   await effectsLab.getByRole('button', { name: 'Reset Effect' }).click();
   await expect(effectsLab.getByLabel('Effect Family')).toHaveValue('none');
   await expect(effectsLab.getByRole('spinbutton', { name: 'Effect Intensity' })).toHaveCount(0);
+});
+
+test('bulk import shows a bottom batch strip and preserves smooth control access', async ({ page }) => {
+  await page.goto('/');
+
+  const imagePath = path.resolve(process.cwd(), 'test-image-to-use.png');
+  await page.locator('label').filter({ hasText: 'Upload Image to edit' }).locator('input[type="file"]').setInputFiles([imagePath, imagePath]);
+
+  await expect(page.getByText('Batch Strip')).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText('Export all applies the current FORMAT stack')).toBeVisible();
+  await expect(page.getByRole('button', { name: /test-image-to-use.png/ })).toHaveCount(2);
 });
 
 test('browser can encode a 4096px export canvas without crashing', async ({ page, browserName }) => {

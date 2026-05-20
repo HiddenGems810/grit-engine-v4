@@ -43,6 +43,7 @@ export interface RetouchParams {
   expressionLift: number;
   beautyBoost: number;
   ageShift: number;
+  eyeDetail: number;
   eyeBrightening: number;
   jawDefinition: number;
   skinPolish: number;
@@ -60,6 +61,7 @@ const LIMITS = {
   glowUp: 24,
   expressionLift: 24,
   jawDefinition: 26,
+  eyeDetail: 30,
   eyeBrightening: 28,
 } as const;
 
@@ -503,6 +505,79 @@ export function applyEyeBrightening(
   ctx.drawImage(eyeCanvas, 0, 0);
   ctx.globalAlpha = 1.0;
   ctx.globalCompositeOperation = 'source-over';
+}
+
+/**
+ * PASS 0.5h: Eye Detail
+ * Lifts eye shadows, adds iris microcontrast/color density, and catches
+ * existing bright eye reflections without globally brightening the face.
+ */
+export function applyEyeDetail(
+  ctx: CanvasRenderingContext2D,
+  canvas: HTMLCanvasElement,
+  eyeDetail: number,
+  eyeMaskCanvas: HTMLCanvasElement | null
+): void {
+  const intensity = Math.min(1, eyeDetail / LIMITS.eyeDetail);
+  if (intensity <= 0 || !eyeMaskCanvas) return;
+
+  const source = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const maskCtx = eyeMaskCanvas.getContext('2d');
+  if (!maskCtx) return;
+  const mask = maskCtx.getImageData(0, 0, canvas.width, canvas.height).data;
+  const output = new ImageData(new Uint8ClampedArray(source.data), canvas.width, canvas.height);
+  const pixels = output.data;
+
+  for (let i = 0; i < pixels.length; i += 4) {
+    const maskStrength = mask[i + 3] / 255;
+    if (maskStrength <= 0.02) continue;
+
+    const r = pixels[i];
+    const g = pixels[i + 1];
+    const b = pixels[i + 2];
+    const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const chroma = max - min;
+    const alpha = intensity * maskStrength;
+    const shadowLift = Math.max(0, 1 - luma / 142) * 18 * alpha;
+    const irisColorBoost = smoothStep(10, 86, chroma) * (1 - smoothStep(170, 245, luma)) * 0.34 * alpha;
+    const catchLightBoost = smoothStep(168, 248, luma) * 38 * alpha;
+    const detailContrast = (luma - 128) * 0.18 * alpha;
+    const targetLuma = luma + shadowLift + catchLightBoost + detailContrast;
+    const lumaDelta = targetLuma - luma;
+    const saturationGain = 1 + irisColorBoost;
+
+    pixels[i] = clampNumber(luma + (r - luma) * saturationGain + lumaDelta, 0, 255);
+    pixels[i + 1] = clampNumber(luma + (g - luma) * saturationGain + lumaDelta, 0, 255);
+    pixels[i + 2] = clampNumber(luma + (b - luma) * saturationGain + lumaDelta, 0, 255);
+  }
+
+  const detailCanvas = document.createElement('canvas');
+  detailCanvas.width = canvas.width;
+  detailCanvas.height = canvas.height;
+  const detailCtx = detailCanvas.getContext('2d');
+  if (!detailCtx) return;
+  detailCtx.putImageData(output, 0, 0);
+
+  const highPass = document.createElement('canvas');
+  highPass.width = canvas.width;
+  highPass.height = canvas.height;
+  const highPassCtx = highPass.getContext('2d');
+  if (!highPassCtx) return;
+  highPassCtx.filter = 'contrast(132%) saturate(118%)';
+  highPassCtx.drawImage(canvas, 0, 0);
+  highPassCtx.globalCompositeOperation = 'destination-in';
+  highPassCtx.drawImage(eyeMaskCanvas, 0, 0);
+
+  ctx.save();
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.globalAlpha = Math.min(0.88, 0.28 + intensity * 0.54);
+  ctx.drawImage(detailCanvas, 0, 0);
+  ctx.globalCompositeOperation = 'overlay';
+  ctx.globalAlpha = Math.min(0.32, intensity * 0.32);
+  ctx.drawImage(highPass, 0, 0);
+  ctx.restore();
 }
 
 /**

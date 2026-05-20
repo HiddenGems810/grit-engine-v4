@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useMemo, useCallback, type ChangeEvent } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback, type ChangeEvent, type FormEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Sliders, Box, RefreshCw, 
@@ -92,13 +92,21 @@ type DisposableFlashNumericKey = {
   [K in keyof DisposableFlashSettings]: DisposableFlashSettings[K] extends number ? K : never;
 }[keyof DisposableFlashSettings];
 
+type BatchImageItem = {
+  id: string;
+  name: string;
+  src: string;
+  width: number;
+  height: number;
+};
+
 const hashEffectString = (value: string) => (
   Array.from(value).reduce((hash, char) => Math.imul(hash ^ char.charCodeAt(0), 16777619), 2166136261) >>> 0
 );
 import {
   applyFaceSlimming, applySkinSmoothing, applySkinPolish, applyBlemishRemoval,
   applyBeautyBoostCanvas, applyGlowAccent, applyExpressionLift, applyJawDefinition,
-  applyEyeBrightening, applyFeatureProtection
+  applyEyeDetail, applyEyeBrightening, applyFeatureProtection
 } from '@/lib/engine/portrait-retouch';
 import { applyColorPipeline } from '@/lib/engine/color-pipeline';
 import { applyFilmHalation, applyLightLeaks, applyPrismEdgeBlur } from '@/lib/engine/light-effects';
@@ -164,6 +172,7 @@ export default function FormatWorkspace() {
   const [expressionLift, setExpressionLift] = useState(0);
   const [beautyBoost, setBeautyBoost] = useState(0);
   const [ageShift, setAgeShift] = useState(0);
+  const [eyeDetail, setEyeDetail] = useState(0);
   const [eyeBrightening, setEyeBrightening] = useState(0);
   const [jawDefinition, setJawDefinition] = useState(0);
   const [skinPolish, setSkinPolish] = useState(0);
@@ -206,6 +215,7 @@ export default function FormatWorkspace() {
 
   // -- UI States --
   const [zoomLevel, setZoomLevel] = useState<'FIT' | '1:1'>('FIT');
+  const [zoomPercent, setZoomPercent] = useState(100);
   const [compareLocked, setCompareLocked] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [workspaceNotice, setWorkspaceNotice] = useState<string | null>(null);
@@ -218,6 +228,9 @@ export default function FormatWorkspace() {
   const [antiAiRepairSettings, setAntiAiRepairSettings] = useState<AntiAiRepairSettings>(DEFAULT_ANTI_AI_REPAIR_SETTINGS);
   const [showOriginal, setShowOriginal] = useState(false);
   const [imageReady, setImageReady] = useState(0); // Trigger to force reliable rendering
+  const [batchImages, setBatchImages] = useState<BatchImageItem[]>([]);
+  const [activeBatchImageId, setActiveBatchImageId] = useState<string | null>(null);
+  const [isBatchExporting, setIsBatchExporting] = useState(false);
   const [activeCamera, setActiveCamera] = useState('Standard Matrix');
   const [upscaleEnabled, setUpscaleEnabled] = useState(DEFAULT_UPSCALE_SETTINGS.enabled);
   const [upscaleScaleFactor, setUpscaleScaleFactor] = useState(DEFAULT_UPSCALE_SETTINGS.scaleFactor);
@@ -287,12 +300,17 @@ export default function FormatWorkspace() {
   const kernelSchedulerRef = useRef<KernelScheduler | null>(null);
   const sliderInteractionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [canvasDisplaySize, setCanvasDisplaySize] = useState({ width: 0, height: 0 });
+  const [canvasRasterSize, setCanvasRasterSize] = useState({ width: 0, height: 0 });
   const [exportAspect, setExportAspect] = useState<ExportAspectId>('original');
   const [renderFingerprint, setRenderFingerprint] = useState<RenderFingerprint | null>(null);
   const [inspectorMode, setInspectorMode] = useState<'off' | 'split' | 'loupe' | 'clipping' | 'texture'>('off');
 
   const syncCanvasDisplaySize = useCallback(() => {
     if (!canvasRef.current) return;
+    setCanvasRasterSize({
+      width: canvasRef.current.width,
+      height: canvasRef.current.height
+    });
     setCanvasDisplaySize({
       width: canvasRef.current.clientWidth,
       height: canvasRef.current.clientHeight
@@ -368,6 +386,7 @@ export default function FormatWorkspace() {
     expressionLift: { value: expressionLift, setValue: setExpressionLift },
     beautyBoost: { value: beautyBoost, setValue: setBeautyBoost },
     ageShift: { value: ageShift, setValue: setAgeShift },
+    eyeDetail: { value: eyeDetail, setValue: setEyeDetail },
     eyeBrightening: { value: eyeBrightening, setValue: setEyeBrightening },
     jawDefinition: { value: jawDefinition, setValue: setJawDefinition },
     skinPolish: { value: skinPolish, setValue: setSkinPolish },
@@ -689,6 +708,7 @@ export default function FormatWorkspace() {
     setFaceSlimming(values.faceSlimming);
     setExpressionLift(values.expressionLift);
     setAgeShift(values.ageShift);
+    setEyeDetail(values.eyeDetail);
     setEyeBrightening(values.eyeBrightening);
     setJawDefinition(values.jawDefinition);
     setSkinPolish(values.skinPolish);
@@ -731,6 +751,7 @@ export default function FormatWorkspace() {
     expressionLift,
     beautyBoost,
     ageShift,
+    eyeDetail,
     eyeBrightening,
     jawDefinition,
     skinPolish,
@@ -770,7 +791,7 @@ export default function FormatWorkspace() {
     disposableCustomDate,
     disposableFrameMode,
     activeCamera
-  }), [monochrome, saturation, hueShift, shadowCrush, midtones, highlights, activeLUT, inkBleed, halation, chromaOffset, grain, threshold, halftone, scanlines, vignette, lightLeak, lightLeakStyle, gradientMap, dustAndScratches, sparkles, camcorderOSD, prismBlur, skinSmoothing, clarity, glowUp, faceSlimming, blemishRemoval, expressionLift, beautyBoost, ageShift, eyeBrightening, jawDefinition, skinPolish, teethWhitening, makeupStrength, artifactRemoval, colorKnockout, textureType, textureIntensity, materialProfile, materialStrength, printProfile, paperSurface, filmProfile, opticalProfile, materialFaceProtection, materialEdgeProtection, effectFamily, effectPreset, effectIntensity, disposableFlashStrength, disposableFlashFalloff, disposableWarmLightLeak, disposableRedEdgeBurn, disposableCyanShadowCast, disposableFilmGrain, disposableDustAndScratches, disposablePlasticLensSoftness, disposableChromaticFringing, disposableVignette, disposableDateStamp, disposablePrintFrame, disposableStampMode, disposableStampFormat, disposableStampColor, disposableStampPosition, disposableCustomDate, disposableFrameMode, activeCamera]);
+  }), [monochrome, saturation, hueShift, shadowCrush, midtones, highlights, activeLUT, inkBleed, halation, chromaOffset, grain, threshold, halftone, scanlines, vignette, lightLeak, lightLeakStyle, gradientMap, dustAndScratches, sparkles, camcorderOSD, prismBlur, skinSmoothing, clarity, glowUp, faceSlimming, blemishRemoval, expressionLift, beautyBoost, ageShift, eyeDetail, eyeBrightening, jawDefinition, skinPolish, teethWhitening, makeupStrength, artifactRemoval, colorKnockout, textureType, textureIntensity, materialProfile, materialStrength, printProfile, paperSurface, filmProfile, opticalProfile, materialFaceProtection, materialEdgeProtection, effectFamily, effectPreset, effectIntensity, disposableFlashStrength, disposableFlashFalloff, disposableWarmLightLeak, disposableRedEdgeBurn, disposableCyanShadowCast, disposableFilmGrain, disposableDustAndScratches, disposablePlasticLensSoftness, disposableChromaticFringing, disposableVignette, disposableDateStamp, disposablePrintFrame, disposableStampMode, disposableStampFormat, disposableStampColor, disposableStampPosition, disposableCustomDate, disposableFrameMode, activeCamera]);
 
   const applySnapshot = (snapshot: EngineSnapshot, options: { skipHistory?: boolean } = { skipHistory: true }) => {
     const normalizedSnapshot = reduceEditorSnapshot(createNeutralSnapshot(), { type: 'apply-snapshot', snapshot });
@@ -807,6 +828,7 @@ export default function FormatWorkspace() {
     setExpressionLift(normalizedSnapshot.expressionLift);
     setBeautyBoost(normalizedSnapshot.beautyBoost);
     setAgeShift(normalizedSnapshot.ageShift);
+    setEyeDetail(normalizedSnapshot.eyeDetail);
     setEyeBrightening(normalizedSnapshot.eyeBrightening);
     setJawDefinition(normalizedSnapshot.jawDefinition);
     setSkinPolish(normalizedSnapshot.skinPolish);
@@ -894,7 +916,7 @@ export default function FormatWorkspace() {
   const resetSpecificationStack = () => {
     pendingHistoryMetaRef.current = {
       label: 'System reset',
-      detail: 'SYSTEM 04 neutral stack restored'
+      detail: 'FORMAT neutral stack restored'
     };
     clearActivePresetMetadata();
     clearAntiAiRepairMetadata();
@@ -924,6 +946,7 @@ export default function FormatWorkspace() {
     setGlowUp(clampPortraitControlValue('glowUp', 6));
     setSkinSmoothing(clampPortraitControlValue('skinSmoothing', 16));
     setBlemishRemoval(clampPortraitControlValue('blemishRemoval', 24));
+    setEyeDetail(clampPortraitControlValue('eyeDetail', 12));
     setEyeBrightening(clampPortraitControlValue('eyeBrightening', 14));
     setJawDefinition(clampPortraitControlValue('jawDefinition', 12));
     setSkinPolish(clampPortraitControlValue('skinPolish', 26));
@@ -1088,6 +1111,125 @@ export default function FormatWorkspace() {
     upscaleScaleFactor
   });
 
+  const loadImageElement = (src: string) => new Promise<HTMLImageElement>((resolve, reject) => {
+    const img = new globalThis.Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error('Image could not be decoded.'));
+    img.src = src;
+  });
+
+  const readBatchFile = (file: File, index: number) => new Promise<BatchImageItem>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const src = String(event.target?.result ?? '');
+        const img = await loadImageElement(src);
+        resolve({
+          id: `${file.name}-${file.size}-${file.lastModified}-${index}`,
+          name: file.name,
+          src,
+          width: img.naturalWidth || img.width,
+          height: img.naturalHeight || img.height
+        });
+      } catch (error) {
+        reject(error);
+      }
+    };
+    reader.onerror = () => reject(new Error('Image could not be read.'));
+    reader.readAsDataURL(file);
+  });
+
+  const captureBatchFiles = async (files: FileList | null) => {
+    const imageFiles = Array.from(files ?? []).filter((file) => ['image/jpeg', 'image/png', 'image/webp'].includes(file.type));
+    if (imageFiles.length <= 1) return;
+
+    try {
+      const items = await Promise.all(imageFiles.map((file, index) => readBatchFile(file, index)));
+      setBatchImages(items);
+      setActiveBatchImageId(items[0]?.id ?? null);
+      setWorkspaceNotice(`Loaded ${items.length} images. Use the bottom batch strip to switch images or export all with the current stack.`);
+    } catch (error) {
+      console.warn('Batch import failed.', error);
+      setWorkspaceNotice('One or more batch images could not be loaded. Use JPG, PNG, or WebP files.');
+    }
+  };
+
+  const handleWorkspaceImageUpload = (event: ChangeEvent<HTMLInputElement> | FormEvent<HTMLInputElement>) => {
+    const files = event.currentTarget.files;
+    void captureBatchFiles(files);
+    handleImageUpload(event);
+  };
+
+  const activateBatchImage = async (item: BatchImageItem) => {
+    try {
+      const img = await loadImageElement(item.src);
+      originalImageRef.current = img;
+      setActiveBatchImageId(item.id);
+      setPreviewImageSrc(item.src);
+      setSourceImageSize({ width: item.width, height: item.height });
+      setImageSrc(item.src);
+      setPortraitSuppressed(false);
+      setImageReady((value) => value + 1);
+      setWorkspaceNotice(`Loaded batch image ${item.name}. Current FORMAT stack remains active.`);
+    } catch (error) {
+      console.warn('Batch image activation failed.', error);
+      setWorkspaceNotice('That batch image could not be decoded.');
+    }
+  };
+
+  const exportBatchImages = async (format: 'png' | 'jpeg') => {
+    if (batchImages.length === 0 || !originalImageRef.current) return;
+
+    const originalImage = originalImageRef.current;
+    const activeItem = batchImages.find((item) => item.id === activeBatchImageId) ?? null;
+    setIsBatchExporting(true);
+    setWorkspaceNotice(`Batch rendering ${batchImages.length} images with the current FORMAT stack...`);
+
+    try {
+      for (const [index, item] of batchImages.entries()) {
+        const img = await loadImageElement(item.src);
+        originalImageRef.current = img;
+        const outputCanvas = await buildExportCanvas();
+        if (!outputCanvas) continue;
+        const blob = await new Promise<Blob>((resolve, reject) => {
+          outputCanvas.toBlob((nextBlob) => {
+            if (nextBlob) resolve(nextBlob);
+            else reject(new Error('Batch export returned an empty blob.'));
+          }, `image/${format}`, format === 'jpeg' ? 0.95 : undefined);
+        });
+        const objectUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        const safeName = item.name.replace(/\.[^.]+$/, '').replace(/[^a-z0-9-_]+/gi, '-').slice(0, 48) || `image-${index + 1}`;
+        link.href = objectUrl;
+        link.download = `format-${safeName}.${format}`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(objectUrl);
+        await new Promise((resolve) => setTimeout(resolve, 80));
+      }
+      setWorkspaceNotice(`Batch rendered ${batchImages.length} ${format.toUpperCase()} files.`);
+    } catch (error) {
+      console.warn('Batch export failed.', error);
+      setWorkspaceNotice('Batch export failed. Try fewer images or lower export scale.');
+    } finally {
+      originalImageRef.current = originalImage;
+      if (activeItem) {
+        setImageSrc(activeItem.src);
+        setPreviewImageSrc(activeItem.src);
+        setSourceImageSize({ width: activeItem.width, height: activeItem.height });
+      }
+      setImageReady((value) => value + 1);
+      setIsBatchExporting(false);
+    }
+  };
+
+  const clearWorkspaceImage = () => {
+    setBatchImages([]);
+    setActiveBatchImageId(null);
+    handleRemoveImage();
+  };
+
   useEffect(() => {
     return () => {
       if (sliderInteractionTimeoutRef.current) {
@@ -1108,7 +1250,7 @@ export default function FormatWorkspace() {
       resizeObserver.disconnect();
       window.removeEventListener('resize', syncCanvasDisplaySize);
     };
-  }, [imageReady, zoomLevel, isFocusMode, syncCanvasDisplaySize]);
+  }, [imageReady, zoomLevel, zoomPercent, isFocusMode, syncCanvasDisplaySize]);
 
 
   useEffect(() => {
@@ -1178,6 +1320,7 @@ export default function FormatWorkspace() {
     const effectiveExpressionLift = clampPortraitControlValue('expressionLift', expressionLift);
     const effectiveBeautyBoost = clampPortraitControlValue('beautyBoost', beautyBoost);
     const effectiveAgeShift = clampPortraitControlValue('ageShift', ageShift);
+    const effectiveEyeDetail = clampPortraitControlValue('eyeDetail', eyeDetail);
     const effectiveEyeBrightening = clampPortraitControlValue('eyeBrightening', eyeBrightening);
     const effectiveJawDefinition = clampPortraitControlValue('jawDefinition', jawDefinition);
     const effectiveSkinPolish = clampPortraitControlValue('skinPolish', skinPolish);
@@ -1284,7 +1427,7 @@ export default function FormatWorkspace() {
     if (scaledPortraitGuide && (
       portraitSmooth > 0 || portraitGlow > 0 || effectiveBeautyBoost > 0 ||
       effectiveExpressionLift > 0 || effectiveAgeShift !== 0 || effectiveSkinPolish > 0 ||
-      effectiveBlemishRemoval > 0 || effectiveEyeBrightening > 0 || effectiveJawDefinition > 0
+      effectiveBlemishRemoval > 0 || effectiveEyeDetail > 0 || effectiveEyeBrightening > 0 || effectiveJawDefinition > 0
     )) {
       const protectedDetailSource = document.createElement('canvas');
       protectedDetailSource.width = canvas.width;
@@ -1322,6 +1465,10 @@ export default function FormatWorkspace() {
       // PASS 0.5i: Eye Brightening canvas-level screen pass.
       // This was previously missing — only the per-pixel color pipeline path ran.
       // The canvas pass provides the high-frequency luminosity boost that makes eyes pop.
+      if (effectiveEyeDetail > 0) {
+        applyEyeDetail(ctx, canvas, effectiveEyeDetail, eyeMaskCanvas);
+      }
+
       if (effectiveEyeBrightening > 0) {
         applyEyeBrightening(ctx, canvas, effectiveEyeBrightening, eyeMaskCanvas);
       }
@@ -1571,7 +1718,7 @@ export default function FormatWorkspace() {
     }
 
     return committedCanvas;
-  }, [imageReady, portraitGuide, skinSmoothing, glowUp, faceSlimming, blemishRemoval, expressionLift, beautyBoost, ageShift, eyeBrightening, jawDefinition, skinPolish, teethWhitening, makeupStrength, artifactRemoval, clarity, isSliderInteracting, inkBleed, shadowCrush, midtones, highlights, activeLUT, grain, threshold, saturation, hueShift, halation, chromaOffset, monochrome, halftone, scanlines, vignette, lightLeak, lightLeakStyle, gradientMap, prismBlur, colorKnockout, textureType, textureIntensity, dustAndScratches, sparkles, camcorderOSD, materialProfile, materialStrength, printProfile, paperSurface, filmProfile, opticalProfile, materialFaceProtection, materialEdgeProtection, effectFamily, effectPreset, effectIntensity, disposableFlashSettings, disposableFlashStrength, disposableFlashFalloff, disposableWarmLightLeak, disposableRedEdgeBurn, disposableCyanShadowCast, disposableFilmGrain, disposableDustAndScratches, disposablePlasticLensSoftness, disposableChromaticFringing, disposableVignette, disposableStampMode, disposableStampFormat, disposableStampColor, disposableStampPosition, disposableCustomDate, disposableFrameMode, sourceImageSize, createSnapshot]);
+  }, [imageReady, portraitGuide, skinSmoothing, glowUp, faceSlimming, blemishRemoval, expressionLift, beautyBoost, ageShift, eyeDetail, eyeBrightening, jawDefinition, skinPolish, teethWhitening, makeupStrength, artifactRemoval, clarity, isSliderInteracting, inkBleed, shadowCrush, midtones, highlights, activeLUT, grain, threshold, saturation, hueShift, halation, chromaOffset, monochrome, halftone, scanlines, vignette, lightLeak, lightLeakStyle, gradientMap, prismBlur, colorKnockout, textureType, textureIntensity, dustAndScratches, sparkles, camcorderOSD, materialProfile, materialStrength, printProfile, paperSurface, filmProfile, opticalProfile, materialFaceProtection, materialEdgeProtection, effectFamily, effectPreset, effectIntensity, disposableFlashSettings, disposableFlashStrength, disposableFlashFalloff, disposableWarmLightLeak, disposableRedEdgeBurn, disposableCyanShadowCast, disposableFilmGrain, disposableDustAndScratches, disposablePlasticLensSoftness, disposableChromaticFringing, disposableVignette, disposableStampMode, disposableStampFormat, disposableStampColor, disposableStampPosition, disposableCustomDate, disposableFrameMode, sourceImageSize, createSnapshot]);
 
   useEffect(() => {
     renderForExportRef.current = () => renderCanvas('export');
@@ -1608,7 +1755,7 @@ export default function FormatWorkspace() {
 
     if (!snapshotSyncRef.current) {
       snapshotSyncRef.current = nextSnapshot;
-      commitHistoryEntry(nextSnapshot, 'Session started', 'SYSTEM 04 industrial base loaded');
+      commitHistoryEntry(nextSnapshot, 'Session started', 'FORMAT neutral base loaded');
       return;
     }
 
@@ -1742,7 +1889,7 @@ export default function FormatWorkspace() {
         openSavePresetDialog={openSavePresetDialog}
         exportCustomPresets={exportCustomPresets}
         importPresetInputRef={importPresetInputRef}
-        handleRemoveImage={handleRemoveImage}
+        handleRemoveImage={clearWorkspaceImage}
         handleUndo={handleUndo}
         handleRedo={handleRedo}
         resetSpecificationStack={resetSpecificationStack}
@@ -1757,6 +1904,8 @@ export default function FormatWorkspace() {
         setIsFocusMode={setIsFocusMode}
         zoomLevel={zoomLevel}
         setZoomLevel={setZoomLevel}
+        zoomPercent={zoomPercent}
+        setZoomPercent={setZoomPercent}
       />
 
       {/* MIDDLE ROW */}
@@ -1789,19 +1938,27 @@ export default function FormatWorkspace() {
           imageSrc={imageSrc}
           zoomLevel={zoomLevel}
           setZoomLevel={setZoomLevel}
+          zoomPercent={zoomPercent}
+          setZoomPercent={setZoomPercent}
           isFocusMode={isFocusMode}
           setIsFocusMode={setIsFocusMode}
           canvasStageRef={canvasStageRef}
           canvasRef={canvasRef}
-          handleImageUpload={handleImageUpload}
+          handleImageUpload={handleWorkspaceImageUpload}
           workspaceNotice={workspaceNotice}
           capabilityNotices={capabilityNotices}
+          batchImages={batchImages}
+          activeBatchImageId={activeBatchImageId}
+          activateBatchImage={activateBatchImage}
+          exportBatchImages={exportBatchImages}
+          isBatchExporting={isBatchExporting}
           showOriginal={showOriginal}
           compareLocked={compareLocked}
           showFaceTargets={showFaceTargets}
           portraitGuides={portraitGuides}
           sourceImageSize={sourceImageSize}
           canvasDisplaySize={canvasDisplaySize}
+          canvasRasterSize={canvasRasterSize}
           selectedFaceIndex={selectedFaceIndex}
           setSelectedFaceIndex={setSelectedFaceIndex}
           inspectorMode={inspectorMode}
@@ -2589,7 +2746,7 @@ export default function FormatWorkspace() {
         />
       )}
 
-      <input ref={fileInputRef} type="file" className="hidden" accept="image/jpeg,image/png,image/webp" onChange={handleImageUpload} onInput={handleImageUpload} />
+      <input ref={fileInputRef} type="file" className="hidden" accept="image/jpeg,image/png,image/webp" multiple onChange={handleWorkspaceImageUpload} onInput={handleWorkspaceImageUpload} />
       <input ref={importPresetInputRef} type="file" className="hidden" accept="application/json,.json" onChange={handlePresetBundleImport} />
 
       <AnimatePresence>
@@ -2597,9 +2754,13 @@ export default function FormatWorkspace() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-40 bg-black/55 flex items-start justify-center pt-20 px-6">
             <motion.div initial={{ y: 18, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 18, opacity: 0 }} className="w-full max-w-[620px] rounded-[8px] border border-[#3a3527] bg-[#121212] shadow-[0_24px_60px_rgba(0,0,0,0.55)]">
               <div className="border-b border-[#2f2f2f] px-6 py-5">
-                <div className="text-[12px] uppercase tracking-[0.24em] text-[#d6a13a]">FORMAT by TAGDesigns</div>
-                <div className="mt-2 text-[20px] font-semibold text-[#f2ede3]">SYSTEM 04 // INDUSTRIAL SPECIFICATION</div>
-                <div className="mt-2 text-[12px] text-[#8d877d]">Revision controls, export paths, and stack behavior for the current workspace.</div>
+                <div className="flex items-center gap-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/Logos/8x/logo-submark.png" alt="" aria-hidden="true" className="h-9 w-9 object-contain" />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/Logos/8x/wordmark-no-submark.png" alt="FORMAT by TAGDesigns" className="h-[20px] w-auto max-w-[260px] object-contain" />
+                </div>
+                <div className="mt-3 text-[12px] text-[#8d877d]">Revision controls, export paths, and stack behavior for the current workspace.</div>
               </div>
               <div className="grid gap-5 px-6 py-5 text-[12px] text-[#c8c2b8] md:grid-cols-2">
                 <div>
@@ -2615,7 +2776,7 @@ export default function FormatWorkspace() {
                   <div className="mt-2 space-y-1 text-[#a8a196]">
                     <p>Undo and Redo step through the recorded specification timeline.</p>
                     <p>Last Edits shows the most recent stack changes.</p>
-                    <p>Reset Stack restores the SYSTEM 04 neutral base.</p>
+                    <p>Reset Stack restores the FORMAT neutral base.</p>
                   </div>
                 </div>
                 <div>
@@ -2630,7 +2791,7 @@ export default function FormatWorkspace() {
                   <div className="mt-2 space-y-1 text-[#a8a196]">
                     <p>Primary brand: FORMAT</p>
                     <p>Parent entity: TAGDesigns</p>
-                    <p>Version style: SYSTEM 04</p>
+                    <p>Version style: FORMAT premium finishing workspace</p>
                   </div>
                 </div>
               </div>

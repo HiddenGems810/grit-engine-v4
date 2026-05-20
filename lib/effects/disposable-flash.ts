@@ -558,17 +558,22 @@ const drawPrintFrameAndDate = (
 
   if (settings.stampMode !== 'off') {
     const pad = Math.max(14, Math.round(canvas.width * 0.018));
-    const fontSize = Math.max(12, Math.round(canvas.width * 0.022));
+    const fontSize = Math.max(18, Math.round(Math.min(canvas.width, canvas.height) * 0.035));
     ctx.font = `700 ${fontSize}px monospace`;
     ctx.textBaseline = 'bottom';
-    ctx.shadowColor = 'rgba(0,0,0,0.45)';
-    ctx.shadowBlur = 2;
-    ctx.fillStyle = stampFillStyle(settings.stampColor);
     const text = resolveDisposableDateStamp(settings, seed);
+    const textWidth = ctx.measureText(text).width;
     const x = settings.stampPosition === 'bottom-right'
-      ? canvas.width - pad - ctx.measureText(text).width
+      ? canvas.width - pad - textWidth
       : pad;
-    ctx.fillText(text, x, canvas.height - pad);
+    const y = canvas.height - pad;
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = 'rgba(0,0,0,0.38)';
+    ctx.fillRect(x - 7, y - fontSize - 5, textWidth + 14, fontSize + 10);
+    ctx.shadowColor = 'rgba(0,0,0,0.72)';
+    ctx.shadowBlur = 3;
+    ctx.fillStyle = stampFillStyle(settings.stampColor);
+    ctx.fillText(text, x, y);
   }
   ctx.restore();
 };
@@ -609,16 +614,20 @@ export const createExpandedDisposablePrintCanvas = (
   if (safe.stampMode !== 'off') {
     const text = resolveDisposableDateStamp(safe, seed);
     const pad = Math.max(16, Math.round(metrics.borderPx * 0.8));
-    const fontSize = Math.max(13, Math.round(sourceCanvas.width * 0.022));
+    const fontSize = Math.max(18, Math.round(Math.min(sourceCanvas.width, sourceCanvas.height) * 0.035));
     ctx.font = `700 ${fontSize}px monospace`;
     ctx.textBaseline = 'bottom';
-    ctx.shadowColor = 'rgba(0,0,0,0.12)';
+    const textWidth = ctx.measureText(text).width;
+    const x = safe.stampPosition === 'bottom-right'
+      ? expanded.width - pad - textWidth
+      : pad;
+    const y = expanded.height - Math.max(12, Math.round(metrics.bottomPx * 0.28));
+    ctx.fillStyle = 'rgba(255,255,255,0.42)';
+    ctx.fillRect(x - 7, y - fontSize - 5, textWidth + 14, fontSize + 10);
+    ctx.shadowColor = 'rgba(0,0,0,0.18)';
     ctx.shadowBlur = 1;
     ctx.fillStyle = stampFillStyle(safe.stampColor);
-    const x = safe.stampPosition === 'bottom-right'
-      ? expanded.width - pad - ctx.measureText(text).width
-      : pad;
-    ctx.fillText(text, x, expanded.height - Math.max(12, Math.round(metrics.bottomPx * 0.28)));
+    ctx.fillText(text, x, y);
   }
 
   return expanded;

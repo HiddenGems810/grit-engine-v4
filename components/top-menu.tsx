@@ -1,7 +1,7 @@
 'use client';
 
 import { RefObject } from 'react';
-import { ArrowUpRight, FileDown, Image as ImageIcon, Minimize } from 'lucide-react';
+import { ArrowUpRight, FileDown, Image as ImageIcon, Minimize, Minus, Plus } from 'lucide-react';
 import type { HistoryEntry, MenuKey } from '@/lib/editor-config';
 
 type TopMenuProps = {
@@ -30,6 +30,8 @@ type TopMenuProps = {
   setIsFocusMode: (updater: boolean | ((current: boolean) => boolean)) => void;
   zoomLevel: 'FIT' | '1:1';
   setZoomLevel: (value: 'FIT' | '1:1') => void;
+  zoomPercent: number;
+  setZoomPercent: (value: number | ((current: number) => number)) => void;
 };
 
 export function TopMenu({
@@ -57,8 +59,16 @@ export function TopMenu({
   isFocusMode,
   setIsFocusMode,
   zoomLevel,
-  setZoomLevel
+  setZoomLevel,
+  zoomPercent,
+  setZoomPercent
 }: TopMenuProps) {
+  const clampZoom = (value: number) => Math.min(300, Math.max(25, Math.round(value / 5) * 5));
+  const adjustZoom = (delta: number) => {
+    setZoomLevel('1:1');
+    setZoomPercent((current) => clampZoom(current + delta));
+  };
+
   return (
     <header className="h-[36px] bg-[#141414] border-b border-[#333] flex items-center px-4 shrink-0">
       <div className="flex items-center gap-1 text-[#aaa] relative" ref={menuRef}>
@@ -145,16 +155,38 @@ export function TopMenu({
 
         <div className="flex items-center gap-2">
           <span className="text-[#888]">Zoom</span>
-          {(['FIT', '1:1'] as const).map((z) => (
-            <button
-              type="button"
-              key={z}
-              onClick={() => setZoomLevel(z)}
-              className={`px-2 h-5 text-[11px] font-semibold rounded-sm transition-colors focus:outline-none focus:ring-1 focus:ring-[#e8a82d] ${zoomLevel === z ? 'bg-[#e8a82d] text-black' : 'border border-[#444] text-[#888] hover:bg-[#333]'}`}
-            >
-              {z}
-            </button>
-          ))}
+          <button
+            type="button"
+            onClick={() => setZoomLevel('FIT')}
+            className={`px-2 h-5 text-[11px] font-semibold rounded-sm transition-colors focus:outline-none focus:ring-1 focus:ring-[#e8a82d] ${zoomLevel === 'FIT' ? 'bg-[#e8a82d] text-black' : 'border border-[#444] text-[#888] hover:bg-[#333]'}`}
+          >
+            FIT
+          </button>
+          <button
+            type="button"
+            aria-label="Zoom out"
+            onClick={() => adjustZoom(-25)}
+            disabled={!imageSrc}
+            className="h-5 w-5 rounded-sm border border-[#444] text-[#888] hover:bg-[#333] disabled:opacity-40 disabled:hover:bg-transparent focus:outline-none focus:ring-1 focus:ring-[#e8a82d]"
+          >
+            <Minus className="mx-auto h-3 w-3" />
+          </button>
+          <button
+            type="button"
+            onClick={() => { setZoomLevel('1:1'); setZoomPercent(100); }}
+            className={`px-2 h-5 min-w-[44px] text-[11px] font-semibold rounded-sm transition-colors focus:outline-none focus:ring-1 focus:ring-[#e8a82d] ${zoomLevel === '1:1' && zoomPercent === 100 ? 'bg-[#e8a82d] text-black' : 'border border-[#444] text-[#888] hover:bg-[#333]'}`}
+          >
+            {zoomLevel === 'FIT' ? '100%' : `${zoomPercent}%`}
+          </button>
+          <button
+            type="button"
+            aria-label="Zoom in"
+            onClick={() => adjustZoom(25)}
+            disabled={!imageSrc}
+            className="h-5 w-5 rounded-sm border border-[#444] text-[#888] hover:bg-[#333] disabled:opacity-40 disabled:hover:bg-transparent focus:outline-none focus:ring-1 focus:ring-[#e8a82d]"
+          >
+            <Plus className="mx-auto h-3 w-3" />
+          </button>
         </div>
       </div>
 
@@ -174,9 +206,22 @@ export function TopMenu({
             </button>
           </>
         )}
-        <div className="ml-2 pl-3 border-l border-[#3a3527] flex flex-col items-end leading-none">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[#f3efe6]">FORMAT <span className="text-[#a7a095] tracking-[0.12em] normal-case">by TAGDesigns</span></span>
-          <span className="mt-1 hidden sm:inline text-[9px] uppercase tracking-[0.24em] text-[#d6a13a]">SYSTEM 04 // INDUSTRIAL SPECIFICATION</span>
+        <div className="ml-2 pl-3 border-l border-[#3a3527] flex items-center gap-2 leading-none">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/Logos/8x/logo-submark.png"
+            alt=""
+            aria-hidden="true"
+            className="h-6 w-6 object-contain"
+          />
+          <div className="flex flex-col items-end">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/Logos/8x/wordmark-no-submark.png"
+              alt="FORMAT by TAGDesigns"
+              className="h-[16px] w-auto object-contain"
+            />
+          </div>
         </div>
       </div>
     </header>

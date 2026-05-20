@@ -66,6 +66,7 @@ const NUMERIC_KEYS: NumericEngineKey[] = [
   'expressionLift',
   'beautyBoost',
   'ageShift',
+  'eyeDetail',
   'eyeBrightening',
   'jawDefinition',
   'skinPolish',
