@@ -1,6 +1,13 @@
 import { normalizeTextureId } from '@/lib/textures';
 import type { FilmProfile, OpticalProfile, PaperSurface, PrintMode } from '@/lib/materials/material-types';
-import type { FormatEffectFamilySelection } from '@/lib/effects/effect-types';
+import type {
+  DisposableFrameMode,
+  DisposableStampColor,
+  DisposableStampFormat,
+  DisposableStampMode,
+  DisposableStampPosition,
+  FormatEffectFamilySelection
+} from '@/lib/effects/effect-types';
 import { getEffectPreset } from '@/lib/effects/effect-registry';
 
 export type PresetFamily =
@@ -65,6 +72,12 @@ export interface Preset {
   disposableVignette?: number;
   disposableDateStamp?: boolean;
   disposablePrintFrame?: boolean;
+  disposableStampMode?: DisposableStampMode;
+  disposableStampFormat?: DisposableStampFormat;
+  disposableStampColor?: DisposableStampColor;
+  disposableStampPosition?: DisposableStampPosition;
+  disposableCustomDate?: string;
+  disposableFrameMode?: DisposableFrameMode;
   inkBleed: number;
   shadowCrush: number;
   midtones?: number;
@@ -227,7 +240,13 @@ const basePreset = {
   disposableChromaticFringing: 0,
   disposableVignette: 0,
   disposableDateStamp: false,
-  disposablePrintFrame: false
+  disposablePrintFrame: false,
+  disposableStampMode: 'off' as DisposableStampMode,
+  disposableStampFormat: 'MM_DD_YY' as DisposableStampFormat,
+  disposableStampColor: 'orange' as DisposableStampColor,
+  disposableStampPosition: 'bottom-left' as const,
+  disposableCustomDate: '',
+  disposableFrameMode: 'off' as DisposableFrameMode
 };
 
 const p = (preset: PresetInput): Preset => ({
@@ -415,7 +434,7 @@ const experimental = (id: string, name: string, overrides: Partial<PresetInput>)
 
 const disposableEffectRecipe = (effectPresetId: string): Partial<PresetInput> => {
   const effectPreset = getEffectPreset(effectPresetId);
-  if (!effectPreset) return {};
+  if (!effectPreset || effectPreset.kind !== 'disposable-flash') return {};
   const values = effectPreset.settings;
 
   return {
@@ -433,7 +452,13 @@ const disposableEffectRecipe = (effectPresetId: string): Partial<PresetInput> =>
     disposableChromaticFringing: values.chromaticFringing,
     disposableVignette: values.vignette,
     disposableDateStamp: values.dateStamp,
-    disposablePrintFrame: values.printFrame
+    disposablePrintFrame: values.printFrame,
+    disposableStampMode: values.stampMode,
+    disposableStampFormat: values.stampFormat,
+    disposableStampColor: values.stampColor,
+    disposableStampPosition: values.stampPosition,
+    disposableCustomDate: values.customDate,
+    disposableFrameMode: values.frameMode
   };
 };
 

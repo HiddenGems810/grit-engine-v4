@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   DISPOSABLE_FLASH_PRESETS,
   EFFECT_FAMILIES,
+  EFFECT_PRESETS,
   getEffectFamily,
   getEffectPreset
 } from '@/lib/effects/effect-registry';
@@ -39,6 +40,7 @@ describe('FORMAT effects registry', () => {
     expect(new Set(presetIds).size).toBe(presetIds.length);
     for (const preset of DISPOSABLE_FLASH_PRESETS) {
       expect(preset.family).toBe('disposable-flash-film');
+      expect(preset.kind).toBe('disposable-flash');
       expect(preset.enabled).toBe(true);
       expect(preset.defaultIntensity).toBeGreaterThanOrEqual(45);
       expect(preset.defaultIntensity).toBeLessThanOrEqual(86);
@@ -51,5 +53,18 @@ describe('FORMAT effects registry', () => {
       expect(changed.length).toBeGreaterThanOrEqual(6);
       expect(getEffectPreset(preset.id)?.id).toBe(preset.id);
     }
+  });
+
+  it('uses discriminated effect preset types and keeps disabled future families non-interactive', () => {
+    const disposable = EFFECT_PRESETS.filter((preset) => preset.kind === 'disposable-flash');
+    const exposedFuture = EFFECT_PRESETS.filter((preset) => preset.kind !== 'disposable-flash' && preset.enabled);
+    const disabledFamiliesWithNoPreset = EFFECT_FAMILIES
+      .filter((family) => !family.enabled)
+      .filter((family) => !EFFECT_PRESETS.some((preset) => preset.family === family.id && preset.enabled))
+      .map((family) => family.id);
+
+    expect(disposable).toHaveLength(6);
+    expect(exposedFuture).toEqual([]);
+    expect(disabledFamiliesWithNoPreset.length).toBeGreaterThan(0);
   });
 });

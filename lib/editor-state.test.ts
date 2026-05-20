@@ -106,4 +106,33 @@ describe('editor snapshot reducer', () => {
     expect(applied.grain).toBe(22);
     expect(reset).toEqual(createNeutralSnapshot());
   });
+
+  it('preserves disposable flash date stamp and frame fields in custom preset snapshots', () => {
+    const snapshot = buildSnapshotFromPreset(createNeutralSnapshot(), {
+      ...preset,
+      effectFamily: 'disposable-flash-film',
+      effectPreset: 'dff-instant-border-date',
+      effectIntensity: 100,
+      disposableFlashStrength: 82,
+      disposableDateStamp: true,
+      disposablePrintFrame: true,
+      disposableStampMode: 'custom',
+      disposableStampFormat: 'YYYY_MM_DD',
+      disposableStampColor: 'white',
+      disposableStampPosition: 'bottom-right',
+      disposableCustomDate: '2026-05-19',
+      disposableFrameMode: 'expanded-print'
+    });
+
+    expect(snapshot.effectFamily).toBe('disposable-flash-film');
+    expect(snapshot.disposableFlashStrength).toBe(82);
+    expect(snapshot.disposableDateStamp).toBe(true);
+    expect(snapshot.disposablePrintFrame).toBe(true);
+    expect(snapshot.disposableStampMode).toBe('custom');
+    expect(snapshot.disposableStampFormat).toBe('YYYY_MM_DD');
+    expect(snapshot.disposableStampColor).toBe('white');
+    expect(snapshot.disposableStampPosition).toBe('bottom-right');
+    expect(snapshot.disposableCustomDate).toBe('2026-05-19');
+    expect(snapshot.disposableFrameMode).toBe('expanded-print');
+  });
 });

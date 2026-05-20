@@ -7,6 +7,7 @@ Professional browser-based image finishing workspace built with Next.js.
 - Applies commercial-style preset stacks for portraits, lifestyle, print, cinematic, and social content
 - Supports portrait finishing controls for skin, eyes, jaw, age, makeup, and polish
 - Includes optional upscale preview/export controls for higher-resolution output
+- Includes a Premium Effects Lab with original procedural Disposable Flash Film rendering
 - Stores custom presets locally in the browser
 - Keeps imported images in-browser during normal editing and export
 
@@ -63,6 +64,12 @@ Preset intensity blends the selected recipe against the captured pre-preset edit
 ## Material Finish Philosophy
 
 FORMAT material finishes are procedural/local render passes, not remote stock texture hotlinks. Film, print, paper, dither, and optical finishes are designed to respond to luminance, edges, and preset intent so they feel physically integrated instead of pasted over the image. Portrait-safe material settings keep face protection on by default; product-oriented settings prioritize edge clarity and believable color. Graphic and Experimental material finishes can be destructive, but they are labeled and kept out of the default safe preset experience.
+
+## Premium Effects Lab
+
+The Premium Effects Lab ships with FORMAT-native Disposable Flash Film effects. These are procedural local render passes for hard flash, cyan shadow cast, warm leaks, film grain, dust/scratches, plastic lens softness, chromatic fringing, vignette, configurable date stamps, and in-frame or expanded-print borders.
+
+The shipped one-click effects are original FORMAT recipes, not copied overlays or remote assets. Planned effect families such as Risograph, Xerox, Prism, Reeded Glass, Chrome, and Letterpress are typed in the registry for future architecture but remain disabled until real renderers, tests, and visual QA ship.
 
 ## Browser limitations
 

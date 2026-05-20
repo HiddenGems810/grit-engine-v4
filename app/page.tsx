@@ -71,15 +71,30 @@ import { renderSparkles } from '@/lib/engine/sparkle-engine';
 import { renderGrain, renderVignette, renderDustAndScratches } from '@/lib/engine/film-effects';
 import {
   applyDisposableFlashFilm,
+  createExpandedDisposablePrintCanvas,
   createNeutralDisposableFlashSettings,
   hasDisposableFlashEffect,
   mixDisposableFlashSettings,
   normalizeDisposableFlashSettings
 } from '@/lib/effects/disposable-flash';
 import { getEffectPreset } from '@/lib/effects/effect-registry';
-import type { DisposableFlashSettings, FormatEffectFamilySelection } from '@/lib/effects/effect-types';
+import type {
+  DisposableFlashSettings,
+  DisposableFrameMode,
+  DisposableStampColor,
+  DisposableStampFormat,
+  DisposableStampMode,
+  DisposableStampPosition,
+  FormatEffectFamilySelection
+} from '@/lib/effects/effect-types';
 
-type DisposableFlashNumericKey = Exclude<keyof DisposableFlashSettings, 'dateStamp' | 'printFrame'>;
+type DisposableFlashNumericKey = {
+  [K in keyof DisposableFlashSettings]: DisposableFlashSettings[K] extends number ? K : never;
+}[keyof DisposableFlashSettings];
+
+const hashEffectString = (value: string) => (
+  Array.from(value).reduce((hash, char) => Math.imul(hash ^ char.charCodeAt(0), 16777619), 2166136261) >>> 0
+);
 import {
   applyFaceSlimming, applySkinSmoothing, applySkinPolish, applyBlemishRemoval,
   applyBeautyBoostCanvas, applyGlowAccent, applyExpressionLift, applyJawDefinition,
@@ -182,6 +197,12 @@ export default function FormatWorkspace() {
   const [disposableVignette, setDisposableVignette] = useState(0);
   const [disposableDateStamp, setDisposableDateStamp] = useState(false);
   const [disposablePrintFrame, setDisposablePrintFrame] = useState(false);
+  const [disposableStampMode, setDisposableStampMode] = useState<DisposableStampMode>('off');
+  const [disposableStampFormat, setDisposableStampFormat] = useState<DisposableStampFormat>('MM_DD_YY');
+  const [disposableStampColor, setDisposableStampColor] = useState<DisposableStampColor>('orange');
+  const [disposableStampPosition, setDisposableStampPosition] = useState<DisposableStampPosition>('bottom-left');
+  const [disposableCustomDate, setDisposableCustomDate] = useState('');
+  const [disposableFrameMode, setDisposableFrameMode] = useState<DisposableFrameMode>('off');
 
   // -- UI States --
   const [zoomLevel, setZoomLevel] = useState<'FIT' | '1:1'>('FIT');
@@ -293,6 +314,7 @@ export default function FormatWorkspace() {
     if (process.env.NODE_ENV === 'production' && !window.location.search.includes('bench=1')) return;
     const benchmarkWindow = window as Window & {
       __FORMAT_RENDER_BENCHMARKS__?: () => Promise<unknown>;
+      __FORMAT_DISPOSABLE_FLASH_BENCHMARKS__?: () => Promise<unknown>;
     };
     benchmarkWindow.__FORMAT_RENDER_BENCHMARKS__ = async () => {
       const { runBrowserRenderBenchmarks } = await import('@/lib/bench/browser-render-benchmarks');
@@ -302,9 +324,18 @@ export default function FormatWorkspace() {
         { label: '4096px export', width: 4096, height: 4096 }
       ]);
     };
+    benchmarkWindow.__FORMAT_DISPOSABLE_FLASH_BENCHMARKS__ = async () => {
+      const { runDisposableFlashBrowserBenchmarks } = await import('@/lib/bench/browser-render-benchmarks');
+      return runDisposableFlashBrowserBenchmarks([
+        { label: '1024px preview', width: 1024, height: 1024 },
+        { label: '1600px preview', width: 1600, height: 1600 },
+        { label: '4096px export', width: 4096, height: 4096 }
+      ]);
+    };
 
     return () => {
       delete benchmarkWindow.__FORMAT_RENDER_BENCHMARKS__;
+      delete benchmarkWindow.__FORMAT_DISPOSABLE_FLASH_BENCHMARKS__;
     };
   }, []);
 
@@ -357,7 +388,13 @@ export default function FormatWorkspace() {
     chromaticFringing: disposableChromaticFringing,
     vignette: disposableVignette,
     dateStamp: disposableDateStamp,
-    printFrame: disposablePrintFrame
+    printFrame: disposablePrintFrame,
+    stampMode: disposableStampMode,
+    stampFormat: disposableStampFormat,
+    stampColor: disposableStampColor,
+    stampPosition: disposableStampPosition,
+    customDate: disposableCustomDate,
+    frameMode: disposableFrameMode
   }), [
     disposableFlashStrength,
     disposableFlashFalloff,
@@ -370,7 +407,13 @@ export default function FormatWorkspace() {
     disposableChromaticFringing,
     disposableVignette,
     disposableDateStamp,
-    disposablePrintFrame
+    disposablePrintFrame,
+    disposableStampMode,
+    disposableStampFormat,
+    disposableStampColor,
+    disposableStampPosition,
+    disposableCustomDate,
+    disposableFrameMode
   ]);
 
   // clampNumber, createSeededRandom, buildDeterministicSeed imported from @/lib/engine/math-utils
@@ -425,6 +468,12 @@ export default function FormatWorkspace() {
     setDisposableVignette(next.vignette);
     setDisposableDateStamp(next.dateStamp);
     setDisposablePrintFrame(next.printFrame);
+    setDisposableStampMode(next.stampMode);
+    setDisposableStampFormat(next.stampFormat);
+    setDisposableStampColor(next.stampColor);
+    setDisposableStampPosition(next.stampPosition);
+    setDisposableCustomDate(next.customDate);
+    setDisposableFrameMode(next.frameMode);
   };
 
   const setEffectFamily = (family: FormatEffectFamilySelection) => {
@@ -449,7 +498,7 @@ export default function FormatWorkspace() {
 
   const applyEffectPreset = (presetId: string) => {
     const preset = getEffectPreset(presetId);
-    if (!preset || preset.family !== 'disposable-flash-film') return;
+    if (!preset || preset.kind !== 'disposable-flash') return;
 
     setEffectFamilyState(preset.family);
     setEffectPreset(preset.id);
@@ -462,7 +511,7 @@ export default function FormatWorkspace() {
     const safeValue = clampSliderValue(value);
     setEffectIntensityState(safeValue);
     const preset = getEffectPreset(effectPreset);
-    if (!preset || preset.family !== 'disposable-flash-film') return;
+    if (!preset || preset.kind !== 'disposable-flash') return;
     markSliderInteraction();
     applyDisposableFlashSettings(mixDisposableFlashSettings(createNeutralDisposableFlashSettings(), preset.settings, safeValue));
     releaseSliderInteraction(180);
@@ -481,13 +530,16 @@ export default function FormatWorkspace() {
     releaseSliderInteraction(180);
   };
 
-  const setDisposableToggle = (key: 'dateStamp' | 'printFrame', value: boolean) => {
+  const updateDisposableChoices = (settings: Partial<Pick<
+    DisposableFlashSettings,
+    'stampMode' | 'stampFormat' | 'stampColor' | 'stampPosition' | 'customDate' | 'frameMode'
+  >>) => {
     setEffectFamilyState('disposable-flash-film');
     setEffectPreset('custom-disposable-flash');
     setEffectIntensityState(100);
     applyDisposableFlashSettings({
       ...disposableFlashSettings,
-      [key]: value
+      ...settings
     });
   };
 
@@ -709,8 +761,14 @@ export default function FormatWorkspace() {
     disposableVignette,
     disposableDateStamp,
     disposablePrintFrame,
+    disposableStampMode,
+    disposableStampFormat,
+    disposableStampColor,
+    disposableStampPosition,
+    disposableCustomDate,
+    disposableFrameMode,
     activeCamera
-  }), [monochrome, saturation, hueShift, shadowCrush, midtones, highlights, activeLUT, inkBleed, halation, chromaOffset, grain, threshold, halftone, scanlines, vignette, lightLeak, lightLeakStyle, gradientMap, dustAndScratches, sparkles, camcorderOSD, prismBlur, skinSmoothing, clarity, glowUp, faceSlimming, blemishRemoval, expressionLift, beautyBoost, ageShift, eyeBrightening, jawDefinition, skinPolish, teethWhitening, makeupStrength, artifactRemoval, colorKnockout, textureType, textureIntensity, materialProfile, materialStrength, printProfile, paperSurface, filmProfile, opticalProfile, materialFaceProtection, materialEdgeProtection, effectFamily, effectPreset, effectIntensity, disposableFlashStrength, disposableFlashFalloff, disposableWarmLightLeak, disposableRedEdgeBurn, disposableCyanShadowCast, disposableFilmGrain, disposableDustAndScratches, disposablePlasticLensSoftness, disposableChromaticFringing, disposableVignette, disposableDateStamp, disposablePrintFrame, activeCamera]);
+  }), [monochrome, saturation, hueShift, shadowCrush, midtones, highlights, activeLUT, inkBleed, halation, chromaOffset, grain, threshold, halftone, scanlines, vignette, lightLeak, lightLeakStyle, gradientMap, dustAndScratches, sparkles, camcorderOSD, prismBlur, skinSmoothing, clarity, glowUp, faceSlimming, blemishRemoval, expressionLift, beautyBoost, ageShift, eyeBrightening, jawDefinition, skinPolish, teethWhitening, makeupStrength, artifactRemoval, colorKnockout, textureType, textureIntensity, materialProfile, materialStrength, printProfile, paperSurface, filmProfile, opticalProfile, materialFaceProtection, materialEdgeProtection, effectFamily, effectPreset, effectIntensity, disposableFlashStrength, disposableFlashFalloff, disposableWarmLightLeak, disposableRedEdgeBurn, disposableCyanShadowCast, disposableFilmGrain, disposableDustAndScratches, disposablePlasticLensSoftness, disposableChromaticFringing, disposableVignette, disposableDateStamp, disposablePrintFrame, disposableStampMode, disposableStampFormat, disposableStampColor, disposableStampPosition, disposableCustomDate, disposableFrameMode, activeCamera]);
 
   const applySnapshot = (snapshot: EngineSnapshot, options: { skipHistory?: boolean } = { skipHistory: true }) => {
     const normalizedSnapshot = reduceEditorSnapshot(createNeutralSnapshot(), { type: 'apply-snapshot', snapshot });
@@ -779,6 +837,12 @@ export default function FormatWorkspace() {
     setDisposableVignette(normalizedSnapshot.disposableVignette);
     setDisposableDateStamp(normalizedSnapshot.disposableDateStamp);
     setDisposablePrintFrame(normalizedSnapshot.disposablePrintFrame);
+    setDisposableStampMode(normalizedSnapshot.disposableStampMode);
+    setDisposableStampFormat(normalizedSnapshot.disposableStampFormat);
+    setDisposableStampColor(normalizedSnapshot.disposableStampColor);
+    setDisposableStampPosition(normalizedSnapshot.disposableStampPosition);
+    setDisposableCustomDate(normalizedSnapshot.disposableCustomDate);
+    setDisposableFrameMode(normalizedSnapshot.disposableFrameMode);
     setActiveCamera(normalizedSnapshot.activeCamera);
   };
 
@@ -1145,7 +1209,15 @@ export default function FormatWorkspace() {
       disposableDustAndScratches,
       disposablePlasticLensSoftness,
       disposableChromaticFringing,
-      disposableVignette
+      disposableVignette,
+      hashEffectString(effectFamily),
+      hashEffectString(effectPreset),
+      hashEffectString(disposableStampMode),
+      hashEffectString(disposableStampFormat),
+      hashEffectString(disposableStampColor),
+      hashEffectString(disposableStampPosition),
+      hashEffectString(disposableCustomDate),
+      hashEffectString(disposableFrameMode)
     );
 
     const masks = buildPortraitMasks(canvas.width, canvas.height, scaledPortraitGuide, effectiveBeautyBoost, effectiveSkinPolish);
@@ -1338,7 +1410,8 @@ export default function FormatWorkspace() {
         canvas,
         disposableFlashSettings,
         deterministicSeed ^ 0xd15f05ab,
-        scaledPortraitGuide?.center
+        scaledPortraitGuide?.center,
+        { fastPreview: renderMode === 'preview' && isSliderInteracting }
       );
     }
 
@@ -1456,14 +1529,18 @@ export default function FormatWorkspace() {
       return null;
     }
 
+    const finalCanvas = effectFamily === 'disposable-flash-film'
+      ? createExpandedDisposablePrintCanvas(canvas, disposableFlashSettings, deterministicSeed ^ 0xd15f05ab)
+      : canvas;
+
     const committedCanvas = renderSurfaceRef.current ?? document.createElement('canvas');
     renderSurfaceRef.current = committedCanvas;
-    committedCanvas.width = canvas.width;
-    committedCanvas.height = canvas.height;
+    committedCanvas.width = finalCanvas.width;
+    committedCanvas.height = finalCanvas.height;
     const committedCtx = committedCanvas.getContext('2d', { willReadFrequently: true });
     if (!committedCtx) return null;
     committedCtx.clearRect(0, 0, committedCanvas.width, committedCanvas.height);
-    committedCtx.drawImage(canvas, 0, 0);
+    committedCtx.drawImage(finalCanvas, 0, 0);
 
     if (renderMode === 'preview' && previewCanvas) {
       drawCanvasToPreview(committedCanvas, previewCanvas);
@@ -1492,7 +1569,7 @@ export default function FormatWorkspace() {
     }
 
     return committedCanvas;
-  }, [imageReady, portraitGuide, skinSmoothing, glowUp, faceSlimming, blemishRemoval, expressionLift, beautyBoost, ageShift, eyeBrightening, jawDefinition, skinPolish, teethWhitening, makeupStrength, artifactRemoval, clarity, isSliderInteracting, inkBleed, shadowCrush, midtones, highlights, activeLUT, grain, threshold, saturation, hueShift, halation, chromaOffset, monochrome, halftone, scanlines, vignette, lightLeak, lightLeakStyle, gradientMap, prismBlur, colorKnockout, textureType, textureIntensity, dustAndScratches, sparkles, camcorderOSD, materialProfile, materialStrength, printProfile, paperSurface, filmProfile, opticalProfile, materialFaceProtection, materialEdgeProtection, effectFamily, effectIntensity, disposableFlashSettings, disposableFlashStrength, disposableFlashFalloff, disposableWarmLightLeak, disposableRedEdgeBurn, disposableCyanShadowCast, disposableFilmGrain, disposableDustAndScratches, disposablePlasticLensSoftness, disposableChromaticFringing, disposableVignette, sourceImageSize, createSnapshot]);
+  }, [imageReady, portraitGuide, skinSmoothing, glowUp, faceSlimming, blemishRemoval, expressionLift, beautyBoost, ageShift, eyeBrightening, jawDefinition, skinPolish, teethWhitening, makeupStrength, artifactRemoval, clarity, isSliderInteracting, inkBleed, shadowCrush, midtones, highlights, activeLUT, grain, threshold, saturation, hueShift, halation, chromaOffset, monochrome, halftone, scanlines, vignette, lightLeak, lightLeakStyle, gradientMap, prismBlur, colorKnockout, textureType, textureIntensity, dustAndScratches, sparkles, camcorderOSD, materialProfile, materialStrength, printProfile, paperSurface, filmProfile, opticalProfile, materialFaceProtection, materialEdgeProtection, effectFamily, effectPreset, effectIntensity, disposableFlashSettings, disposableFlashStrength, disposableFlashFalloff, disposableWarmLightLeak, disposableRedEdgeBurn, disposableCyanShadowCast, disposableFilmGrain, disposableDustAndScratches, disposablePlasticLensSoftness, disposableChromaticFringing, disposableVignette, disposableStampMode, disposableStampFormat, disposableStampColor, disposableStampPosition, disposableCustomDate, disposableFrameMode, sourceImageSize, createSnapshot]);
 
   useEffect(() => {
     renderForExportRef.current = () => renderCanvas('export');
@@ -1774,7 +1851,7 @@ export default function FormatWorkspace() {
             applyEffectPreset={applyEffectPreset}
             setEffectIntensity={setDisposableEffectIntensity}
             updateDisposableSetting={updateDisposableSetting}
-            setDisposableToggle={setDisposableToggle}
+            updateDisposableChoices={updateDisposableChoices}
             resetEffects={resetEffects}
           />
           

@@ -1,6 +1,13 @@
 import type { Preset } from './presets';
 import type { FilmProfile, OpticalProfile, PaperSurface, PrintMode } from './materials/material-types';
-import type { FormatEffectFamilySelection } from './effects/effect-types';
+import type {
+  DisposableFrameMode,
+  DisposableStampColor,
+  DisposableStampFormat,
+  DisposableStampMode,
+  DisposableStampPosition,
+  FormatEffectFamilySelection
+} from './effects/effect-types';
 
 export const CUSTOM_PRESET_CATEGORY = 'Custom Specifications';
 export const CUSTOM_PRESET_STORAGE_KEY = 'format-system-04-custom-presets';
@@ -70,6 +77,12 @@ export type EngineSnapshot = {
   disposableVignette: number;
   disposableDateStamp: boolean;
   disposablePrintFrame: boolean;
+  disposableStampMode: DisposableStampMode;
+  disposableStampFormat: DisposableStampFormat;
+  disposableStampColor: DisposableStampColor;
+  disposableStampPosition: DisposableStampPosition;
+  disposableCustomDate: string;
+  disposableFrameMode: DisposableFrameMode;
   activeCamera: string;
 };
 
@@ -248,6 +261,12 @@ export const PARAM_LABELS: Record<keyof EngineSnapshot, string> = {
   disposableVignette: 'Disposable Vignette',
   disposableDateStamp: 'Disposable Date Stamp',
   disposablePrintFrame: 'Disposable Print Frame',
+  disposableStampMode: 'Disposable Stamp Mode',
+  disposableStampFormat: 'Disposable Stamp Format',
+  disposableStampColor: 'Disposable Stamp Color',
+  disposableStampPosition: 'Disposable Stamp Position',
+  disposableCustomDate: 'Disposable Custom Date',
+  disposableFrameMode: 'Disposable Frame Mode',
   activeCamera: 'Capture Profile'
 };
 
@@ -359,6 +378,12 @@ export const createNeutralSnapshot = (): EngineSnapshot => ({
   disposableVignette: 0,
   disposableDateStamp: false,
   disposablePrintFrame: false,
+  disposableStampMode: 'off',
+  disposableStampFormat: 'MM_DD_YY',
+  disposableStampColor: 'orange',
+  disposableStampPosition: 'bottom-left',
+  disposableCustomDate: '',
+  disposableFrameMode: 'off',
   activeCamera: 'Standard Matrix'
 });
 
@@ -508,5 +533,11 @@ export const buildPresetFromSnapshot = (snapshot: EngineSnapshot, name: string):
   disposableVignette: snapshot.disposableVignette,
   disposableDateStamp: snapshot.disposableDateStamp,
   disposablePrintFrame: snapshot.disposablePrintFrame,
+  disposableStampMode: snapshot.disposableStampMode,
+  disposableStampFormat: snapshot.disposableStampFormat,
+  disposableStampColor: snapshot.disposableStampColor,
+  disposableStampPosition: snapshot.disposableStampPosition,
+  disposableCustomDate: snapshot.disposableCustomDate,
+  disposableFrameMode: snapshot.disposableFrameMode,
   artifactRemoval: snapshot.artifactRemoval
 });

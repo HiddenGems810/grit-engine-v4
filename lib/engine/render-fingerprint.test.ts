@@ -25,4 +25,24 @@ describe('render fingerprinting', () => {
     expect(first.settingsHash).toBe(hashEngineSnapshot(snapshot));
     expect(first.outputHash).toBe(fnv1aHash(output));
   });
+
+  it('includes effect-relevant disposable flash fields in the settings hash', () => {
+    const base = createNeutralSnapshot();
+    const expandedFrame = {
+      ...base,
+      effectFamily: 'disposable-flash-film' as const,
+      effectPreset: 'custom-disposable-flash',
+      effectIntensity: 100,
+      disposableFlashStrength: 80,
+      disposableStampMode: 'custom' as const,
+      disposableCustomDate: '2026-05-19',
+      disposableFrameMode: 'expanded-print' as const
+    };
+
+    expect(hashEngineSnapshot(expandedFrame)).not.toBe(hashEngineSnapshot(base));
+    expect(hashEngineSnapshot({
+      ...expandedFrame,
+      disposableFrameMode: 'in-frame'
+    })).not.toBe(hashEngineSnapshot(expandedFrame));
+  });
 });

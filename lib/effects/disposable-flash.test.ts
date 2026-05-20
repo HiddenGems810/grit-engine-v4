@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildDisposableFlashRenderPlan,
+  buildExpandedPrintFrameMetrics,
   createNeutralDisposableFlashSettings,
+  formatDisposableDateStamp,
   mixDisposableFlashSettings,
-  normalizeDisposableFlashSettings
+  normalizeDisposableFlashSettings,
+  resolveDisposableDateStamp
 } from '@/lib/effects/disposable-flash';
 import { DISPOSABLE_FLASH_PRESETS } from '@/lib/effects/effect-registry';
 
@@ -21,7 +24,13 @@ describe('disposable flash film effect', () => {
       chromaticFringing: 500,
       vignette: 140,
       dateStamp: true,
-      printFrame: true
+      printFrame: true,
+      stampMode: 'bad-mode',
+      stampFormat: 'bad-format',
+      stampColor: 'purple',
+      stampPosition: 'middle',
+      customDate: 'not-a-date',
+      frameMode: 'poster'
     })).toEqual({
       flashStrength: 100,
       flashFalloff: 0,
@@ -34,8 +43,26 @@ describe('disposable flash film effect', () => {
       chromaticFringing: 100,
       vignette: 100,
       dateStamp: true,
+      printFrame: true,
+      stampMode: 'seeded-retro',
+      stampFormat: 'MM_DD_YY',
+      stampColor: 'orange',
+      stampPosition: 'bottom-left',
+      customDate: '',
+      frameMode: 'in-frame'
+    });
+  });
+
+  it('upgrades legacy date stamp and print frame booleans into explicit modes', () => {
+    const legacy = normalizeDisposableFlashSettings({
+      dateStamp: true,
       printFrame: true
     });
+
+    expect(legacy.stampMode).toBe('seeded-retro');
+    expect(legacy.frameMode).toBe('in-frame');
+    expect(legacy.dateStamp).toBe(true);
+    expect(legacy.printFrame).toBe(true);
   });
 
   it('blends preset intensity without changing deterministic pattern identity', () => {
@@ -74,5 +101,48 @@ describe('disposable flash film effect', () => {
     expect(plan.scratches.length).toBeGreaterThan(20);
     expect(plan.dust.length).toBeGreaterThan(60);
     expect(plan.frame.borderPx).toBeGreaterThan(0);
+  });
+
+  it('formats date stamps and derives seeded-retro dates deterministically', () => {
+    const settings = normalizeDisposableFlashSettings({
+      dateStamp: true,
+      stampMode: 'seeded-retro',
+      stampFormat: 'DD_MM_YY',
+      stampColor: 'red',
+      stampPosition: 'bottom-right'
+    });
+    const first = resolveDisposableDateStamp(settings, 424242);
+    const second = resolveDisposableDateStamp(settings, 424242);
+    const different = resolveDisposableDateStamp(settings, 424243);
+
+    expect(first).toEqual(second);
+    expect(first).not.toEqual(different);
+    expect(formatDisposableDateStamp(new Date(Date.UTC(2024, 0, 9)), 'MM_DD_YY')).toBe('01 09 24');
+    expect(formatDisposableDateStamp(new Date(Date.UTC(2024, 0, 9)), 'DD_MM_YY')).toBe('09 01 24');
+    expect(formatDisposableDateStamp(new Date(Date.UTC(2024, 0, 9)), 'YYYY_MM_DD')).toBe('2024 01 09');
+  });
+
+  it('normalizes invalid custom dates and computes expanded print dimensions', () => {
+    const fallback = normalizeDisposableFlashSettings({
+      dateStamp: true,
+      stampMode: 'custom',
+      customDate: 'not-real',
+      printFrame: true,
+      frameMode: 'expanded-print'
+    });
+    const custom = normalizeDisposableFlashSettings({
+      stampMode: 'custom',
+      customDate: '2026-05-19',
+      frameMode: 'expanded-print'
+    });
+    const metrics = buildExpandedPrintFrameMetrics(1200, 900);
+
+    expect(fallback.stampMode).toBe('seeded-retro');
+    expect(custom.stampMode).toBe('custom');
+    expect(resolveDisposableDateStamp(custom, 1)).toBe('05 19 26');
+    expect(metrics.width).toBeGreaterThan(1200);
+    expect(metrics.height).toBeGreaterThan(900);
+    expect(metrics.imageX).toBeGreaterThan(0);
+    expect(metrics.imageY).toBeGreaterThan(0);
   });
 });

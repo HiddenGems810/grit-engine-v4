@@ -102,4 +102,18 @@ describe('premium preset recipe engine', () => {
     expect(balanced.disposableCyanShadowCast).toBeLessThan(full.disposableCyanShadowCast);
     expect(full.disposableFilmGrain).toBeGreaterThan(0);
   });
+
+  it('keeps disposable stamp and frame choices stable once preset intensity is active', () => {
+    const datePreset = PRESETS.find((preset) => preset.id === 'film-instant-border-date-flash')!;
+    const base = createNeutralSnapshot();
+    const off = buildPresetRecipeSnapshot(base, datePreset, 0);
+    const subtle = buildPresetRecipeSnapshot(base, datePreset, 25);
+    const full = buildPresetRecipeSnapshot(base, datePreset, 100);
+
+    expect(off.disposableStampMode).toBe('off');
+    expect(subtle.disposableStampMode).toBe('seeded-retro');
+    expect(subtle.disposableFrameMode).toBe('in-frame');
+    expect(full.disposableStampMode).toBe('seeded-retro');
+    expect(full.disposableFrameMode).toBe('in-frame');
+  });
 });

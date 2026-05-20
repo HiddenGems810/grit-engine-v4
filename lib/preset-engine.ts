@@ -24,7 +24,13 @@ type SwitchEngineKey =
   | 'filmProfile'
   | 'opticalProfile'
   | 'effectFamily'
-  | 'effectPreset';
+  | 'effectPreset'
+  | 'disposableStampMode'
+  | 'disposableStampFormat'
+  | 'disposableStampColor'
+  | 'disposableStampPosition'
+  | 'disposableCustomDate'
+  | 'disposableFrameMode';
 
 type BooleanEngineKey =
   | 'monochrome'
@@ -93,7 +99,13 @@ const SWITCH_KEYS: SwitchEngineKey[] = [
   'filmProfile',
   'opticalProfile',
   'effectFamily',
-  'effectPreset'
+  'effectPreset',
+  'disposableStampMode',
+  'disposableStampFormat',
+  'disposableStampColor',
+  'disposableStampPosition',
+  'disposableCustomDate',
+  'disposableFrameMode'
 ];
 
 const BOOLEAN_KEYS: BooleanEngineKey[] = [
@@ -131,7 +143,16 @@ const getBlendBaseValue = (
 const getSwitchThreshold = (key: keyof EngineSnapshot) => {
   if (key === 'gradientMap' || key === 'colorKnockout') return 40;
   if (key === 'textureType' || key === 'materialProfile' || key === 'paperSurface' || key === 'filmProfile' || key === 'opticalProfile') return 8;
-  if (key === 'effectFamily' || key === 'effectPreset') return 8;
+  if (
+    key === 'effectFamily'
+    || key === 'effectPreset'
+    || key === 'disposableStampMode'
+    || key === 'disposableStampFormat'
+    || key === 'disposableStampColor'
+    || key === 'disposableStampPosition'
+    || key === 'disposableCustomDate'
+    || key === 'disposableFrameMode'
+  ) return 8;
   if (key === 'printProfile') return 8;
   return 15;
 };

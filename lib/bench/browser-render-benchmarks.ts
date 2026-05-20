@@ -4,6 +4,10 @@ import { createKernelWorkerClient } from '@/lib/engine/kernel-worker-client';
 import { KernelScheduler } from '@/lib/engine/kernel-scheduler';
 import type { KernelBackend } from '@/lib/engine/kernel-types';
 import type { PixelKernelInput, PixelKernelOutput } from '@/lib/engine/kernel-types';
+import { applyDisposableFlashFilm, createExpandedDisposablePrintCanvas } from '@/lib/effects/disposable-flash';
+import { DISPOSABLE_FLASH_PRESETS } from '@/lib/effects/effect-registry';
+import { applyMaterialFinishWithKernelScheduler } from '@/lib/materials/material-engine';
+import { createSeededRandom } from '@/lib/engine/math-utils';
 
 export type BrowserBenchmarkSize = {
   label: string;
@@ -25,12 +29,36 @@ export type BrowserBenchmarkResult = BrowserBenchmarkPlanItem & {
   warnings: string[];
 };
 
+export type DisposableFlashBenchmarkCaseId =
+  | 'disposable-flash-only'
+  | 'disposable-flash-material-finish'
+  | 'disposable-flash-anti-ai-repair'
+  | 'disposable-flash-premium-preset';
+
+export type DisposableFlashBenchmarkPlanItem = {
+  caseId: DisposableFlashBenchmarkCaseId;
+  size: BrowserBenchmarkSize;
+};
+
+export type DisposableFlashBenchmarkResult = DisposableFlashBenchmarkPlanItem & {
+  elapsedMs: number;
+  memoryRisk: 'low' | 'medium' | 'high';
+  recommendation: 'stay-canvas2d' | 'split-canvas-worker' | 'worker-buffer-candidate';
+};
+
 const kernelCases = [
   { kernelId: 'ordered-dither' as const, settings: { strength: 80, outputBitDepth: 1 as const } },
   { kernelId: 'error-diffusion' as const, settings: { strength: 72 } },
   { kernelId: 'film-emulsion' as const, settings: { profile: 'fine-35mm' as const, strength: 42, portraitSafe: true } },
   { kernelId: 'material-noise' as const, settings: { materialId: 'cold-press-paper', strength: 48 } },
   { kernelId: 'material-stack' as const, settings: null }
+];
+
+const disposableFlashCases: DisposableFlashBenchmarkCaseId[] = [
+  'disposable-flash-only',
+  'disposable-flash-material-finish',
+  'disposable-flash-anti-ai-repair',
+  'disposable-flash-premium-preset'
 ];
 
 const outputToInput = (output: PixelKernelOutput, seed: number): PixelKernelInput => ({
@@ -144,6 +172,133 @@ export const buildBrowserRenderBenchmarkPlan = (
   { backend: 'typescript' as const, kernelId: kernelCase.kernelId, size },
   { backend: 'worker' as const, kernelId: kernelCase.kernelId, size }
 ]));
+
+export const buildDisposableFlashBenchmarkPlan = (
+  sizes: BrowserBenchmarkSize[] = [
+    { label: '1024px preview', width: 1024, height: 1024 },
+    { label: '1600px preview', width: 1600, height: 1600 },
+    { label: '4096px export', width: 4096, height: 4096 }
+  ]
+): DisposableFlashBenchmarkPlanItem[] => sizes.flatMap((size) => (
+  disposableFlashCases.map((caseId) => ({ caseId, size }))
+));
+
+const createSyntheticCanvas = (width: number, height: number) => {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) throw new Error('Canvas2D is unavailable for disposable flash benchmarks.');
+  const gradient = ctx.createLinearGradient(0, 0, width, height);
+  gradient.addColorStop(0, '#121820');
+  gradient.addColorStop(0.35, '#7b5246');
+  gradient.addColorStop(0.68, '#d7a45f');
+  gradient.addColorStop(1, '#f2e6ca');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, width, height);
+  ctx.fillStyle = 'rgba(20,20,24,0.58)';
+  ctx.fillRect(width * 0.18, height * 0.2, width * 0.36, height * 0.52);
+  ctx.fillStyle = 'rgba(232,180,125,0.72)';
+  ctx.beginPath();
+  ctx.ellipse(width * 0.44, height * 0.38, width * 0.1, height * 0.14, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(245,242,235,0.75)';
+  ctx.fillRect(width * 0.62, height * 0.28, width * 0.2, height * 0.22);
+  return { canvas, ctx };
+};
+
+const applyDisposableBenchmarkCase = async (
+  item: DisposableFlashBenchmarkPlanItem,
+  scheduler: KernelScheduler | null,
+  requestId: number
+) => {
+  const { canvas, ctx } = createSyntheticCanvas(item.size.width, item.size.height);
+  const preset = DISPOSABLE_FLASH_PRESETS.find((candidate) => candidate.id === 'dff-format-instant-flash') ?? DISPOSABLE_FLASH_PRESETS[0];
+  if (!preset) throw new Error('Disposable Flash benchmark preset missing.');
+  const seed = item.size.width ^ item.size.height ^ 0xd15f05ab;
+
+  if (item.caseId === 'disposable-flash-anti-ai-repair') {
+    ctx.save();
+    ctx.filter = 'blur(0.42px) contrast(96%) saturate(104%)';
+    ctx.globalAlpha = 0.42;
+    ctx.drawImage(canvas, 0, 0);
+    ctx.restore();
+  }
+
+  if (item.caseId === 'disposable-flash-premium-preset') {
+    ctx.save();
+    ctx.filter = 'contrast(112%) brightness(104%) saturate(112%)';
+    ctx.drawImage(canvas, 0, 0);
+    ctx.restore();
+  }
+
+  applyDisposableFlashFilm(ctx, canvas, preset.settings, seed, {
+    x: item.size.width * 0.44,
+    y: item.size.height * 0.38
+  });
+
+  if (item.caseId === 'disposable-flash-material-finish') {
+    await applyMaterialFinishWithKernelScheduler(ctx, canvas, {
+      materialProfile: 'cold-press-paper',
+      materialStrength: 34,
+      printProfile: 'none',
+      paperSurface: 'matte-photo-paper',
+      filmProfile: 'fine-35mm',
+      opticalProfile: 'lens-bloom',
+      faceProtection: true,
+      edgeProtection: true
+    }, createSeededRandom(seed ^ 0x4d47544d), {
+      scheduler,
+      requestId,
+      seed: seed ^ 0x4d47544d,
+      priority: item.size.width >= 2048 ? 'export' : 'preview',
+      quality: item.size.width >= 2048 ? 'export' : 'full-preview'
+    });
+  }
+
+  if (item.caseId === 'disposable-flash-premium-preset') {
+    createExpandedDisposablePrintCanvas(canvas, {
+      ...preset.settings,
+      stampMode: 'seeded-retro',
+      frameMode: 'expanded-print',
+      dateStamp: true,
+      printFrame: true
+    }, seed);
+  }
+};
+
+const recommendDisposableBackend = (elapsedMs: number, size: BrowserBenchmarkSize): DisposableFlashBenchmarkResult['recommendation'] => {
+  if (size.width >= 4096 && elapsedMs > 300) return 'worker-buffer-candidate';
+  if (size.width >= 1600 && elapsedMs > 80) return 'split-canvas-worker';
+  if (elapsedMs > 120) return 'split-canvas-worker';
+  return 'stay-canvas2d';
+};
+
+export const runDisposableFlashBrowserBenchmarks = async (
+  sizes?: BrowserBenchmarkSize[]
+): Promise<DisposableFlashBenchmarkResult[]> => {
+  const workerClient = createKernelWorkerClient();
+  const scheduler = new KernelScheduler(workerClient);
+  const plan = buildDisposableFlashBenchmarkPlan(sizes);
+  const results: DisposableFlashBenchmarkResult[] = [];
+
+  for (let index = 0; index < plan.length; index += 1) {
+    const item = plan[index];
+    const memory = estimateKernelMemoryRisk(item.size.width, item.size.height);
+    const startedAt = performance.now();
+    await applyDisposableBenchmarkCase(item, scheduler, 9_000 + index);
+    const elapsedMs = Math.max(0, performance.now() - startedAt);
+    results.push({
+      ...item,
+      elapsedMs,
+      memoryRisk: memory.risk,
+      recommendation: recommendDisposableBackend(elapsedMs, item.size)
+    });
+  }
+
+  scheduler.close();
+  return results;
+};
 
 export const runBrowserRenderBenchmarks = async (
   sizes?: BrowserBenchmarkSize[]

@@ -10,7 +10,9 @@ import {
 } from '@/lib/effects/effect-registry';
 import type { DisposableFlashSettings, FormatEffectFamilySelection } from '@/lib/effects/effect-types';
 
-type DisposableFlashNumericKey = Exclude<keyof DisposableFlashSettings, 'dateStamp' | 'printFrame'>;
+type DisposableFlashNumericKey = {
+  [K in keyof DisposableFlashSettings]: DisposableFlashSettings[K] extends number ? K : never;
+}[keyof DisposableFlashSettings];
 
 const DISPOSABLE_CONTROLS: Array<{
   key: DisposableFlashNumericKey;
@@ -38,7 +40,10 @@ type EffectsPanelProps = {
   applyEffectPreset: (presetId: string) => void;
   setEffectIntensity: (value: number) => void;
   updateDisposableSetting: (key: DisposableFlashNumericKey, value: number) => void;
-  setDisposableToggle: (key: 'dateStamp' | 'printFrame', value: boolean) => void;
+  updateDisposableChoices: (settings: Partial<Pick<
+    DisposableFlashSettings,
+    'stampMode' | 'stampFormat' | 'stampColor' | 'stampPosition' | 'customDate' | 'frameMode'
+  >>) => void;
   resetEffects: () => void;
 };
 
@@ -51,7 +56,7 @@ export function EffectsPanel({
   applyEffectPreset,
   setEffectIntensity,
   updateDisposableSetting,
-  setDisposableToggle,
+  updateDisposableChoices,
   resetEffects
 }: EffectsPanelProps) {
   const selectedFamily = getEffectFamily(effectFamily);
@@ -136,23 +141,92 @@ export function EffectsPanel({
         {showDisposableControls && (
           <div className={`mt-3 grid gap-3 ${!familyEnabled && effectFamily !== 'none' ? 'opacity-40 pointer-events-none' : ''}`}>
             <div className="grid grid-cols-2 gap-2">
-              <label className="flex items-center gap-2 rounded-[3px] border border-[#333] bg-[#111] px-2 py-2 text-[10px] uppercase tracking-[0.12em] text-[#c8c2b8]">
-                <input
-                  type="checkbox"
-                  checked={disposableSettings.dateStamp}
-                  onChange={(event) => setDisposableToggle('dateStamp', event.target.checked)}
-                  className="h-3.5 w-3.5"
-                />
-                Date Stamp
+              <label className="flex flex-col gap-1 text-[9px] uppercase tracking-[0.12em] text-[#8e877c]">
+                Date Stamp Mode
+                <select
+                  aria-label="Date Stamp Mode"
+                  value={disposableSettings.stampMode}
+                  onChange={(event) => {
+                    const stampMode = event.target.value as DisposableFlashSettings['stampMode'];
+                    updateDisposableChoices({
+                      stampMode,
+                      ...(stampMode === 'custom' && !disposableSettings.customDate
+                        ? { customDate: new Date().toISOString().slice(0, 10) }
+                        : {})
+                    });
+                  }}
+                  className="rounded-[3px] border border-[#3a3527] bg-[#101010] p-2 text-[11px] text-[#f2ede3] focus:border-[#e8a82d] focus:outline-none"
+                >
+                  <option value="off">Off</option>
+                  <option value="today">Today</option>
+                  <option value="seeded-retro">Seeded Retro</option>
+                  <option value="custom">Custom</option>
+                </select>
               </label>
-              <label className="flex items-center gap-2 rounded-[3px] border border-[#333] bg-[#111] px-2 py-2 text-[10px] uppercase tracking-[0.12em] text-[#c8c2b8]">
+              <label className="flex flex-col gap-1 text-[9px] uppercase tracking-[0.12em] text-[#8e877c]">
+                Print Frame Mode
+                <select
+                  aria-label="Print Frame Mode"
+                  value={disposableSettings.frameMode}
+                  onChange={(event) => updateDisposableChoices({ frameMode: event.target.value as DisposableFlashSettings['frameMode'] })}
+                  className="rounded-[3px] border border-[#3a3527] bg-[#101010] p-2 text-[11px] text-[#f2ede3] focus:border-[#e8a82d] focus:outline-none"
+                >
+                  <option value="off">Off</option>
+                  <option value="in-frame">In-Frame</option>
+                  <option value="expanded-print">Expanded Print</option>
+                </select>
+              </label>
+              <label className="flex flex-col gap-1 text-[9px] uppercase tracking-[0.12em] text-[#8e877c]">
+                Stamp Format
+                <select
+                  aria-label="Stamp Format"
+                  value={disposableSettings.stampFormat}
+                  onChange={(event) => updateDisposableChoices({ stampFormat: event.target.value as DisposableFlashSettings['stampFormat'] })}
+                  disabled={disposableSettings.stampMode === 'off'}
+                  className="rounded-[3px] border border-[#3a3527] bg-[#101010] p-2 text-[11px] text-[#f2ede3] focus:border-[#e8a82d] focus:outline-none disabled:opacity-40"
+                >
+                  <option value="MM_DD_YY">MM DD YY</option>
+                  <option value="DD_MM_YY">DD MM YY</option>
+                  <option value="YYYY_MM_DD">YYYY MM DD</option>
+                </select>
+              </label>
+              <label className="flex flex-col gap-1 text-[9px] uppercase tracking-[0.12em] text-[#8e877c]">
+                Stamp Color
+                <select
+                  aria-label="Stamp Color"
+                  value={disposableSettings.stampColor}
+                  onChange={(event) => updateDisposableChoices({ stampColor: event.target.value as DisposableFlashSettings['stampColor'] })}
+                  disabled={disposableSettings.stampMode === 'off'}
+                  className="rounded-[3px] border border-[#3a3527] bg-[#101010] p-2 text-[11px] text-[#f2ede3] focus:border-[#e8a82d] focus:outline-none disabled:opacity-40"
+                >
+                  <option value="orange">Orange</option>
+                  <option value="red">Red</option>
+                  <option value="white">White</option>
+                </select>
+              </label>
+              <label className="flex flex-col gap-1 text-[9px] uppercase tracking-[0.12em] text-[#8e877c]">
+                Stamp Position
+                <select
+                  aria-label="Stamp Position"
+                  value={disposableSettings.stampPosition}
+                  onChange={(event) => updateDisposableChoices({ stampPosition: event.target.value as DisposableFlashSettings['stampPosition'] })}
+                  disabled={disposableSettings.stampMode === 'off'}
+                  className="rounded-[3px] border border-[#3a3527] bg-[#101010] p-2 text-[11px] text-[#f2ede3] focus:border-[#e8a82d] focus:outline-none disabled:opacity-40"
+                >
+                  <option value="bottom-left">Bottom Left</option>
+                  <option value="bottom-right">Bottom Right</option>
+                </select>
+              </label>
+              <label className="flex flex-col gap-1 text-[9px] uppercase tracking-[0.12em] text-[#8e877c]">
+                Custom Stamp Date
                 <input
-                  type="checkbox"
-                  checked={disposableSettings.printFrame}
-                  onChange={(event) => setDisposableToggle('printFrame', event.target.checked)}
-                  className="h-3.5 w-3.5"
+                  aria-label="Custom Stamp Date"
+                  type="date"
+                  value={disposableSettings.customDate}
+                  onChange={(event) => updateDisposableChoices({ customDate: event.target.value, stampMode: 'custom' })}
+                  disabled={disposableSettings.stampMode !== 'custom'}
+                  className="rounded-[3px] border border-[#3a3527] bg-[#101010] p-2 text-[11px] text-[#f2ede3] focus:border-[#e8a82d] focus:outline-none disabled:opacity-40"
                 />
-                Print Frame
               </label>
             </div>
 

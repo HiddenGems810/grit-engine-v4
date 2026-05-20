@@ -6,6 +6,7 @@ import {
 } from '@/lib/editor-config';
 import { normalizeTextureId } from '@/lib/textures';
 import type { FormatEffectFamilySelection } from '@/lib/effects/effect-types';
+import { normalizeDisposableFlashSettings } from '@/lib/effects/disposable-flash';
 
 const clampPercent = (value: number | undefined) => Math.min(100, Math.max(0, Number.isFinite(value) ? value ?? 0 : 0));
 
@@ -34,46 +35,75 @@ export type EditorStateAction =
   | { type: 'apply-preset'; preset: Preset }
   | { type: 'reset' };
 
-export const normalizeEditorSnapshot = (snapshot: EngineSnapshot): EngineSnapshot => ({
-  ...snapshot,
-  skinSmoothing: clampPortraitControlValue('skinSmoothing', snapshot.skinSmoothing),
-  glowUp: clampPortraitControlValue('glowUp', snapshot.glowUp),
-  faceSlimming: clampPortraitControlValue('faceSlimming', snapshot.faceSlimming),
-  blemishRemoval: clampPortraitControlValue('blemishRemoval', snapshot.blemishRemoval),
-  expressionLift: clampPortraitControlValue('expressionLift', snapshot.expressionLift),
-  beautyBoost: clampPortraitControlValue('beautyBoost', snapshot.beautyBoost),
-  ageShift: clampPortraitControlValue('ageShift', snapshot.ageShift),
-  eyeBrightening: clampPortraitControlValue('eyeBrightening', snapshot.eyeBrightening),
-  jawDefinition: clampPortraitControlValue('jawDefinition', snapshot.jawDefinition),
-  skinPolish: clampPortraitControlValue('skinPolish', snapshot.skinPolish),
-  teethWhitening: clampPortraitControlValue('teethWhitening', snapshot.teethWhitening),
-  makeupStrength: clampPortraitControlValue('makeupStrength', snapshot.makeupStrength),
-  artifactRemoval: clampPortraitControlValue('artifactRemoval', snapshot.artifactRemoval),
-  textureType: normalizeTextureId(snapshot.textureType),
-  materialProfile: snapshot.materialProfile ?? 'none',
-  materialStrength: Math.min(100, Math.max(0, snapshot.materialStrength ?? 0)),
-  printProfile: snapshot.printProfile ?? 'none',
-  paperSurface: snapshot.paperSurface ?? 'none',
-  filmProfile: snapshot.filmProfile ?? 'none',
-  opticalProfile: snapshot.opticalProfile ?? 'none',
-  materialFaceProtection: snapshot.materialFaceProtection ?? true,
-  materialEdgeProtection: snapshot.materialEdgeProtection ?? true,
-  effectFamily: normalizeEffectFamily(snapshot.effectFamily),
-  effectPreset: snapshot.effectPreset ?? 'none',
-  effectIntensity: clampPercent(snapshot.effectIntensity),
-  disposableFlashStrength: clampPercent(snapshot.disposableFlashStrength),
-  disposableFlashFalloff: clampPercent(snapshot.disposableFlashFalloff),
-  disposableWarmLightLeak: clampPercent(snapshot.disposableWarmLightLeak),
-  disposableRedEdgeBurn: clampPercent(snapshot.disposableRedEdgeBurn),
-  disposableCyanShadowCast: clampPercent(snapshot.disposableCyanShadowCast),
-  disposableFilmGrain: clampPercent(snapshot.disposableFilmGrain),
-  disposableDustAndScratches: clampPercent(snapshot.disposableDustAndScratches),
-  disposablePlasticLensSoftness: clampPercent(snapshot.disposablePlasticLensSoftness),
-  disposableChromaticFringing: clampPercent(snapshot.disposableChromaticFringing),
-  disposableVignette: clampPercent(snapshot.disposableVignette),
-  disposableDateStamp: Boolean(snapshot.disposableDateStamp),
-  disposablePrintFrame: Boolean(snapshot.disposablePrintFrame)
-});
+export const normalizeEditorSnapshot = (snapshot: EngineSnapshot): EngineSnapshot => {
+  const disposable = normalizeDisposableFlashSettings({
+    flashStrength: snapshot.disposableFlashStrength,
+    flashFalloff: snapshot.disposableFlashFalloff,
+    warmLightLeak: snapshot.disposableWarmLightLeak,
+    redEdgeBurn: snapshot.disposableRedEdgeBurn,
+    cyanShadowCast: snapshot.disposableCyanShadowCast,
+    filmGrain: snapshot.disposableFilmGrain,
+    dustAndScratches: snapshot.disposableDustAndScratches,
+    plasticLensSoftness: snapshot.disposablePlasticLensSoftness,
+    chromaticFringing: snapshot.disposableChromaticFringing,
+    vignette: snapshot.disposableVignette,
+    dateStamp: snapshot.disposableDateStamp,
+    printFrame: snapshot.disposablePrintFrame,
+    stampMode: snapshot.disposableStampMode,
+    stampFormat: snapshot.disposableStampFormat,
+    stampColor: snapshot.disposableStampColor,
+    stampPosition: snapshot.disposableStampPosition,
+    customDate: snapshot.disposableCustomDate,
+    frameMode: snapshot.disposableFrameMode
+  });
+
+  return {
+    ...snapshot,
+    skinSmoothing: clampPortraitControlValue('skinSmoothing', snapshot.skinSmoothing),
+    glowUp: clampPortraitControlValue('glowUp', snapshot.glowUp),
+    faceSlimming: clampPortraitControlValue('faceSlimming', snapshot.faceSlimming),
+    blemishRemoval: clampPortraitControlValue('blemishRemoval', snapshot.blemishRemoval),
+    expressionLift: clampPortraitControlValue('expressionLift', snapshot.expressionLift),
+    beautyBoost: clampPortraitControlValue('beautyBoost', snapshot.beautyBoost),
+    ageShift: clampPortraitControlValue('ageShift', snapshot.ageShift),
+    eyeBrightening: clampPortraitControlValue('eyeBrightening', snapshot.eyeBrightening),
+    jawDefinition: clampPortraitControlValue('jawDefinition', snapshot.jawDefinition),
+    skinPolish: clampPortraitControlValue('skinPolish', snapshot.skinPolish),
+    teethWhitening: clampPortraitControlValue('teethWhitening', snapshot.teethWhitening),
+    makeupStrength: clampPortraitControlValue('makeupStrength', snapshot.makeupStrength),
+    artifactRemoval: clampPortraitControlValue('artifactRemoval', snapshot.artifactRemoval),
+    textureType: normalizeTextureId(snapshot.textureType),
+    materialProfile: snapshot.materialProfile ?? 'none',
+    materialStrength: Math.min(100, Math.max(0, snapshot.materialStrength ?? 0)),
+    printProfile: snapshot.printProfile ?? 'none',
+    paperSurface: snapshot.paperSurface ?? 'none',
+    filmProfile: snapshot.filmProfile ?? 'none',
+    opticalProfile: snapshot.opticalProfile ?? 'none',
+    materialFaceProtection: snapshot.materialFaceProtection ?? true,
+    materialEdgeProtection: snapshot.materialEdgeProtection ?? true,
+    effectFamily: normalizeEffectFamily(snapshot.effectFamily),
+    effectPreset: snapshot.effectPreset ?? 'none',
+    effectIntensity: clampPercent(snapshot.effectIntensity),
+    disposableFlashStrength: disposable.flashStrength,
+    disposableFlashFalloff: disposable.flashFalloff,
+    disposableWarmLightLeak: disposable.warmLightLeak,
+    disposableRedEdgeBurn: disposable.redEdgeBurn,
+    disposableCyanShadowCast: disposable.cyanShadowCast,
+    disposableFilmGrain: disposable.filmGrain,
+    disposableDustAndScratches: disposable.dustAndScratches,
+    disposablePlasticLensSoftness: disposable.plasticLensSoftness,
+    disposableChromaticFringing: disposable.chromaticFringing,
+    disposableVignette: disposable.vignette,
+    disposableDateStamp: disposable.dateStamp,
+    disposablePrintFrame: disposable.printFrame,
+    disposableStampMode: disposable.stampMode,
+    disposableStampFormat: disposable.stampFormat,
+    disposableStampColor: disposable.stampColor,
+    disposableStampPosition: disposable.stampPosition,
+    disposableCustomDate: disposable.customDate,
+    disposableFrameMode: disposable.frameMode
+  };
+};
 
 export const buildSnapshotFromPreset = (baseSnapshot: EngineSnapshot, preset: Preset): EngineSnapshot => normalizeEditorSnapshot({
   ...baseSnapshot,
@@ -138,6 +168,12 @@ export const buildSnapshotFromPreset = (baseSnapshot: EngineSnapshot, preset: Pr
   disposableVignette: preset.disposableVignette || 0,
   disposableDateStamp: preset.disposableDateStamp || false,
   disposablePrintFrame: preset.disposablePrintFrame || false,
+  disposableStampMode: preset.disposableStampMode || 'off',
+  disposableStampFormat: preset.disposableStampFormat || 'MM_DD_YY',
+  disposableStampColor: preset.disposableStampColor || 'orange',
+  disposableStampPosition: preset.disposableStampPosition || 'bottom-left',
+  disposableCustomDate: preset.disposableCustomDate || '',
+  disposableFrameMode: preset.disposableFrameMode || 'off',
   artifactRemoval: preset.artifactRemoval || 0,
   activeCamera: 'Custom Preset'
 });

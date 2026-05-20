@@ -270,6 +270,7 @@ test('surface texture options and Y2K star filter render without export failure'
 });
 
 test('disposable flash film effect applies and exports as jpeg with workers disabled', async ({ page }) => {
+  test.setTimeout(60_000);
   await page.goto('/?disableWorkers=1');
   const imagePath = path.resolve(process.cwd(), 'test-image-to-use.png');
   await page.locator('label').filter({ hasText: 'Upload Image to edit' }).locator('input[type="file"]').setInputFiles(imagePath);
@@ -280,15 +281,44 @@ test('disposable flash film effect applies and exports as jpeg with workers disa
   await effectsLab.getByRole('button', { name: /FORMAT Instant Flash/i }).click();
   await expect(effectsLab.getByText('FORMAT Instant Flash').first()).toBeVisible();
 
+  await effectsLab.getByRole('spinbutton', { name: 'Effect Intensity' }).fill('0');
+  await expect(effectsLab.getByRole('spinbutton', { name: 'Flash Strength' })).toHaveValue('0');
+  await effectsLab.getByRole('spinbutton', { name: 'Effect Intensity' }).fill('100');
+  await expect(effectsLab.getByRole('spinbutton', { name: 'Flash Strength' })).toHaveValue('70');
   await effectsLab.getByRole('spinbutton', { name: 'Flash Strength' }).fill('84');
   await effectsLab.getByRole('spinbutton', { name: 'Warm Light Leak' }).fill('52');
   await effectsLab.getByRole('spinbutton', { name: 'Dust & Scratches' }).fill('44');
-  await effectsLab.getByLabel('Date Stamp').check();
+  await effectsLab.getByLabel('Date Stamp Mode').selectOption('custom');
+  await effectsLab.getByLabel('Custom Stamp Date').fill('2026-05-19');
+  await effectsLab.getByLabel('Stamp Format').selectOption('YYYY_MM_DD');
+  await effectsLab.getByLabel('Stamp Color').selectOption('white');
+  await effectsLab.getByLabel('Stamp Position').selectOption('bottom-right');
+  await effectsLab.getByLabel('Print Frame Mode').selectOption('expanded-print');
+  await expect(page.getByLabel('Export Quality')).toContainText('Base Export');
+
+  const customPresetName = `Flash QA ${Date.now()}`;
+  await page.getByRole('button', { name: 'Save Specification Preset' }).click();
+  await page.getByPlaceholder('Example: Editorial Brass Portrait').fill(customPresetName);
+  await page.getByRole('button', { name: 'Save Preset' }).click();
+  await expect(page.getByText(customPresetName).first()).toBeVisible();
+
+  await effectsLab.getByLabel('Date Stamp Mode').selectOption('off');
+  await effectsLab.getByLabel('Print Frame Mode').selectOption('off');
+  const savedPreset = page.getByRole('button', { name: new RegExp(customPresetName) }).first();
+  await savedPreset.focus();
+  await page.keyboard.press('Enter');
+  await expect(effectsLab.getByLabel('Date Stamp Mode')).toHaveValue('custom');
+  await expect(effectsLab.getByLabel('Custom Stamp Date')).toHaveValue('2026-05-19');
+  await expect(effectsLab.getByLabel('Print Frame Mode')).toHaveValue('expanded-print');
 
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Render Output' }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toMatch(/format-system-04.*\.jpeg$/);
+
+  await effectsLab.getByRole('button', { name: 'Reset Effect' }).click();
+  await expect(effectsLab.getByLabel('Effect Family')).toHaveValue('none');
+  await expect(effectsLab.getByRole('spinbutton', { name: 'Effect Intensity' })).toHaveCount(0);
 });
 
 test('browser can encode a 4096px export canvas without crashing', async ({ page, browserName }) => {

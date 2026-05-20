@@ -1,4 +1,4 @@
-import type { DisposableFlashSettings, FormatEffectFamily, FormatEffectPreset } from '@/lib/effects/effect-types';
+import type { DisposableFlashEffectPreset, DisposableFlashSettings, FormatEffectFamily, FormatEffectPreset } from '@/lib/effects/effect-types';
 
 export const EFFECT_FAMILIES: FormatEffectFamily[] = [
   {
@@ -112,11 +112,18 @@ const settings = (overrides: Partial<DisposableFlashSettings>): DisposableFlashS
   vignette: 0,
   dateStamp: false,
   printFrame: false,
+  stampMode: 'off',
+  stampFormat: 'MM_DD_YY',
+  stampColor: 'orange',
+  stampPosition: 'bottom-left',
+  customDate: '',
+  frameMode: 'off',
   ...overrides
 });
 
-export const DISPOSABLE_FLASH_PRESETS: FormatEffectPreset[] = [
+export const DISPOSABLE_FLASH_PRESETS: DisposableFlashEffectPreset[] = [
   {
+    kind: 'disposable-flash',
     id: 'dff-format-instant-flash',
     name: 'FORMAT Instant Flash',
     family: 'disposable-flash-film',
@@ -139,6 +146,7 @@ export const DISPOSABLE_FLASH_PRESETS: FormatEffectPreset[] = [
     })
   },
   {
+    kind: 'disposable-flash',
     id: 'dff-nightlife-memory',
     name: 'Nightlife Memory Flash',
     family: 'disposable-flash-film',
@@ -158,10 +166,13 @@ export const DISPOSABLE_FLASH_PRESETS: FormatEffectPreset[] = [
       plasticLensSoftness: 42,
       chromaticFringing: 22,
       vignette: 46,
-      dateStamp: true
+      dateStamp: true,
+      stampMode: 'seeded-retro',
+      stampColor: 'orange'
     })
   },
   {
+    kind: 'disposable-flash',
     id: 'dff-red-leak-party',
     name: 'Red Leak Party Frame',
     family: 'disposable-flash-film',
@@ -184,6 +195,7 @@ export const DISPOSABLE_FLASH_PRESETS: FormatEffectPreset[] = [
     })
   },
   {
+    kind: 'disposable-flash',
     id: 'dff-cyan-shadow-party',
     name: 'Cyan Shadow Cheap Flash',
     family: 'disposable-flash-film',
@@ -206,6 +218,7 @@ export const DISPOSABLE_FLASH_PRESETS: FormatEffectPreset[] = [
     })
   },
   {
+    kind: 'disposable-flash',
     id: 'dff-print-border-date',
     name: 'Instant Border Date Flash',
     family: 'disposable-flash-film',
@@ -226,10 +239,14 @@ export const DISPOSABLE_FLASH_PRESETS: FormatEffectPreset[] = [
       chromaticFringing: 14,
       vignette: 24,
       dateStamp: true,
-      printFrame: true
+      printFrame: true,
+      stampMode: 'seeded-retro',
+      stampColor: 'orange',
+      frameMode: 'in-frame'
     })
   },
   {
+    kind: 'disposable-flash',
     id: 'dff-soft-plastic-lens',
     name: 'Soft Plastic Lens Flash',
     family: 'disposable-flash-film',
