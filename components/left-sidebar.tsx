@@ -194,7 +194,7 @@ export function LeftSidebar({
       <AnimatePresence>
         {leftPanels.presets && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="flex-1 overflow-hidden flex flex-col">
-            <div className="flex-1 overflow-y-auto bg-[#202020] p-2 hide-scrollbar">
+            <div className="flex-1 overflow-y-auto bg-[#202020] p-2 pb-24 hide-scrollbar">
               {activePresetId && activePresetName && (
                 <div className="mb-2 rounded-[4px] border border-[#4a3820] bg-[#17130d] p-3">
                   <div className="flex items-start justify-between gap-3">

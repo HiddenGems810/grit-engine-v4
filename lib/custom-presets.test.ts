@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createNeutralSnapshot, buildPresetFromSnapshot } from '@/lib/editor-config';
+import { CUSTOM_PRESET_CATEGORY, createNeutralSnapshot, buildPresetFromSnapshot } from '@/lib/editor-config';
 import { createCustomPresetBundle, mergeCustomPresets, parseCustomPresetBundle, serializeCustomPresetBundle } from './custom-presets';
 
 describe('custom preset schema', () => {
@@ -19,6 +19,23 @@ describe('custom preset schema', () => {
 
     expect(parsed.presets).toHaveLength(1);
     expect(parsed.warning).toContain('legacy');
+  });
+
+  it('normalizes imported preset bundles into the visible custom specification category', () => {
+    const preset = {
+      ...buildPresetFromSnapshot(createNeutralSnapshot(), 'Imported Custom'),
+      category: 'Custom Presets'
+    };
+    const raw = JSON.stringify({
+      app: 'FORMAT',
+      schemaVersion: 2,
+      exportedAt: new Date().toISOString(),
+      presets: [preset]
+    });
+
+    const parsed = parseCustomPresetBundle(raw);
+
+    expect(parsed.presets[0].category).toBe(CUSTOM_PRESET_CATEGORY);
   });
 
   it('merges incoming presets without duplicate id/name pairs', () => {

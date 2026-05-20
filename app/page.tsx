@@ -537,10 +537,12 @@ export default function FormatWorkspace() {
     setEffectFamilyState('disposable-flash-film');
     setEffectPreset('custom-disposable-flash');
     setEffectIntensityState(100);
+    markSliderInteraction();
     applyDisposableFlashSettings({
       ...disposableFlashSettings,
       ...settings
     });
+    releaseSliderInteraction(180);
   };
 
   function resetEffects() {

@@ -1,6 +1,6 @@
 # FORMAT by TAGDesigns
 
-Professional browser-based image finishing workspace built with Next.js.
+FORMAT is the anti-AI-slop finishing engine for creator visuals: premium browser-native effects, local-first editing, portrait-safe retouching, material/print finishes, and export-ready image treatments without Photoshop or cloud-uploading your work.
 
 ## What it does
 
@@ -10,6 +10,30 @@ Professional browser-based image finishing workspace built with Next.js.
 - Includes a Premium Effects Lab with original procedural Disposable Flash Film rendering
 - Stores custom presets locally in the browser
 - Keeps imported images in-browser during normal editing and export
+
+## Money-ready V1 scope
+
+V1 is focused on one paid-beta path: a user lands on FORMAT, understands the product in seconds, imports an image, applies premium presets/effects or Anti-AI Slop Repair, exports a high-quality result, and follows a configured purchase or paid-beta CTA.
+
+The public entry surface now includes:
+
+- A direct `Start Editing` import CTA.
+- A paid access CTA driven by `NEXT_PUBLIC_FORMAT_PAYMENT_URL`, `NEXT_PUBLIC_FORMAT_BETA_URL`, or `NEXT_PUBLIC_FORMAT_SUPPORT_EMAIL`.
+- Trust copy explaining local-first editing, procedural effects, truthful export reporting, and browser limitations.
+
+FORMAT does not implement payment processing inside this repo. Configure the CTA to point at the live checkout, paid-beta, waitlist, or support flow before launch.
+
+## Launch CTA environment variables
+
+Only `NEXT_PUBLIC_` variables are used because the landing CTA renders in the browser. These are public build-time values, not secrets.
+
+```txt
+NEXT_PUBLIC_FORMAT_PAYMENT_URL=https://example.com/checkout
+NEXT_PUBLIC_FORMAT_BETA_URL=https://example.com/paid-beta
+NEXT_PUBLIC_FORMAT_SUPPORT_EMAIL=hello@example.com
+```
+
+Priority order: payment URL, beta URL, support email `mailto:` fallback. If none are configured, FORMAT shows a launch configuration notice instead of pretending payment exists.
 
 ## Run locally
 
@@ -43,6 +67,8 @@ Manual QA:
 - Confirm export buttons are disabled before import and enabled after import.
 - Render PNG and JPG outputs with upscale disabled and enabled.
 - Test one portrait image with face controls and one non-face image with portrait fallback.
+- Apply Anti-AI Slop Repair, FORMAT Instant Flash, and at least one Signature premium preset.
+- Verify the launch CTA points to the configured payment/beta/support destination.
 - Verify preset search, custom preset save/delete, history undo/redo, and reset stack.
 - Check desktop, tablet-width, and mobile fallback layouts.
 - Confirm no browser console errors appear during import, slider movement, upscale preview, or export.

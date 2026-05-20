@@ -9,6 +9,10 @@ test('initial workspace shell renders core controls before image import', async 
   await expect(page.getByText('FORMAT by TAGDesigns')).toBeVisible();
   await expect(page.getByRole('button', { name: /^Specifications/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /tone & color/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Anti-AI-slop finishing for release-ready creator visuals/i })).toBeVisible();
+  await expect(page.getByText('Local-first creator finishing engine')).toBeVisible();
+  await expect(page.getByText('Configure NEXT_PUBLIC_FORMAT_PAYMENT_URL')).toBeVisible();
+  await expect(page.getByText('Paid beta access')).toBeVisible();
   await expect(page.getByText('Upload Image to edit')).toBeVisible();
 
   await expect(page.getByRole('button', { name: 'Render Output' })).toBeDisabled();
@@ -55,6 +59,11 @@ test('user can import a real image and export a jpeg', async ({ page }) => {
   const download = await downloadPromise;
 
   expect(download.suggestedFilename()).toMatch(/format-system-04.*\.jpeg$/);
+
+  const pngDownloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: /^PNG$/ }).click();
+  const pngDownload = await pngDownloadPromise;
+  expect(pngDownload.suggestedFilename()).toMatch(/format-system-04.*\.png$/);
 });
 
 test('premium preset intensity applies through the export path', async ({ page }) => {

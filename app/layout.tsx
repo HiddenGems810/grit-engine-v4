@@ -8,11 +8,11 @@ const plexMono = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500', '600
 export const metadata: Metadata = {
   applicationName: 'FORMAT',
   title: {
-    default: 'FORMAT by TAGDesigns',
+    default: 'FORMAT by TAGDesigns - Anti-AI-Slop Finishing Engine',
     template: '%s | FORMAT'
   },
-  description: 'A browser-based image finishing workspace for portrait, social, cinematic, print, and texture-driven visual treatments.',
-  keywords: ['image editor', 'portrait retouching', 'photo finishing', 'creative presets', 'browser image editor'],
+  description: 'Local-first browser finishing for creator visuals: anti-AI-slop repair, procedural premium effects, portrait-safe retouching, material finishes, and export-ready presets.',
+  keywords: ['anti AI slop repair', 'image finishing', 'portrait retouching', 'photo effects', 'creative presets', 'browser image editor'],
   authors: [{ name: 'TAGDesigns' }],
   creator: 'TAGDesigns',
   publisher: 'TAGDesigns',
@@ -22,15 +22,15 @@ export const metadata: Metadata = {
     follow: true
   },
   openGraph: {
-    title: 'FORMAT by TAGDesigns',
-    description: 'A professional browser-based image finishing workspace for stylized raster output.',
+    title: 'FORMAT by TAGDesigns - Anti-AI-Slop Finishing Engine',
+    description: 'Premium local-first browser finishing for creator visuals, procedural effects, and export-ready image treatments.',
     type: 'website',
     siteName: 'FORMAT'
   },
   twitter: {
     card: 'summary',
     title: 'FORMAT by TAGDesigns',
-    description: 'Professional image finishing in the browser.'
+    description: 'Anti-AI-slop repair and premium image finishing in the browser.'
   },
 };
 

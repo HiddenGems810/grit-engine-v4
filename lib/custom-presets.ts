@@ -1,4 +1,5 @@
 import type { Preset } from '@/lib/presets';
+import { CUSTOM_PRESET_CATEGORY } from '@/lib/editor-config';
 
 export const CUSTOM_PRESET_SCHEMA_VERSION = 2;
 
@@ -23,7 +24,7 @@ export const parseCustomPresetBundle = (raw: string): { presets: Preset[]; warni
   const bundle = parsed as Partial<CustomPresetBundle> | Preset[];
 
   if (Array.isArray(bundle)) {
-    return { presets: bundle as Preset[], warning: 'Imported legacy custom preset array. It was upgraded to the current schema.' };
+    return { presets: normalizeImportedCustomPresets(bundle as Preset[]), warning: 'Imported legacy custom preset array. It was upgraded to the current schema.' };
   }
 
   if (!bundle || bundle.app !== 'FORMAT' || !Array.isArray(bundle.presets)) {
@@ -42,7 +43,10 @@ export const parseCustomPresetBundle = (raw: string): { presets: Preset[]; warni
     ? `Imported older preset schema v${bundle.schemaVersion}; FORMAT upgraded it on import.`
     : null;
 
-  return { presets: bundle.presets as Preset[], warning };
+  return {
+    presets: normalizeImportedCustomPresets(bundle.presets as Preset[]),
+    warning
+  };
 };
 
 export const mergeCustomPresets = (existing: Preset[], incoming: Preset[]) => {
@@ -54,3 +58,8 @@ export const mergeCustomPresets = (existing: Preset[], incoming: Preset[]) => {
     return true;
   });
 };
+
+const normalizeImportedCustomPresets = (presets: Preset[]) => presets.map((preset) => ({
+  ...preset,
+  category: CUSTOM_PRESET_CATEGORY
+}));
